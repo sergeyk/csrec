@@ -1,0 +1,4 @@
+### Mar 7 (all):
+- went through linear regression, logistic regression, log-linear model that Alex suggested
+- thought about whether it should be \theta_h^\top \phi(u) or \theta^\top \phi(u,h)
+- personalized spam filters may be relevant

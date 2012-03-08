@@ -1,0 +1,67 @@
+### Tim (Mar 1):
+Hey everybody,
+
+yesterday's visit at couchsurfing went great (in my eyes...). They want to e-mail us with more information by the end of the week and provide us with data next Monday (if their lawyers don't make a problem). Then we should get started since we are supposed to present stuff the week after that. To be honest, they seem to have no idea how to do ranking right (I think they have some easy "SQL-order" stuff to do it currently). So lots of room for improvement for us :-)
+I would suggest doing the following the next few days:
+
+- looking at couchsurfing profiles to get a sense of the data
+- think about what initial results we could present
+- think about how we represent their data, ie. in terms of features for our recommendation
+- how do we want to do recommendation?
+- are there baselines we could quickly implement for the midterm presentations?
+
+### Ron (Mar 1):
+I just finished reading this paper:
+
+Harvesting Social Network Profiles for Recommendations
+
+Their research is so similar to what we're doing it's scary. I think if we combine their normalization techniques + Koren's collaborative filtering algorithms, we'll be in good shape. Liu also has other interesting papers I'm going to read.
+
+### Tim (Mar 6):
+Ron, in the last paper you send around they use a "predefined" ontology of socially relevant interests (22k terms). All algorithms are essentially in N^2 space because they store all the pairwise probabilities/similarities etc. 
+In your literature search, did you find any publicly/easily available "term sets/ontologies" or full interest graphs? Or are we sure we want to build this ourselves? 
+It seems that the free text form on CS is a lot more free form than what they used in the paper (back in 2005). I did a little research on term extraction (if we don't know which terms/ontology to use) and the best python package I could find is this one [1].
+Also, it would be interesting to get a better idea of how our ranking/recommendation algorithm is supposed to use this data (probably along with collab. filtering ideas, and possibly image-based stuff).
+
+### Ron (Mar 6):
+Nope I don't think there are interest graphs publicly available. These guys constructed their own ontology by using public databases (wikipedia/opendirectory/imdb etc.).  I'm writing a "casual profile" parser using the NLTK chunker and freebase/wikipedia.  I use NLTK to extract noun phrases from the profiles and then I look those noun phrases up on wikipedia/freebase to see if they are interests/books/music/sports/arts etc.  I plan to have this done Friday.
+
+### Tim (Mar 6):
+Yes, I couldn't find anything either with a quick google search.
+
+I'm not sure how much work your chunker/parser is but the term extraction thing below + wordnet/freebase/wikipedia might be powerful, too. I think term extraction might do very similar steps, too, but you only need 1-2 function calls. If you want, we can look into this some time before class.
+
+### Ron (Mar 6):
+The term extractor library seems to do the same thing as the NLTK chunker, eg: POS tag and then extract based on POS patterns.  What's more interesting is the YQL extraction API that it mentions at the bottom.  The results look exceptionally good.  Unfortunately it's limited to only 5000 requests per 24 hours. If only we knew someone from Yahoo who could hook us up with more requests.
+
+### Tim (Mar 6):
+I think that if we wanted to we could already start to figure stuff out because we can have an idea of what data we'll get just by looking at profiles online. At least we should start thinking more concretely about our problem, how to solve it, and what to do until the first presentation. Admittedly, I'm personally pushing a bit simply because I'll be unavailable from Fri-Sun and I would like to contribute some stuff before that. Maybe Ron and I can look into the NLP stuff today, not everybody would need to come.
+
+Some identified issues:
+compare persons in terms of interests
+figure out which terms to use (nontrivial imo)
+build interest graph
+can build (sparse) vector that represents interests (spreading activation on interest graph is probably necessary) -> (weighted) dot product between two users' vectors might already be a good content/interest-based score
+learning similarity/affinities between persons based on accepted/rejected couch requests (the "behavioral part").
+how exactly to do this?
+does a collaborative filtering algorithm fit this? How?
+
+some papers that might be relevant:
+- A Survey of Collaborative Filtering Techniques, Xiaoyuan Su and Taghi M. Khoshgoftaar
+-> just a survey paper talking some general stuff about hybrid recommendation systems (usually collab + content)
+- Multi-Layered Ontology-Based User Profiles and Semantic Social Networks for Recommender Systems, Iván Cantador and Pablo Castells 
+-> title sounds very applicable, will read it soon in more detail :-)
+
+### Tim (Mar 7):
+here are a few papers Alex mentioned today in our discussion. I haven't checked yet how applicable they really are, will start on that tomorrow:
+
+feature preprocessing: http://www.springerlink.com/content/q2841573463j066p/fulltext.pdf
+
+http://hal.archives-ouvertes.fr/docs/00/48/27/40/PDF/NIPS2007_0612.pdf
+
+http://www.cc.gatech.edu/~syang46/papers/WWW11FIP.pdf
+
+http://www.cs.cmu.edu/~amahmed/papers/SVCM_WSDM12.pdf
+
+### Tim (Mar 7):
+The last one is actually a paper he suggested to me after class (he was still pretty excited about the project). He also mentioned like three times that we shouldn't "solve everything" for CS for free, "at least for some equity" ;-)
