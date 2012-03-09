@@ -32,14 +32,13 @@ p = xml.parsers.expat.ParserCreate()
 p.CharacterDataHandler = char_data
 
 print context
-
-print 'YQL'
+print ''
+print '====YQL====='
 print p.Parse(data)
 
-print 'NLTK'
-import nltk_chunker
+print '\n'
 
-print 'topia'
+print '====topia===='
 
 from topia.termextract import extract
 extractor = extract.TermExtractor()
