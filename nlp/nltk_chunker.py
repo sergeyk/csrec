@@ -1,6 +1,7 @@
 # Natural Language Toolkit: code_classifier_chunker
 import nltk
 from nltk.corpus import conll2000
+import cPickle
 
 class ConsecutiveNPChunkTagger(nltk.TaggerI): # [_consec-chunk-tagger]
 
@@ -32,6 +33,7 @@ class ConsecutiveNPChunker(nltk.ChunkParserI): # [_consec-chunker]
         self.tagger = ConsecutiveNPChunkTagger(tagged_sents)
 
     def parse(self, sentence):
+        # Input: tagged sentence
         tagged_sents = self.tagger.tag(sentence)
         conlltags = [(w,t,c) for ((w,t),c) in tagged_sents]
         return nltk.chunk.conlltags2tree(conlltags)
@@ -65,7 +67,24 @@ def tags_since_dt(sentence, i):
             tags.add(pos)
     return '+'.join(sorted(tags))
 
-test_sents = conll2000.chunked_sents('test.txt', chunk_types=['NP'])
-train_sents = conll2000.chunked_sents('train.txt', chunk_types=['NP'])
-unigram_chunker = ConsecutiveNPChunker(train_sents)
-print unigram_chunker.parse(test_sents)
+text = '''
+I consider myself a pretty diverse character... I'm a professional wrestler, but I'd take a bullet for WallE. I train like a one-man genocide machine in the gym, but I cried at "Armageddon." I'll head bang to AC/DC, and I'm seriously considering getting a Legend of Zelda tattoo. I'm 420-friendly. I like to party it up with the frat crowd one night, hang out with my Burning Man friends the next, play Halo and World of Warcraft the next, and jam with friends that aren't any younger than 40 the next. My youngest friend is 16, my oldest friend is 66. I'll sing karaoke at the bars, and I'm my friends' collective psychiatrist/shoulder.
+'''
+
+token_text = nltk.word_tokenize(text)
+tagged_text = nltk.pos_tag(token_text)
+unigram_chunker = None
+try:
+    unigram_chunker = cPickle.load(open('chunker', 'r'))
+except (EOFError, IOError):
+    pass
+if not unigram_chunker:
+    train_sents = conll2000.chunked_sents('train.txt', chunk_types=['NP'])
+    unigram_chunker = ConsecutiveNPChunker(train_sents)
+    f = open('chunker', 'wb')
+    cPickle.dump(unigram_chunker, f, -1)
+chunk_tree = unigram_chunker.parse(tagged_text)
+for st in chunk_tree.subtrees():
+    for l in st.leaves():
+        print l[0],
+    print
