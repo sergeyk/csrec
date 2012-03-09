@@ -65,3 +65,58 @@ http://www.cs.cmu.edu/~amahmed/papers/SVCM_WSDM12.pdf
 
 ### Tim (Mar 7):
 The last one is actually a paper he suggested to me after class (he was still pretty excited about the project). He also mentioned like three times that we shouldn't "solve everything" for CS for free, "at least for some equity" ;-)
+
+### Tim (Mar 8):
+I just finished reading the four papers and thought I share some of my thoughts :-)
+
+Like like alike
+seems relevant because they also have friendships + interests (although CS friendships are probably more sparse)
+they use a fancy graphical model to do a joint propagation of interests
+one idea for us would be not only to take their interests from there profiles, but assume that they are incomplete and try to predict other interests similar to this paper
+they practically only have positives. we will (thankfully) also have negative feedback, but they have an interesting idea of using randomly sampled "weak negatives" to correct for a bias towards positive samples
+they also use SGD learning and this feature hashing trick (that I uploaded the papers about but haven't read yet)
+their evaluation part describes standard ranking metrics that would become interesting/necessary if we decide to pool "all positives (ie all accepted couch requests)" instead of having a "1 positive, multiple negatives" problem
+This papers has some interesting references i.e. [4,28] that I also mention below (and have uploaded to github)
+
+CoFiRank
+gets pretty into math/optimization in the end :-)
+learns the features (latent factors), but does not allow for additional observations (apart from ratings); but we have features, e.g. demographic stuff and interests
+learns how to rank as opposed to how to score, also provides a definition of nDCG -> structured estimation (SVM idea that we briefly talked about last meeting)
+there seems to be C++ software available
+however, I think it is bad not to include the features (obviously) and we should probably start with more standard stuff (loglinear model, learn how to rank e.g. with Joachims paper idea...)
+
+Fair and balanced
+unfortunately, very tailored towards news articles and implicit click data (that we don't have) -> not very applicable
+I also think that the notion of submodularity / diminishing returns is not applicable for us since or hosts can only accept one request at a time...
+the only interesting part is the user personalization references that lead to the same references as paper 1 (see below)
+Optimizing Search Engines through clickthrough data
+we don't have implicit click feedback so the application is different but the general idea of using an SVM type of optimization problem is!
+-> Problem 2 in Section 4.2 is what we might want to use to learn a ranking
+the order relations that we have (that will give us the constraints) are that (assuming we pool all the positive/accepted requests for one host) pos > neg (for all pos in POS and neg in NEG) if that makes any sense :-)
+
+Further interesting references in my opinion) include:
+- Feature Hashing for Large Scale Multitask Learning (see uploaded pdf "0902.2206.pdf" :-)) (I also uploaded two similar papers on that hashing trick that Alex pointed us two earlier)
+- Personalized Recommendation on Dynamic Content Using Predictive Bilinear Models -> personable recommendation from yahoo people so presumably scalable :-) (also uploaded to github)
+
+I hope that helps at least a bit. I will also be there in tomorrow mornings class but I have to leave shortly afterwards for LA. I will hopefully find time to read the other papers on the road and will reconnect with you on Monday then.
+
+### Ron (Mar 8):
+My Readings:
+I mostly focused on interest graph related stuff because I believe the interests will be our most powerful features.  I read Like like alike and An Enhanced Semantic Layer for HybridRecommender Systems. 
+
+An Enhanced Semantic Layer for Hybrid Recommender Systems:
+Ontology: They use  http://ir.ii.uam.es/news-at-hand/iptc-ontology_v01.rdfs which comes from the news codes ontology at http://www.iptc.org/site/NewsCodes.
+Tips for "semantic annotation", which is essentially mapping a document to its ontology entities (almost like topic modeling). They extract terms, map the terms to ontology entities(they look up the term's wikipedia article and construct a vector of applicable ontology entities based on what categories appear in the wikipedia article), and then measure the strength of those mappings using tf-idf.
+They build a news recommender system that recommends based on activation propagation.
+Like like alike:
+The idea of homophily: people with similar interests attract each other.  Perhaps we can increase the pairwise affinity between the interest sets of 2 couch surfing friends?
+
+Ranking:
+Does anyone have a clear idea of how to learn feature weights?  I guess before we worry about learning the weights, we should figure out what kind of features we want.  I think there's really 3 possibilities:
+
+What Sergey explained on the white board.  You have a feature vector per suitor and you dot that with your trained "host preferences" weights. And then do some black magic exponentiation to make things nice. We haven't figured out how to make this "reversible".  This makes no assumption for homophily.
+Generate a feature vector for the host and each suitor. Compute a cosine similarityish thing between the host vector and each suitor vector and rank by most similar. Each vector can have demographic/socioeconomic/and interest features.  This makes the assumption of homophily. We assume more similar = higher conversion rate. This method is reversible.
+Interest graph: the compatibility strength between suitor and host is determined by num_overlapping_interest(host, suitor) through some type of decaying activation propagation.  This will be based on the "Taste Fabric" paper and the "Semantic Recommendation" paper.  This method assumes homophily and that interests are the strongest attractors between people (doesn't take into account demographics etc.).  This method is reversible.
+Tomorrow's Meeting:
+I'm waiting for couchsurfing to tell me what time to pick up the data.  Let's plan to meet after your guys' class?
+

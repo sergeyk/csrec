@@ -31,8 +31,53 @@
 
 \subsection{Related Work}
 
+\paragraph{Harvesting Social Network Profiles for Recommendations} \cite{Liu2005}
+Their research is so similar to what we're doing it's scary. I think if we combine their normalization techniques + Koren's collaborative filtering algorithms, we'll be in good shape. Liu also has other interesting papers I'm going to read.
+
+\paragraph{Like like alike} \cite{Yang2011}
+seems relevant because they also have friendships + interests (although CS friendships are probably more sparse)
+they use a fancy graphical model to do a joint propagation of interests
+one idea for us would be not only to take their interests from there profiles, but assume that they are incomplete and try to predict other interests similar to this paper
+they practically only have positives. we will (thankfully) also have negative feedback, but they have an interesting idea of using randomly sampled "weak negatives" to correct for a bias towards positive samples
+they also use SGD learning and this feature hashing trick (that I uploaded the papers about but haven't read yet)
+their evaluation part describes standard ranking metrics that would become interesting/necessary if we decide to pool "all positives (ie all accepted couch requests)" instead of having a "1 positive, multiple negatives" problem
+This papers has some interesting references i.e. [4,28] that I also mention below (and have uploaded to github)
+
+\paragraph{CoFiRank} \cite{Weimer2009}
+seems relevant because they also have friendships + interests (although CS friendships are probably more sparse)
+they use a fancy graphical model to do a joint propagation of interests
+one idea for us would be not only to take their interests from there profiles, but assume that they are incomplete and try to predict other interests similar to this paper
+they practically only have positives. we will (thankfully) also have negative feedback, but they have an interesting idea of using randomly sampled "weak negatives" to correct for a bias towards positive samples
+they also use SGD learning and this feature hashing trick (that I uploaded the papers about but haven't read yet)
+their evaluation part describes standard ranking metrics that would become interesting/necessary if we decide to pool "all positives (ie all accepted couch requests)" instead of having a "1 positive, multiple negatives" problem
+This papers has some interesting references i.e. [4,28] that I also mention below (and have uploaded to github)
+
+\paragraph{Fair and Balanced} \cite{Ahmed2012}
+unfortunately, very tailored towards news articles and implicit click data (that we don't have)  not very applicable
+I also think that the notion of submodularity / diminishing returns is not applicable for us since or hosts can only accept one request at a time...
+the only interesting part is the user personalization references that lead to the same references as paper 1 (see below)
+Optimizing Search Engines through clickthrough data
+we don't have implicit click feedback so the application is different but the general idea of using an SVM type of optimization problem is!
+-> Problem 2 in Section 4.2 is what we might want to use to learn a ranking
+the order relations that we have (that will give us the constraints) are that (assuming we pool all the positive/accepted requests for one host) pos > neg (for all pos in POS and neg in NEG) if that makes any sense :-)
+
+\paragraph{An Enhanced Semantic Layer for Hybrid Recommender Systems} \cite{Cantador2011}
+%Ontology: They use \url{http://ir.ii.uam.es/news-at-hand/iptc-ontology_v01.rdfs} which comes from the news codes ontology at \url{http://www.iptc.org/site/NewsCodes}.
+Tips for "semantic annotation", which is essentially mapping a document to its ontology entities (almost like topic modeling). They extract terms, map the terms to ontology entities(they look up the term's wikipedia article and construct a vector of applicable ontology entities based on what categories appear in the wikipedia article), and then measure the strength of those mappings using tf-idf.
+They build a news recommender system that recommends based on activation propagation.
+Like like alike:
+The idea of homophily: people with similar interests attract each other.  Perhaps we can increase the pairwise affinity between the interest sets of 2 couch surfing friends?
+
 \section{Proposal}
 \subsection{Model}
+Ranking:
+Does anyone have a clear idea of how to learn feature weights?  I guess before we worry about learning the weights, we should figure out what kind of features we want.  I think there's really 3 possibilities:
+
+What Sergey explained on the white board.  You have a feature vector per suitor and you dot that with your trained "host preferences" weights. And then do some black magic exponentiation to make things nice. We haven't figured out how to make this "reversible".  This makes no assumption for homophily.
+Generate a feature vector for the host and each suitor. Compute a cosine similarityish thing between the host vector and each suitor vector and rank by most similar. Each vector can have demographic, socioeconomic, and interest features.  This makes the assumption of homophily. We assume more similar = higher conversion rate. This method is reversible.
+
+%Interest graph: the compatibility strength between suitor and host is determined by $num_overlapping_interest(host, suitor)$ through some type of decaying activation propagation.  This will be based on the "Taste Fabric" paper and the "Semantic Recommendation" paper.  This method assumes homophily and that interests are the strongest attractors between people (doesn't take into account demographics etc.).  This method is reversible.
+
 \subsection{Evaluation}
 
 \bibliographystyle{ieeetr}

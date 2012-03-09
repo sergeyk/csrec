@@ -1,2 +1,3 @@
 .cache
 writeups/*.pdf
+.DS_Store
