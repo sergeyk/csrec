@@ -115,8 +115,11 @@ Ranking:
 Does anyone have a clear idea of how to learn feature weights?  I guess before we worry about learning the weights, we should figure out what kind of features we want.  I think there's really 3 possibilities:
 
 What Sergey explained on the white board.  You have a feature vector per suitor and you dot that with your trained "host preferences" weights. And then do some black magic exponentiation to make things nice. We haven't figured out how to make this "reversible".  This makes no assumption for homophily.
+
 Generate a feature vector for the host and each suitor. Compute a cosine similarityish thing between the host vector and each suitor vector and rank by most similar. Each vector can have demographic/socioeconomic/and interest features.  This makes the assumption of homophily. We assume more similar = higher conversion rate. This method is reversible.
+
 Interest graph: the compatibility strength between suitor and host is determined by num_overlapping_interest(host, suitor) through some type of decaying activation propagation.  This will be based on the "Taste Fabric" paper and the "Semantic Recommendation" paper.  This method assumes homophily and that interests are the strongest attractors between people (doesn't take into account demographics etc.).  This method is reversible.
+
 Tomorrow's Meeting:
 I'm waiting for couchsurfing to tell me what time to pick up the data.  Let's plan to meet after your guys' class?
 
