@@ -1,3 +1,6 @@
 .cache
 writeups/*.pdf
 .DS_Store
+writeups/*.aux
+writeups/*.log
+writeups/*.backup
