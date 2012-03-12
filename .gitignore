@@ -4,3 +4,6 @@ writeups/*.pdf
 writeups/*.aux
 writeups/*.log
 writeups/*.backup
+writeups/*.make
+writeups/*.d
+writeups/*.fls
