@@ -4,10 +4,14 @@
 \usepackage{algorithm}
 \usepackage{algorithmic}
 \usepackage{amssymb}
+\usepackage{ifthen}
 \renewcommand{\algorithmicrequire}{\textbf{Input:}}
 \renewcommand{\algorithmicensure}{\textbf{Output:}}
 
-\newcommand{\note}[3]{\marginpar{\textcolor{black}{#1:} \textcolor{red}{\emph{#2}}} \textcolor{red}{#3}}
+\newcommand{\shownotes}{0}
+\ifthenelse{ \shownotes = 1}
+{ \newcommand{\note}[3]{\marginpar{\textcolor{black}{#1:} \textcolor{red}{\emph{#2}}} \textcolor{red}{#3}} }
+{ \newcommand{\note}[3]{\textcolor{black}{#3}} }
 
 \begin{document}
 
@@ -54,14 +58,12 @@ $$\sigma^* = \arg\min_{\sigma}\sum_{i=1}^k p(reject(h, r_{\sigma_i}))$$
 where $k$ is the number of requests that are shown to $h$. 
 In section~\ref{sec:implicitNeg} we assumed that all requests in the \textit{implicit negatives} have been seen by $h$, which is not a perfectly valid model as just stated. Instead we have to compute the following:
 $$p(reject(h, r_i)) = \int p(reject(h, r_i)|seen(h, r_i))\cdot p(seen(h, s_i))$$
-To do so we need a way to estimate $p(seen(h,s_i))$. This probability is both dependent on the manner of $h$ as well as on the order of how the requests are shown to $h$, which is dependent on the time $h$ looks at the requests. We do not have log-files of the website, so we cannot determine which requests $h$ has acutally seen, but we can again try to infer this information from the behavior of the host. Assuming that $h$ acts during each visit of her request-list at least once with a click onto accept/reject/maybe (\textit{active visit}), we can interpolate for each of these events the request-list she saw and assume that $h$ looked at the first $l$ of these requests. We can now for each \textit{active visit} sum up the number of requests $h$ actually saw and reacted upon and the discounted number of the first $l$ request in the list, discounted by $\lambda_i$ for their position $i$ in the list as well as with another host-specific factor $\lambda$ \ldots
+To do so we need a way to estimate $p(seen(h,s_i))$. This probability is both dependent on the manner of $h$ as well as on the order of how the requests are shown to $h$, which is dependent on the time $h$ looks at the requests. We do not have log-files of the website, so we cannot determine which requests $h$ has acutally seen, but we can again try to infer this information from the behavior of the host. Assuming that $h$ acts during each visit of her request-list at least once with a click onto accept/reject/maybe (\textit{active visit}), we can interpolate for each of these events the request-list she saw and assume that $h$ looked at the first $l$ of these requests. We can now for each \textit{active visit} sum up the number of requests $h$ actually saw and reacted upon and the discounted number of the first $l$ request in the list, discounted by $\lambda_i$ for their position $i$ in the list as well as with another host-specific factor $\lambda$.
 
-
-
-\subsection{Open Questions}
-\begin{itemize}
- \item multiple requests per user
- \item Bad match, good request $\leftrightarrow$ Good match, bad request
-\end{itemize}
+%\subsection{Open Questions}
+%\begin{itemize}
+% \item multiple requests per user
+% \item Bad match, good request $\leftrightarrow$ Good match, bad request
+%\end{itemize}
 
 \end{document}
