@@ -7,3 +7,4 @@ writeups/*.backup
 writeups/*.make
 writeups/*.d
 writeups/*.fls
+writeups/*.temp

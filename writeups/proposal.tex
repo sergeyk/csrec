@@ -22,7 +22,7 @@
 \newcommand{\aside}[1]{\textcolor{light-gray}{\emph{#1}}}
 \newcommand{\comment}[1]{}
 
-\newcommand{\shownotes}{0}
+\newcommand{\shownotes}{1}
 \ifthenelse{ \shownotes = 1}
 { \newcommand{\note}[3]{\marginpar{\textcolor{black}{#1:} \textcolor{red}{\emph{#2}}} \textcolor{red}{#3}} }
 { \newcommand{\note}[3]{\textcolor{black}{#3}} }
@@ -54,7 +54,7 @@ they also use SGD learning and this feature hashing trick (that I uploaded the p
 their evaluation part describes standard ranking metrics that would become interesting/necessary if we decide to pool "all positives (ie all accepted couch requests)" instead of having a "1 positive, multiple negatives" problem
 This papers has some interesting references i.e. [4,28] that I also mention below (and have uploaded to github)
 
-\paragraph{CoFiRank} \cite{Weimer2009}
+\paragraph{CoFi$^{\textsc{Rank}}$} \cite{Weimer2009}
 seems relevant because they also have friendships + interests (although CS friendships are probably more sparse)
 they use a fancy graphical model to do a joint propagation of interests
 one idea for us would be not only to take their interests from there profiles, but assume that they are incomplete and try to predict other interests similar to this paper
