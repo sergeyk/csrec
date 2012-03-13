@@ -22,23 +22,20 @@
 \newcommand{\aside}[1]{\textcolor{light-gray}{\emph{#1}}}
 \newcommand{\comment}[1]{}
 
-\newcommand{\shownotes}{1}
+\newcommand{\shownotes}{0}
 \ifthenelse{ \shownotes = 1}
 { \newcommand{\note}[3]{\marginpar{\textcolor{black}{#1:} \textcolor{red}{\emph{#2}}} \textcolor{red}{#3}} }
 { \newcommand{\note}[3]{\textcolor{black}{#3}} }
 
-\title{Recommending Couches to Surf}
+\title{CSRec - Recommending Couches to Surf}
 \author{Ron Sun, Tobi Baumgartner, Tim Althoff, Sergey Karayev}
-\date{12 Mar 2012}
+\date{\today}
 
 \begin{document}
 \maketitle
 
-\begin{abstract}
-\todo{write}
-\end{abstract}
-
 \section{Introduction}
+In this project we work on solving a problem in the CouchSurfing~\footnote{~\url{http://www.couchsurfing.org/}} domain. CouchSurfing is a platform for travellers around the world to find accomodations on other user's couches. Each user can either act as a \textit{host} and offer her couch, or a \textit{suitor} who requests hosts to stay at their place for a couple of days. While first focusing on finding the best matching couch for a suitor, further discussion with CouchSurfing revealed that the main problem is to find in the opposite direction. For hosts who have a lot of requests it is hard to find the suitor they like the most and will want to host. We present an approach to classify the requests one hosts gets and order them to make the CouchSurfing experience for hosts as convenient as possible. 
 
 \subsection{Related Work}
 
@@ -54,7 +51,8 @@ they also use SGD learning and this feature hashing trick (that I uploaded the p
 their evaluation part describes standard ranking metrics that would become interesting/necessary if we decide to pool "all positives (ie all accepted couch requests)" instead of having a "1 positive, multiple negatives" problem
 This papers has some interesting references i.e. [4,28] that I also mention below (and have uploaded to github)
 
-\paragraph{CoFi$^{\textsc{Rank}}$} \cite{Weimer2009}
+\paragraph{CoFiRank} \cite{Weimer2009}
+Weimer et al. present a collaborative filtering approach to ranking.
 seems relevant because they also have friendships + interests (although CS friendships are probably more sparse)
 they use a fancy graphical model to do a joint propagation of interests
 one idea for us would be not only to take their interests from there profiles, but assume that they are incomplete and try to predict other interests similar to this paper
