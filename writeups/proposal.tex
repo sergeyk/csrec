@@ -89,6 +89,15 @@ Generate a feature vector for the host and each suitor. Compute a cosine similar
 
 %Interest graph: the compatibility strength between suitor and host is determined by $num_overlapping_interest(host, suitor)$ through some type of decaying activation propagation.  This will be based on the "Taste Fabric" paper and the "Semantic Recommendation" paper.  This method assumes homophily and that interests are the strongest attractors between people (doesn't take into account demographics etc.).  This method is reversible.
 
+\subsection{Temporally blind prediction of host-suitor pairings}
+The first formulation of the problem ignores the temporal nature of the requests.
+We simply wish to answer the prediction problem of which couch requests to a host will result in a match, ignoring any notions of ranking against contemporal requests.
+
+From the CouchSurfing user database, we form a set of \emph{hosts} $\mathcal{H}$ such that every $h \in \mathcal{H}$ has hosted at least $K$ persons since signing up for a user account.
+We initially set $K=1$, but the proper setting may be higher to reduce the amount of noise in the set of hosts.
+
+For every host $h_n$, there is a corresponding list of t least $K$ \emph{suitors} $\mathcal{S}_n$, where a suitor $s \in \mathcal{S}_n$ has made at least one couch request to $h_n$.
+
 \subsection{Implicit Negatives}
 \label{sec:implicitNeg}
 In order to apply learning algorithms to our problem and evaluate the resulting recommendations for the hosts, we need to get positive as well as negative samples from the data. If we just had the positive data (i.e. accepted couches) the only thing we could evaluate for would be \textit{true positives} and \textit{false negatives}, but for a meaningful computation of \textit{precision} and \textit{recall} we also want to learn about \textit{false positives}, which can only be gathered given negative test samples.
