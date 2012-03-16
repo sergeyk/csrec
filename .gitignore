@@ -1,10 +1,7 @@
-.cache
-writeups/*.pdf
-.DS_Store
-writeups/*.aux
-writeups/*.log
-writeups/*.backup
-writeups/*.make
-writeups/*.d
-writeups/*.fls
-writeups/*.temp
+db/*
+*/db/*
+\#*
+\.*
+*.pyc
+*.pyo
+neo4j/datasets/*
