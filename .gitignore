@@ -5,3 +5,4 @@ db/*
 *.pyc
 *.pyo
 neo4j/datasets/*
+littlepy/

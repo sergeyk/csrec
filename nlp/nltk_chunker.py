@@ -2,6 +2,7 @@
 import nltk
 from nltk.corpus import conll2000
 import cPickle
+from nltk.draw import tree
 
 class ConsecutiveNPChunkTagger(nltk.TaggerI): # [_consec-chunk-tagger]
 
@@ -11,7 +12,7 @@ class ConsecutiveNPChunkTagger(nltk.TaggerI): # [_consec-chunk-tagger]
             untagged_sent = nltk.tag.untag(tagged_sent)
             history = []
             for i, (word, tag) in enumerate(tagged_sent):
-                featureset = npchunk_features(untagged_sent, i, history) # [_consec-use-fe]
+                featureset = self.npchunk_features(untagged_sent, i, history) # [_consec-use-fe]
                 train_set.append( (featureset, tag) )
                 history.append(tag)
         self.classifier = nltk.MaxentClassifier.train( # [_consec-use-maxent]
@@ -20,10 +21,38 @@ class ConsecutiveNPChunkTagger(nltk.TaggerI): # [_consec-chunk-tagger]
     def tag(self, sentence):
         history = []
         for i, word in enumerate(sentence):
-            featureset = npchunk_features(sentence, i, history)
+            featureset = self.npchunk_features(sentence, i, history)
             tag = self.classifier.classify(featureset)
             history.append(tag)
         return zip(sentence, history)
+
+    def npchunk_features(self, sentence, i, history):
+        word, pos = sentence[i]
+        if i == 0:
+            prevword, prevpos = "<START>", "<START>"
+        else:
+            prevword, prevpos = sentence[i-1]
+        if i == len(sentence)-1:
+            nextword, nextpos = "<END>", "<END>"
+        else:
+            nextword, nextpos = sentence[i+1]
+        return {"pos": pos,
+                "word": word,
+                "prevpos": prevpos,
+                "nextpos": nextpos, 
+                "prevpos+pos": "%s+%s" % (prevpos, pos),  
+                "pos+nextpos": "%s+%s" % (pos, nextpos),
+                "tags-since-dt": self.tags_since_dt(sentence, i)}  
+
+    def tags_since_dt(self, sentence, i):
+        tags = set()
+        for word, pos in sentence[:i]:
+            if pos == 'DT':
+                tags = set()
+            else:
+                tags.add(pos)
+        return '+'.join(sorted(tags))
+
 
 class ConsecutiveNPChunker(nltk.ChunkParserI): # [_consec-chunker]
     def __init__(self, train_sents):
@@ -39,52 +68,32 @@ class ConsecutiveNPChunker(nltk.ChunkParserI): # [_consec-chunker]
         return nltk.chunk.conlltags2tree(conlltags)
 
 
- 	
-def npchunk_features(sentence, i, history):
-    word, pos = sentence[i]
-    if i == 0:
-        prevword, prevpos = "<START>", "<START>"
-    else:
-        prevword, prevpos = sentence[i-1]
-    if i == len(sentence)-1:
-        nextword, nextpos = "<END>", "<END>"
-    else:
-        nextword, nextpos = sentence[i+1]
-    return {"pos": pos,
-            "word": word,
-            "prevpos": prevpos,
-            "nextpos": nextpos, 
-            "prevpos+pos": "%s+%s" % (prevpos, pos),  
-            "pos+nextpos": "%s+%s" % (pos, nextpos),
-            "tags-since-dt": tags_since_dt(sentence, i)}  
+class NLTKChunker(object):
 
-def tags_since_dt(sentence, i):
-    tags = set()
-    for word, pos in sentence[:i]:
-        if pos == 'DT':
-            tags = set()
-        else:
-            tags.add(pos)
-    return '+'.join(sorted(tags))
+    def __init__(self):
+        try:
+            self.unigram_chunker = cPickle.load(open('chunker.pkl', 'r'))
+        except (EOFError, IOError):
+            train_sents = conll2000.chunked_sents('train.txt', chunk_types=['NP'])
+            unigram_chunker = ConsecutiveNPChunker(train_sents)
+            f = open('chunker.pkl', 'wb')
+            cPickle.dump(unigram_chunker, f, -1)
 
-text = '''
+    def chunk(self, text):
+        token_text = nltk.word_tokenize(text)
+        tagged_text = nltk.pos_tag(token_text)
+        chunk_tree = self.unigram_chunker.parse(tagged_text)
+        output = []
+        for subtree in chunk_tree.subtrees(filter=lambda t: t.node == 'NP'):
+            output.append(" ".join([x[0] for x in subtree.leaves()]))
+        return output
+
+def test():
+    text = '''
 I consider myself a pretty diverse character... I'm a professional wrestler, but I'd take a bullet for WallE. I train like a one-man genocide machine in the gym, but I cried at "Armageddon." I'll head bang to AC/DC, and I'm seriously considering getting a Legend of Zelda tattoo. I'm 420-friendly. I like to party it up with the frat crowd one night, hang out with my Burning Man friends the next, play Halo and World of Warcraft the next, and jam with friends that aren't any younger than 40 the next. My youngest friend is 16, my oldest friend is 66. I'll sing karaoke at the bars, and I'm my friends' collective psychiatrist/shoulder.
 '''
+    chunker = NLTKChunker()
+    print chunker.chunk(text)
 
-token_text = nltk.word_tokenize(text)
-tagged_text = nltk.pos_tag(token_text)
-unigram_chunker = None
-try:
-    unigram_chunker = cPickle.load(open('chunker', 'r'))
-except (EOFError, IOError):
-    pass
-if not unigram_chunker:
-    train_sents = conll2000.chunked_sents('train.txt', chunk_types=['NP'])
-    unigram_chunker = ConsecutiveNPChunker(train_sents)
-    f = open('chunker', 'wb')
-    cPickle.dump(unigram_chunker, f, -1)
-chunk_tree = unigram_chunker.parse(tagged_text)
-for st in chunk_tree.subtrees():
-    for l in st.leaves():
-        print l[0],
-    print
+if __name__ == "__main__":
+    test()
