@@ -1,5 +1,6 @@
 import urllib2
 import json 
+from test_text import text
 
 class WikiDisambiguator(object):
     def disambiguate(self, text):
@@ -17,7 +18,7 @@ class WikiDisambiguator(object):
 
 def test():
     diser = WikiDisambiguator()
-    print diser.disambiguate('fasdfsdf')
+    print diser.disambiguate('Hiking')
 
 if __name__ == '__main__':
     test()
