@@ -1,6 +1,5 @@
 import urllib2
 import json 
-from test_text import text
 
 whitelist = ['activity', 'interests', 'hobby', 'netflix_genre', 'film', 'book', 'music']
 

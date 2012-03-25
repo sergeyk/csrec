@@ -27,4 +27,4 @@ def nltk_sim(chunk1, chunk2):
     else:
         return 0
 
-print sim('yoga', 'fadgfag')
+print sim('yoga', 'Fistball')

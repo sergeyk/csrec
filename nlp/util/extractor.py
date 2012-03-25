@@ -1,12 +1,12 @@
-import bagged_chunker
-import wiki_disambiguator, freebase_disambiguator
-import chunk_cleanser
-from test_text import text
+import chunkers.bagged_chunker as bc
+import recognizers.wiki_disambiguator as wd
+import recognizers.freebase_disambiguator as fd
+import util.chunk_cleanser
 
 class Extractor(object):
     def __init__(self):
-        self.chunker = bagged_chunker.BaggedChunker()
-        self.disambiguator = freebase_disambiguator.FreebaseDisambiguator()
+        self.chunker = bc.BaggedChunker()
+        self.disambiguator = fd.FreebaseDisambiguator()
         
     def extract(self, text):
         output = set([])
@@ -25,6 +25,7 @@ class Extractor(object):
 
 
 def test():
+    from testing.test_text import text
     extractor = Extractor()
     print extractor.extract(text) 
         

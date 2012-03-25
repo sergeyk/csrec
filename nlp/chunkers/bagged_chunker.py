@@ -1,5 +1,5 @@
 import topia_chunker, yql_chunker, nltk_chunker
-from test_text import text
+from testing.test_text import text
 
 class BaggedChunker(object):
     def __init__(self):

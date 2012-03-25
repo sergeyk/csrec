@@ -1,6 +1,5 @@
 import urllib2
 import json 
-from test_text import text
 
 class WikiDisambiguator(object):
     def disambiguate(self, text):

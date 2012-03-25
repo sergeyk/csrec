@@ -1,5 +1,4 @@
 from topia.termextract import extract
-from test_text import text
 
 class TopiaChunker(object):
 
@@ -11,6 +10,7 @@ class TopiaChunker(object):
         return output
 
 def test():
+    from testing.test_text import text
     chunker = TopiaChunker()
     print chunker.chunk(text)
 

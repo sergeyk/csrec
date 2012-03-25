@@ -1,6 +1,5 @@
 import urllib
 import xml.parsers.expat
-from test_text import text
 
 class YQLChunker(object):
     def __init__(self):
@@ -27,6 +26,7 @@ class YQLChunker(object):
         # 3 handler functions
 
 def test():
+    from testing.test_text import text
     chunker = YQLChunker()
     print chunker.chunk(text)
 

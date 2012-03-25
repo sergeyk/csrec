@@ -3,7 +3,6 @@ import nltk
 from nltk.corpus import conll2000
 import cPickle
 from nltk.draw import tree
-from test_text import text
 
 class ConsecutiveNPChunkTagger(nltk.TaggerI): # [_consec-chunk-tagger]
 
@@ -100,6 +99,7 @@ class NLTKChunker(object):
         return output
 
 def test():
+    from testing.test_text import text
     chunker = NLTKChunker()
     print chunker.chunk(text)
 

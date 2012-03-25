@@ -6,3 +6,4 @@ db/*
 *.pyo
 neo4j/datasets/*
 littlepy/
+*.tsv

@@ -1,5 +1,4 @@
 import re
-from test_text import text
 
 blacklist = ['the', 'I', 'a', 'it', 'myself',]
 def clean(chunk_lst):
