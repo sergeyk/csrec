@@ -3,10 +3,10 @@ from nltk.metrics import distance
 import difflib
 
 def sim(chunk1, chunk2):
-    #if len(chunk1.split(" ")) == 1 and len(chunk2.split(" ")) == 1:
+    if len(chunk1.split(" ")) == 1 and len(chunk2.split(" ")) == 1:
         return nltk_sim(chunk1, chunk2)
-    #else:
-        #return levenshtein(chunk1, chunk2)
+    else:
+        return levenshtein(chunk1, chunk2)
     #print seq_match(chunk1, chunk2)
 
 def levenshtein(chunk1, chunk2):
@@ -27,4 +27,4 @@ def nltk_sim(chunk1, chunk2):
     else:
         return 0
 
-print sim('yoga', 'Fistball')
+print sim('swimming', 'swim')

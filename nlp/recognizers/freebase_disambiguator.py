@@ -1,19 +1,22 @@
 import urllib2
 import json 
 
-whitelist = ['activity', 'interests', 'hobby', 'netflix_genre', 'film', 'book', 'music']
+whitelist = ['netflix_genre', 'film', 'book', 'music', 'food']
 
 class FreebaseDisambiguator(object):
     def disambiguate(self, text):
         text = urllib2.quote(text)
-        url = "https://www.googleapis.com/freebase/v1/search?query="+text+"&indent=true&limit=2&mql_output={%22name%22:%20null,%22id%22:%20null,%22type%22:%20[],%22/common/topic/notable_for%22:%20{}}"
+        url = "https://www.googleapis.com/freebase/v1/search?query="+text+"&key=AIzaSyA3sM2HSS_zg92Gu3kDG7gC-5QwCL2DjT8&limit=2"
+        print url
         req = urllib2.Request(url)
         r = urllib2.urlopen(req)
         json_response = json.loads(r.read())
- #       print json.dumps(json_response, sort_keys=True, indent=4)
+        print json.dumps(json_response, sort_keys=True, indent=4)
         filtered = filter_relevant_results(json_response["result"])
         if filtered:
             return filtered[0]
+        else:
+            return None
 
 def filter_relevant_results(results):
     good_results = []
@@ -23,8 +26,9 @@ def filter_relevant_results(results):
     return good_results
 
 def is_good(result):
-    for t in result["type"]:
-        path = t.split("/")
+    if "notable" in result:
+        path = result['notable']['id']
+        path = path.split("/")
         for wl in whitelist:
             if wl in path:
                 return True
@@ -33,7 +37,7 @@ def is_good(result):
 
 def test():
     diser = FreebaseDisambiguator()
-    print diser.disambiguate('hiking')
+    print diser.disambiguate('nirvana')
 
 if __name__ == '__main__':
     test()
