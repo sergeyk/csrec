@@ -4,8 +4,8 @@ import time
 import sys
 import cPickle
 import nlp_paths as paths
-
-DICTIONARY = paths.get_proj_root()+"/freebase_util/interests_lst.pkl";
+from util import chunk_similarity
+DICTIONARY = paths.get_proj_root()+"/freebase_util/interest_lst.pkl";
 
 # The Trie data structure keeps a set of words, organized with one node for
 # each letter. Each node has a branch for each letter that may follow it in the
@@ -77,13 +77,21 @@ def searchRecursive( node, letter, word, previousRow, results, maxCost ):
 class FreebaseInterestDisambiguator(object):
     def __init__(self):
         self.trie = TrieNode()
+        self.singles_lst = []
         loaded = cPickle.load(open(DICTIONARY, 'r'))
-        print loaded
         for word in loaded:
-            self.trie.insert( word.lower() )
+            word = word.lower()
+            if len(word.split()) > 1:
+                self.trie.insert(word)
+            else:
+                self.singles_lst.append(word)
 
-    def disambiguate(self, text):
-        text = text.lower()
+    def single_word(self, text):
+        for word in self.singles_lst:
+            if chunk_similarity.nltk_sim(text, word):
+                return word
+
+    def multiple_word(self, text):
         percent_match = .9
         max_cost = int((1-percent_match)*len(text))
         results = search(self.trie, text, max_cost)
@@ -93,9 +101,16 @@ class FreebaseInterestDisambiguator(object):
         else:
             return None
 
+    def disambiguate(self, text):
+        text = text.lower()
+        if len(text.split())>1:
+            return self.multiple_word(text)
+        else:
+            return self.single_word(text)
+
 def test():
     diser = FreebaseInterestDisambiguator()
-    print diser.disambiguate('ice hockey')
+    print diser.disambiguate('weightlifting')
 
 if __name__ == '__main__':
     test()

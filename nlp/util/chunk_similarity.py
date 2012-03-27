@@ -3,7 +3,7 @@ from nltk.metrics import distance
 import difflib
 
 def sim(chunk1, chunk2):
-    if len(chunk1.split(" ")) == 1 and len(chunk2.split(" ")) == 1:
+    if len(chunk1.split()) == 1 and len(chunk2.split()) == 1:
         return nltk_sim(chunk1, chunk2)
     else:
         return levenshtein(chunk1, chunk2)
@@ -19,12 +19,11 @@ def seq_match(chunk1, chunk2):
 
 def nltk_sim(chunk1, chunk2):
     chunk1_syn = set(wn.synsets(chunk1))
-    print chunk1_syn
     chunk2_syn = set(wn.synsets(chunk2))
-    print chunk2_syn
     if chunk1_syn.intersection(chunk2_syn):
         return 1
     else:
         return 0
 
-print sim('swimming', 'swim')
+if __name__ == '__main__':
+    print sim('swimming', 'swim')

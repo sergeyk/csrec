@@ -1,3 +1,4 @@
+import chunkers.csv_chunker as cc
 import chunkers.bagged_chunker as bc
 import recognizers.wiki_disambiguator as wd
 import recognizers.freebase_disambiguator as fd
@@ -6,14 +7,19 @@ import util.chunk_cleanser
 
 class NamedEntityExtractor(object):
     def __init__(self):
-        self.chunker = bc.BaggedChunker()
+        self.chunker = cc.CSVChunker()
         self.disambiguator = fd.FreebaseDisambiguator()
-        
-    def extract(self, text):
+        self.deep_chunker = bc.BaggedChunker()
+        self.num_passes = 0
+
+    def extract(self, text, chunker = None):
+        if not chunker:
+            chunker = self.chunker
+        residuals_lst = []
         print 'extracting named entities...'
         output = set([])
-        chunks = self.chunker.chunk(text)
-        chunks = chunk_cleanser.clean(chunks)
+        chunks = chunker.chunk(text)
+        #chunks = chunk_cleanser.clean(chunks)
         print 'recognizing...'
         for chunk in chunks:
             print chunk, '-->',
@@ -22,7 +28,12 @@ class NamedEntityExtractor(object):
                 print disambed
                 output.add(disambed)
             else:
-                print ''
+                residuals_lst.append(chunk)
+        self.num_passes += 1
+        if self.num_passes == 1:
+            for residual in residuals_lst:
+                additional = self.extract(residual, self.deep_chunker)
+                [output.add(x) for x in additional]
         output = sorted(list(output))
         return output
 

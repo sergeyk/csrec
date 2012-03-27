@@ -1,7 +1,8 @@
 import urllib2
 import json 
 
-whitelist = ['netflix_genre', 'film', 'book', 'music', 'food']
+whitelist = ['netflix_genre', 'film', 'book', 'music', 'food', 'writer',
+             'radio', 'linguist', 'language']
 
 class FreebaseDisambiguator(object):
     def disambiguate(self, text):
@@ -26,11 +27,14 @@ def filter_relevant_results(results):
     return good_results
 
 def is_good(result):
+    if result['score'] < 20:
+        return False
     if "notable" in result:
+        notable_name = result['notable']['name'].lower()
         path = result['notable']['id']
         path = path.split("/")
         for wl in whitelist:
-            if wl in path:
+            if wl in path or wl in notable_name:
                 return True
     return False
             
