@@ -2,6 +2,5 @@
 # -*- coding: utf8 -*- 
 
 text = '''
-Geography, books, going out, going to museums, opera, ballet, Japan, mangas, deep sea exploration, city planning
-
+meet new people all the time . Travelling, partying, drinking, eating (and specially Alex) , play soccer, swimming...
 '''

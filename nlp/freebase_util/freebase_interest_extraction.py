@@ -8,7 +8,14 @@ target_types = ('/interests/interest',
                 "/base/dance/dance_form",
                 "/base/socialdance/dance_style",
                 "/visual_art/visual_art_form", 
-                "/education/field_of_study"
+                "/education/field_of_study",
+                "/martial_arts/martial_art",
+                "/organization/club_interest",
+                "/games/game_genre",
+                "/base/services/exercise_programs",
+                "/music/genre",
+                "/broadcast/genre",
+                "/base/services/spa_physical_treatments"
                 )
                 
 
@@ -27,9 +34,9 @@ except (EOFError, IOError):
     f = open('interests_frame.pkl', 'wb')
     print 'found %s interests' % (len(interests))
     cPickle.dump(interests, f, -1)
+    f.close()
 
 interests = cPickle.load(open('interests_frame.pkl', 'r'))
-
 print 'stage 2: filling the frame'
 
 try:
@@ -45,6 +52,7 @@ except (EOFError, IOError):
             print row[3]
     f = open('named_interests.pkl', 'wb')
     cPickle.dump(interests, f, -1)
+    f.close()
 
 interests = cPickle.load(open('named_interests.pkl', 'r'))
 

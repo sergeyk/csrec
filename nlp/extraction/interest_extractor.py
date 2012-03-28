@@ -9,24 +9,41 @@ class InterestExtractor(object):
         self.disambiguator = fd.FreebaseInterestDisambiguator()
         
     def extract(self, text):
-        print 'extracting named entities...'
+        #print 'extracting named entities...'
         output = set([])
         chunks = self.chunker.chunk(text)
         chunks = chunk_cleanser.clean(chunks)
-        print 'recognizing...'
-        for chunk in chunks:
+        #print 'recognizing...'
+        while len(chunks) > 0:
+            chunk = chunks.pop(0)
             disambed = self.disambiguator.disambiguate(chunk)
             if disambed:
-                print disambed
+                #print chunk, '->', disambed
                 output.add(disambed)
+                to_remove_lst = chunk.split()
+                for r in to_remove_lst:
+                    if r in chunks:
+                        chunks.remove(r)
+            
         output = sorted(list(output))
         return output
 
 
 def test():
-    from testing.test_text import text
+    import sys
+    import csv
+    import nlp_paths
+    f = nlp_paths.get_proj_root()+'/testing/test_interest_text'
     extractor = InterestExtractor()
-    print extractor.extract(text) 
-        
+    reader = csv.reader(open(f, 'rb'), delimiter='$')
+    i = 0
+    desired = int(sys.argv[1])
+    for row in reader:
+        if len(row)==1:
+            i += 1
+            if i == desired:
+                #print row[0]
+                print extractor.extract(row[0]) 
+    
 if __name__ == "__main__":
     test()

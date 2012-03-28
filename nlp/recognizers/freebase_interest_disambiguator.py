@@ -4,8 +4,15 @@ import time
 import sys
 import cPickle
 import nlp_paths as paths
+from nltk.stem.porter import PorterStemmer
+from nltk.stem.lancaster import LancasterStemmer
 from util import chunk_similarity
+from nltk.metrics import distance
+
+MOST_COMMON = paths.get_proj_root()+"/util/1000_most_common.pkl";
 DICTIONARY = paths.get_proj_root()+"/freebase_util/interest_lst.pkl";
+CUSTOM = ['drinking', 'partying', 'wine']
+TOP_K_FILTER = 200
 
 # The Trie data structure keeps a set of words, organized with one node for
 # each letter. Each node has a branch for each letter that may follow it in the
@@ -76,25 +83,53 @@ def searchRecursive( node, letter, word, previousRow, results, maxCost ):
 
 class FreebaseInterestDisambiguator(object):
     def __init__(self):
+        self.stemmer = LancasterStemmer()
+        self.stem_mapping = {}
+        self.stemmed_trie = TrieNode()
         self.trie = TrieNode()
         self.singles_lst = []
+        self.black_listed_stems = set([])
         loaded = cPickle.load(open(DICTIONARY, 'r'))
+        print len(loaded)
+        loaded += CUSTOM
+        loaded = set(loaded)
+        most_common = cPickle.load(open(MOST_COMMON, 'r'))
+        for word in most_common:
+            self.black_listed_stems.add(self.stem(word))
+        #print self.black_listed_stems
         for word in loaded:
             word = word.lower()
-            if len(word.split()) > 1:
+            if word not in most_common[:TOP_K_FILTER]:
                 self.trie.insert(word)
-            else:
-                self.singles_lst.append(word)
+                stemmed_word = self.stem(word)
+                if stemmed_word in self.stem_mapping: 
+                    previous = self.stem_mapping[stemmed_word]
+                    edist = distance.edit_distance(word, previous)
+                    if edist > 2:
+                        pass
+                    #print 'warning: %s dropped in favor of %s' % (word, previous)
+                else:
+                    if stemmed_word not in self.black_listed_stems:
+                        self.stem_mapping[stemmed_word] = word
+                        self.stemmed_trie.insert(stemmed_word)
 
-    def single_word(self, text):
+    def stem(self, text):
+        return " ".join([self.stemmer.stem(w) for w in text.split()])
+
+    def nltk_search(self, text):
         for word in self.singles_lst:
             if chunk_similarity.nltk_sim(text, word):
                 return word
+    
+    def stem_leven_search(self, text):
+        stemmed_text = self.stem(text)
+        result = self.leven_search(stemmed_text, self.stemmed_trie, 1)
+        if result:
+            return self.stem_mapping[result]
 
-    def multiple_word(self, text):
-        percent_match = .9
+    def leven_search(self, text, trie=None, percent_match=.9):
         max_cost = int((1-percent_match)*len(text))
-        results = search(self.trie, text, max_cost)
+        results = search(trie, text, max_cost)
         if results:
             results = sorted(results, key=lambda x: x[1])
             return results[0][0]
@@ -103,14 +138,16 @@ class FreebaseInterestDisambiguator(object):
 
     def disambiguate(self, text):
         text = text.lower()
-        if len(text.split())>1:
-            return self.multiple_word(text)
+        first =  self.leven_search(text, self.trie)
+        if first:
+            return first
         else:
-            return self.single_word(text)
+            return self.stem_leven_search(text)
 
 def test():
-    diser = FreebaseInterestDisambiguator()
-    print diser.disambiguate('weightlifting')
+    from util import chunk_cleanser
+    diser = FreebaseInterestDisambiguator() 
+    print diser.disambiguate(chunk_cleanser.remove_punctuation('all'))
 
 if __name__ == '__main__':
     test()
