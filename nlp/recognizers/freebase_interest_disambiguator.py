@@ -147,7 +147,7 @@ class FreebaseInterestDisambiguator(object):
 def test():
     from util import chunk_cleanser
     diser = FreebaseInterestDisambiguator() 
-    print diser.disambiguate(chunk_cleanser.remove_punctuation('all'))
+    print diser.disambiguate(chunk_cleanser.remove_punctuation('string instruments'))
 
 if __name__ == '__main__':
     test()

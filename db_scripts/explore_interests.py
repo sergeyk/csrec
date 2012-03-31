@@ -5,17 +5,15 @@ import MySQLdb as mdb
 import sys, os
 
 def print_profile(attr_lst):
-    attr_order = ['Interests']
+    attr_order = ['Personal Description', 'Interests', 'Music, Movies, Books', 'People I Enjoy']
     for i in range(len(attr_order)):
         print '==', attr_order[i], '=='
         print attr_lst[i]
 
 def print_accepted_interests(cursor):
-        #"ps.description, ps.interests, ps.music_movies_books, ps.people_i_enjoy, " + \
-        #"ph.description, ph.interests, ph.music_movies_books, ph.people_i_enjoy " + \
     sql_cmd = "select "+ \
-        "ps.interests, " + \
-        "ph.interests " + \
+        "ps.description, ps.interests, ps.music_movies_books, ps.people_i_enjoy, " + \
+        "ph.description, ph.interests, ph.music_movies_books, ph.people_i_enjoy " + \
         "from couchrequest as r inner join (user_profile as ps, user_profile as ph) " + \
         "on (r.surf_user_id=ps.user_id and r.host_user_id=ph.user_id) " + \
         "where r.status='Y' " + \
