@@ -20,7 +20,6 @@ def load_data():
     intra_weight = 1
     inter_weight = .1
     interest_id_map = {}
-    num_appearances = Counter()
     i_dct = cPickle.load(open(csrec_paths.get_proj_root()+'/features/interests/interest_extraction/merged_interest_dct.pkl', 'rb')) 
     a_pairs = cPickle.load(open(csrec_paths.get_proj_root()+'/features/interests/interest_extraction/merged_accepted_pairs.pkl', 'rb'))
     num_uniques = 0
@@ -30,7 +29,8 @@ def load_data():
                 interest_id_map[i] = num_uniques
                 num_uniques += 1
     matrix_size = len(interest_id_map)
-    interest_matrix = lil_matrix((matrix_size, matrix_size), dtype=np.int32)
+    num_appearances = np.zeros(matrix_size)
+    interest_matrix = lil_matrix((matrix_size, matrix_size))
     i = 0
     for k,v in i_dct.iteritems():
         if len(v) >= 2:
@@ -50,6 +50,8 @@ def load_data():
                     interest_matrix[first, second] += intra_weight
         i += 1
         print "%s/%s intra-profile completed" % (i, len(i_dct))
-    
+    cPickle.dump(num_appearances, open('appearances.pkl', 'wb'))
     cPickle.dump(interest_matrix, open('interest_matrix.pkl', 'wb'))
+    cPickle.dump(interest_id_map, open('interest_id_map.pkl', 'wb'))
+
 load_data()
