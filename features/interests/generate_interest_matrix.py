@@ -20,12 +20,14 @@ def load_data():
     intra_weight = 1
     inter_weight = .1
     interest_id_map = {}
+    id_interest_map = {}
     i_dct = cPickle.load(open(csrec_paths.get_proj_root()+'/features/interests/interest_extraction/merged_interest_dct.pkl', 'rb')) 
     a_pairs = cPickle.load(open(csrec_paths.get_proj_root()+'/features/interests/interest_extraction/merged_accepted_pairs.pkl', 'rb'))
     num_uniques = 0
     for k,v in i_dct.iteritems():
         for i in v:
             if i not in interest_id_map:
+                id_interest_map[num_uniques] = i
                 interest_id_map[i] = num_uniques
                 num_uniques += 1
     matrix_size = len(interest_id_map)
@@ -53,5 +55,6 @@ def load_data():
     cPickle.dump(num_appearances, open('appearances.pkl', 'wb'))
     cPickle.dump(interest_matrix, open('interest_matrix.pkl', 'wb'))
     cPickle.dump(interest_id_map, open('interest_id_map.pkl', 'wb'))
+    cPickle.dump(id_interest_map, open('id_interest_map.pkl', 'wb'))
 
 load_data()

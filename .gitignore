@@ -7,3 +7,4 @@ db/*
 neo4j/datasets/*
 littlepy/
 *.tsv
+*.pkl
