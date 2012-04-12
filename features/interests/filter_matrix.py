@@ -13,12 +13,12 @@ num_nz = len(nz_x)
 max_so_far = 0
 print id_interest_map[0]
 related = []
+active_nodes = set([])
 
 for i in range(num_nz):
     x = nz_x[i]
     y = nz_y[i]
     sim = i_matrix[x,y]
-    active_nodes = set([])
     t_max = max(max_so_far, i_matrix[x,y])
     if t_max != max_so_far:
         max_so_far = t_max
@@ -30,6 +30,6 @@ for i in range(num_nz):
         pair = (x, y, sim)
         related.append(pair)
         print id_interest_map[x], id_interest_map[y], sim
-
+print active_nodes
 cPickle.dump(related, open('filtered_edges.pkl', 'wb'))
 cPickle.dump(active_nodes, open('active_nodes.pkl', 'wb'))
