@@ -19,7 +19,10 @@ def pickle_user_info(cursor):
 
     cur.execute(sql_cmd)
     all_results = cur.fetchall()
+    i = 0
     for results in all_results:
+        i += 1
+        print 'stored %s/%s' % (i, len(all_results))
         half = len(results)/2
         u1 = list(results[:half])
         u2 = list(results[half:])
