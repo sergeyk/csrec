@@ -25,6 +25,7 @@ class FeatureGetter():
 def test():
     fg = FeatureGetter()
     print fg.get_features(907345, 907345, 1)
+    print fg.get_dimension()
 
 if __name__ == "__main__":
     test()
