@@ -1,5 +1,6 @@
 import cPickle
 import numpy as np
+import bucketizer
 
 class FeatureGetter():
     
