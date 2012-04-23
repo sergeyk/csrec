@@ -69,7 +69,7 @@ class Bucketizer():
         return dividers
 
 if __name__ == "__main__":
-    Bucketizer.generate_bucket_dividers()
+    #Bucketizer.generate_bucket_dividers()
     #Bucketizer.find_matrix_dividers(np.matrix([[1,2],[3,4]]))
     b = Bucketizer()
     a = np.ones(126)

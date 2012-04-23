@@ -10,15 +10,13 @@ def pickle_sample_user_info(cursor):
     print 'loading user data...'
     user_data = cPickle.load(open('user_data.pkl', 'rb'))
     print 'querying database...'
-    sql_cmd = "select * "+ \
-        "from couchrequest as r inner join (user as us, user as uh) " + \
-        "on (r.surf_user_id=us.user_id and r.host_user_id=uh.user_id) " + \
-        "group by uh.user_id;"
+    sql_cmd = "select host_id,  surfer_id "+ \
+        "from competitor_sets"
     print sql_cmd
     cur.execute(sql_cmd)
     print 'finished query'
     all_results = cur.fetchall()
-    cPickle.dump(all_results, open('db_query_results.pkl', 'wb'))
+    print all_results
 
 def pickle_user_info(cursor):
     try:
@@ -64,8 +62,9 @@ try:
         password, 'csrec');
 
     cur = con.cursor()
-    pickle_user_info(cur)
-        
+    #pickle_user_info(cur)
+    pickle_sample_user_info(cur)
+
 except mdb.Error, e:
     print e
     sys.exit(1)
