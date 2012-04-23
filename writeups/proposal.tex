@@ -27,7 +27,7 @@
 { \newcommand{\note}[3]{\marginpar{\textcolor{black}{#1:} \textcolor{red}{\emph{#2}}} \textcolor{red}{#3}} }
 { \newcommand{\note}[3]{\textcolor{black}{#3}} }
 
-\title{CSRec - Recommending Couches to Surf}
+\title{Recommender System for Social Roomsharing}
 \author{Ron Sun, Tobi Baumgartner, Tim Althoff, Sergey Karayev}
 \date{\today}
 
@@ -120,6 +120,9 @@ The CS system allows hosts to reject a couch request, which indicates a negative
 
 It might also be beneficial to soften the notion of ``overlap'' just because it might be very stressful for a host to have suitors without a gap in between the two visits. Analyzing the data for statistics on gaps for each host seperately will reveal their willingness to host several suitors in a row. The above algorithm can easily be adapted by modifying the input times accordingly.
 
+\subsection{Filter rejects by temporal constraints}
+Using a very similar technique we can filter rejects that are not actually rejects for the reason of a mismatching suitor. Imagine $h$ gets a request $r_1$ at time $t_1$, accepts this request at time $t_2$ and gets another request $r_2$ for the same period as $r_1$ at $t_3$. If we have that $t_1 < t_2 < t_3$, there is no valid information about whether or not $h$ likes suitor $s_2$. By the time he gets the second request, his couch is already booked out and so he has to reject $s_2$ no matter if he would even prefer him over $s_1$. Because of this scenario we filter our training data for exactly those \textit{uninformative rejects} using again algorithm~\ref{alg:overlap} and temporal orderings on requests and acceptances/rejects.
+
 \subsection{Unseen Requests}
 \label{sec:unseen}
 The current state of the system is that $h$ gets an email as soon as a new request is filed and on their profile the requests are presented in \note{TB}{true?}{chronological order} as well. For the mentioned couch in Paris these mails might be archived without being read and interesting request could get lost. For each request $r_i$ we have a binary random variable $seen(h, r_i)$ which is $1$ if $h$ took a look at request $r_i$, independent of whether he click accept/reject/maybe or nothing at all. The probability $p(seen(h,r_i))$ directly corresponds to the objective of this project. The goal is to present the requests to $h$ in order by how likely she is to accept them, or in other words, we want to maximize the probability that $h$ \textit{sees} requests that she would accept by moving them upwards in our ranking and hence reducing the number of overall requests to look at. Maximizing the acceptance/\#views rate is the same as minimizing the rejection/\#views rate, which can be expressed as finding a permutation $\sigma^*$, such that:
@@ -129,7 +132,7 @@ In section~\ref{sec:implicitNeg} we assumed that all requests in the \textit{imp
 $$p(reject(h, r_i)) = \int p(reject(h, r_i)|seen(h, r_i))\cdot p(seen(h, s_i))$$
 To do so we need a way to estimate $p(seen(h,s_i))$. This probability is both dependent on the manner of $h$ as well as on the order of how the requests are shown to $h$, which is dependent on the time $h$ looks at the requests. We do not have log-files of the website, so we cannot determine which requests $h$ has acutally seen, but we can again try to infer this information from the behavior of the host. Assuming that $h$ acts during each visit of her request-list at least once with a click onto accept/reject/maybe (\textit{active visit}), we can interpolate for each of these events the request-list she saw and assume that $h$ looked at the first $l$ of these requests. We can now for each \textit{active visit} sum up the number of requests $h$ actually saw and reacted upon and the discounted number of the first $l$ request in the list, discounted by $\lambda_i$ for their position $i$ in the list as well as with another host-specific factor $\lambda$.
 
-\subsection{Evaluation}
+%\subsection{Evaluation}
 
 \bibliographystyle{ieeetr}
 \small
