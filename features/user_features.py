@@ -36,8 +36,10 @@ class FeatureGetter():
 
 def test():
     fg = FeatureGetter()
-    print fg.get_features(907345, 907345, 1)
-    print fg.get_dimension()
+    arr = fg.get_features(907345, 907345, 1)
+    print 'dimension', fg.get_dimension()
+    print arr
+    print 'memory size of a feature', arr.itemsize, 'bytes'
 
 if __name__ == "__main__":
     test()

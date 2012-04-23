@@ -6,6 +6,20 @@ import sys, os
 import cPickle
 import feature_contractor
 
+def pickle_sample_user_info(cursor):
+    print 'loading user data...'
+    user_data = cPickle.load(open('user_data.pkl', 'rb'))
+    print 'querying database...'
+    sql_cmd = "select * "+ \
+        "from couchrequest as r inner join (user as us, user as uh) " + \
+        "on (r.surf_user_id=us.user_id and r.host_user_id=uh.user_id) " + \
+        "group by uh.user_id;"
+    print sql_cmd
+    cur.execute(sql_cmd)
+    print 'finished query'
+    all_results = cur.fetchall()
+    cPickle.dump(all_results, open('db_query_results.pkl', 'wb'))
+
 def pickle_user_info(cursor):
     try:
         print 'loading data...'
