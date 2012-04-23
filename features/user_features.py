@@ -3,9 +3,23 @@ import numpy as np
 import bucketizer
 
 class FeatureGetter():
+    """ Generates crossed features for ids
+
+    Requires:
+    'user_data.pkl' and 'bucket_dividers.pkl' to be in the current directory'
     
+    Attribues:
+    bucketizer: a Bucketizer object initialized with 'bucket_dividers.pkl'
+    user_data: dictionary of {user_id : user_features} initialized from
+    'user_data.pkl'
+    """
+
     def __init__(self):
         self.load_user_features_pkl()
+        self.init_bucketizer()
+         
+    def init_bucketizer(self):
+        self.bucketizer = bucketizer.Bucketizer()
 
     def load_user_features_pkl(self):
         print 'loading user data...'
@@ -13,17 +27,12 @@ class FeatureGetter():
         print 'data for %s users loaded' % (len(self.user_data))
 
     def get_features(self, user_id, host_id, req_id):
-        output = []
         user_features = self.user_data[user_id]
         host_features = self.user_data[host_id]
-        for i in range(len(user_features)):
-            u_i = user_features[i]
-            h_i = host_features[i]
-            if u_i == h_i:
-                output.append(1)
-            else:
-                output.append(0)
-        return np.array(output)
+        return self.bucketizer.cross_bucketized_features(user_features, host_features, [])
+    
+    def get_dimension(self):
+        return self.bucketizer.get_dimension()
 
 def test():
     fg = FeatureGetter()
