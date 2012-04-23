@@ -7,8 +7,10 @@ class FeatureGetter():
         self.load_user_features_pkl()
 
     def load_user_features_pkl(self):
+        print 'loading user data...'
         self.user_data = cPickle.load(open('user_data.pkl', 'rb'))
-        
+        print 'data for %s users loaded' % (len(self.user_data))
+
     def get_features(self, user_id, host_id, req_id):
         output = []
         user_features = self.user_data[user_id]

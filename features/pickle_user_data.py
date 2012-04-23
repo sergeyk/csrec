@@ -1,36 +1,44 @@
-from nlp.extraction import interest_extractor
-
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 import MySQLdb as mdb
 import sys, os
 import cPickle
+import feature_contractor
 
 def pickle_user_info(cursor):
-    user_data = {}
-        #"us.description, us.interests, us.music_movies_books, us.people_i_enjoy, " + \
-        #"uh.description, uh.interests, uh.music_movies_books, uh.people_i_enjoy " + \
-    sql_cmd = "select * "+ \
-        "from couchrequest as r inner join (user as us, user as uh) " + \
-        "on (r.surf_user_id=us.user_id and r.host_user_id=uh.user_id) " + \
-        "where r.status='Y' " + \
-        "group by uh.user_id;"
+    try:
+        print 'loading data...'
+        all_results = cPickle.load(open('db_query_results.pkl', 'rb'))
+    except IOError:
+        print 'querying database...'
+        sql_cmd = "select * "+ \
+            "from couchrequest as r inner join (user as us, user as uh) " + \
+            "on (r.surf_user_id=us.user_id and r.host_user_id=uh.user_id) " + \
+            "group by uh.user_id;"
+        print sql_cmd
+        cur.execute(sql_cmd)
+        print 'finished query'
+        all_results = cur.fetchall()
+        cPickle.dump(all_results, open('db_query_results.pkl', 'wb'))
+    print len(all_results)
 
-    cur.execute(sql_cmd)
-    all_results = cur.fetchall()
+    converter = feature_contractor.Converter()
+    user_data = {}
     i = 0
-    for results in all_results:
+    for result in all_results:
         i += 1
         print 'stored %s/%s' % (i, len(all_results))
-        half = len(results)/2
-        u1 = list(results[:half])
-        u2 = list(results[half:])
+        half = len(result)/2
+        u1 = list(result[:half])
+        u2 = list(result[half:])
         if u1[0] not in user_data:
-            user_data[u1[0]] = u1
+            user_data[u1[0]] = converter.convert(u1)
         if u2[0] not in user_data:
-            user_data[u2[0]] = u2
-        cPickle.dump(user_data, open('user_data.pkl', 'wb'))
+            user_data[u2[0]] = converter.convert(u2)
+    del(all_results)
+    print 'dumping user data...'
+    cPickle.dump(user_data, open('user_data.pkl', 'wb'))
 
 con = None
 username = os.environ['MYSQL_USER']
