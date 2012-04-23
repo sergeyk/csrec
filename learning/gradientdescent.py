@@ -7,69 +7,92 @@ We assume the following format:
     - competitorset structure: dict with keys hostID, list_surfers [(surferID, requestID), ...], winner (surferID or None if all rejected)
 
 TODO:
-    - code structure -> object-oriented?
-    - r_hosts
+    - names for getterfunctions for tobi
+    - toplevel file that reads data from tobi and does learning
+    - testcode 
 
 @author: Tim
 """
 
 import numpy as np
 
-def get_score(theta, feature):
-    return np.exp(np.dot(theta,feature))
-    
-def get_rejectscore(r, r_hosts):
-    return np.exp(r+r_hosts)
 
-def predict(theta, r, r_hosts, competitorset):
-    # used for inference later and to evaluate error on testset
-    features = [get_feature(surferID,competitorset['hostID'],requestID) for (surferID, requestID) in competitorset['list_surfers']]
-    scores = [get_score(theta, f) for f in features]
-    rejectscore = get_rejectscore(r, r_hosts[competitorset['hostID']]) # maybe change rhosts to be dict
-    
-    maxsurfer = np.argmax(scores)
-    #print "rejectscore", rejectscore
-    #print "maxsurferscore", scores[maxsurfer]
-    #print ""
-    if rejectscore>scores[maxsurfer]:
-        return None
-    else: # return surferID of winner
-        return competitorset['list_surfers'][maxsurfer][0]
-    
+class SGDLearning:
 
-def update(theta, r, r_hosts, competitorset, eta=0.01, regularization_lambda=1):
-    # get features, scores, and probabilities
-    features = [get_feature(surferID,competitorset['hostID'],requestID) for (surferID, requestID) in competitorset['list_surfers']]
-    scores = [get_score(theta, f) for f in features]
-    rejectscore = get_rejectscore(r, r_hosts[competitorset['hostID']]) # maybe change rhosts to be dict
-    normalizer = float(np.sum(scores) + rejectscore)
-    probabilities = [s/normalizer for s in scores]
-    rejectprobability = rejectscore / normalizer
+    def __init__(self, featuredimension, get_feature_function):
+        self.theta = np.zeros(featuredimension)
+        self.r = 0
+        #r_hosts = np.zeros(nhosts) # do I need dictionary here: hostID -> param?
+        self.r_hosts = {}
+        self.get_feature = get_feature_function
     
-    # update params based on ground truth
-    if competitorset['winner']==None:
-        # gt -> all got rejected
-        temp = [p*f for (p,f) in zip(probabilities,features)]
-        theta = theta - eta * np.sum(temp, axis=0)
-        r = r - eta * (rejectprobability - 1)
-        r_hosts[competitorset['hostID']] = r_hosts[competitorset['hostID']] - eta * (rejectprobability - 1) 
-    else:
-        # there was a winner
-        winneridx = zip(*competitorset['list_surfers'])[0].index(competitorset['winner'])
+    def get_score(self, feature):
+        return np.exp(np.dot(self.theta,feature))
         
-        temp = [p*f for (p,f) in zip(probabilities,features)]
-        theta = theta - eta * (np.sum(temp, axis=0) - features[winneridx])
-        r = r - eta * rejectprobability
-        r_hosts[competitorset['hostID']] = r_hosts[competitorset['hostID']] - eta * rejectprobability 
+    def get_rejectscore(self, hostID):
+        # if we don't have a r_host yet create one with param zero
+        if not self.r_hosts.has_key(hostID):
+            self.r_hosts[hostID] = 0.0
+            
+        return np.exp(self.r + self.r_hosts[hostID])
     
-    
-    # regularization of theta, r_hosts
-    if regularization_lambda>0:
-        theta = theta - eta * regularization_lambda * theta
-        r_hosts[competitorset['hostID']] = r_hosts[competitorset['hostID']] - eta * regularization_lambda *r_hosts[competitorset['hostID']] 
+    def predict(self, competitorset):
+        # used for inference later and to evaluate error on testset
         
-    return theta, r, r_hosts
+        # if we don't have a r_host yet create one with param zero
+        if not self.r_hosts.has_key(competitorset.get_hostID()):
+            self.r_hosts[competitorset.get_hostID()] = 0.0
+        
+        features = [self.get_feature(surferID,competitorset.get_hostID(),requestID) for (surferID, requestID) in competitorset.get_surferlist()]
+        scores = [self.get_score(f) for f in features]
+        rejectscore = self.get_rejectscore(competitorset.get_hostID())
+        
+        maxsurfer = np.argmax(scores)
+        #print "rejectscore", rejectscore
+        #print "maxsurferscore", scores[maxsurfer]
+        #print ""
+        if rejectscore>scores[maxsurfer]:
+            return None
+        else: # return surferID of winner
+            return competitorset.get_surferlist()[maxsurfer][0]
+        
+    
+    def update(self, competitorset, eta=0.01, regularization_lambda=1):
+        # if we don't have a r_host yet create one with param zero
+        if not self.r_hosts.has_key(competitorset.get_hostID()):
+            self.r_hosts[competitorset.get_hostID()] = 0.0        
+        
+        # get features, scores, and probabilities
+        features = [self.get_feature(surferID,competitorset.get_hostID(),requestID) for (surferID, requestID) in competitorset.get_surferlist()]
+        scores = [self.get_score(f) for f in features]
+        rejectscore = self.get_rejectscore(competitorset.get_hostID())
+        normalizer = float(np.sum(scores) + rejectscore)
+        probabilities = [s/normalizer for s in scores]
+        rejectprobability = rejectscore / normalizer
+        
+        # update params based on ground truth
+        if competitorset.get_winner()==None:
+            # gt -> all got rejected
+            temp = [p*f for (p,f) in zip(probabilities,features)]
+            self.theta = self.theta - eta * np.sum(temp, axis=0)
+            self.r = self.r - eta * (rejectprobability - 1)
+            self.r_hosts[competitorset.get_hostID()] = self.r_hosts[competitorset.get_hostID()] - eta * (rejectprobability - 1) 
+        else:
+            # there was a winner
+            winneridx = zip(*competitorset.get_surferlist())[0].index(competitorset.get_winner())
+            
+            temp = [p*f for (p,f) in zip(probabilities,features)]
+            self.theta = self.theta - eta * (np.sum(temp, axis=0) - features[winneridx])
+            self.r = self.r - eta * rejectprobability
+            self.r_hosts[competitorset.get_hostID()] = self.r_hosts[competitorset.get_hostID()] - eta * rejectprobability 
+        
+        
+        # regularization of theta, r_hosts
+        if regularization_lambda>0:
+            self.theta = self.theta - eta * regularization_lambda * self.theta
+            self.r_hosts[competitorset.get_hostID()] = self.r_hosts[competitorset.get_hostID()] - eta * regularization_lambda * self.r_hosts[competitorset.get_hostID()] 
 
+    
 
 
 if __name__=='__main__':
@@ -78,37 +101,45 @@ if __name__=='__main__':
     # build fake features
     def get_feature(surferID, hostID, couchrequestID):
         feat = np.zeros(3)
-        if surferID==competitorset['winner']:
+        if surferID==competitorset.get_winner():
             feat[0] = 1 # later try 2,1 
         else: 
             feat[0] = -1
         feat[1] = 2
         return feat
     
-    competitorset = {
-        'hostID': 0,
-        'list_surfers': [(1,1), (2,2), (3,3)],
-        'winner': 3, # later try None
-    }
+#    competitorset = {
+#        'hostID': 0,
+#        'list_surfers': [(1,1), (2,2), (3,3)],
+#        'winner': 3, # later try None
+#    }
     #print competitorset
+    class CompetitorSet:
+        def get_hostID(self):
+            return 0
+            
+        def get_surferlist(self):
+            return [(1,1), (2,2), (3,3)]
+        
+        def get_winner(self):
+            return 3
     
-    # init params
-    dim = 3
-    nhosts = 1
-    theta = np.zeros(dim)
-    r = 0
-    r_hosts = np.zeros(nhosts) # do I need dictionary here: hostID -> param?
+    competitorset = CompetitorSet()    
+    
+    featuredimension = 3
+    get_feature_function = get_feature # here Ron's function should go
+    sgd = SGDLearning(featuredimension, get_feature_function)
     
     # do a couple update steps
     for i in range(100):
                 
         print "iteration", i
-        print "\ttheta", theta
-        print "\tr", r
-        print "\tr_hosts", r_hosts
-        print "\ttrue", competitorset['winner']
-        print "\tpredicted", predict(theta, r, r_hosts, competitorset)
+        print "\ttheta", sgd.theta
+        print "\tr", sgd.r
+        print "\tr_hosts", sgd.r_hosts
+        print "\ttrue", competitorset.get_winner()
+        print "\tpredicted", sgd.predict(competitorset)
         
-        theta, r, r_hosts = update(theta, r, r_hosts, competitorset, eta=0.1, regularization_lambda=0.1)
+        sgd.update(competitorset, eta=0.1, regularization_lambda=0.1)
         
     
