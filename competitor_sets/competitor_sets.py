@@ -62,7 +62,6 @@ class CompetitorSetCollection:
   def get_sample(self, n):
     ''' Get an CompetitorSet object of the sample with index n'''
     request = 'select * from '+self.db+' where set_id = '+str(n)+';'
-    print request
     res = self.sq.rqst(request)
     rows = res.fetch_row(res.num_rows(),1)
     return CompetitorSet(rows) 
