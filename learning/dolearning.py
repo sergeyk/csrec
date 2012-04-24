@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Apr 19 17:34:55 2012
-
-@author: Tim
-"""
-
 from competitor_sets.competitor_sets import CompetitorSet, CompetitorSetCollection
 
 # get data (Tobi)
@@ -38,7 +31,7 @@ sgd = SGDLearning(featuredimension, get_feature_function)
 # do a couple update steps
 for i in range(niter):
     # draw random sample  
-    sampleindex = random.randint(0,N-1)    
+    sampleindex = random.randint(1,N)    
     competitorset = dataobject.get_sample(sampleindex)  
     
 #    print "iteration", i
@@ -51,12 +44,11 @@ for i in range(niter):
     sgd.update(competitorset, eta=0.1, regularization_lambda=0.1)
     
     
+    
 # TESTING
 errors = 0
-for i in range(N-8):
+for i in range(N):
     #TODO: dirty hack
-    if i < 8:
-      i += 8
     competitorset = dataobject.get_sample(i)
     
     pred = sgd.predict(competitorset)
