@@ -50,7 +50,10 @@ class CompetitorSetCollection:
     else:
       self.db = 'competitor_sets'
       
-    self.num_sets = self.sq.rqst('select max(set_id) from '+self.db).fetch_row(1)[0][0]
+    self.sq.rqst('select max(set_id) from '+self.db+';')
+    req = self.sq.get_row(0)[0][0]
+    self.num_sets = int(req)
+    self.sq.get_row()
     
   def get_nsamples(self):
     ''' Get the overall number of samples (= competitor sets) in our data'''
@@ -58,7 +61,9 @@ class CompetitorSetCollection:
   
   def get_sample(self, n):
     ''' Get an CompetitorSet object of the sample with index n'''
-    res = self.sq.rqst('select * from '+self.db+' where set_id = '+str(n))
+    request = 'select * from '+self.db+' where set_id = '+str(n)+';'
+    print request
+    res = self.sq.rqst(request)
     rows = res.fetch_row(res.num_rows(),1)
     return CompetitorSet(rows) 
   

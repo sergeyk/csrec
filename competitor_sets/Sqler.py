@@ -14,7 +14,6 @@ class Sqler:
       self.db = sql.connect(db='csrec',user='tobibaum',unix_socket='/u/vis/x1/sergeyk/mysql/mysql.sock')
     elif os.path.exists('/home/tobibaum/'):    
       self.db = sql.connect(db='CSRec')
-      
 
   def rqst(self, request):
     t = time.time()
@@ -22,8 +21,9 @@ class Sqler:
     t -=time.time()
     
     print 'db request took %f seconds'%(-t)
-    self.res = self.db.use_result()
-    return self.res
+    res = self.db.use_result()
+    self.res = res
+    return res
 
   def get_row(self, style=1):
     return self.res.fetch_row(1,style)
