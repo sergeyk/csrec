@@ -10,7 +10,10 @@ import os
 
 class Sqler:
   def __init__(self):
-    self.db = sql.connect(db='CSRec')
+    if os.path.exists('/u/vis/'):
+      self.db = sql.connect(db='csrec',user='tobibaum',unix_socket='/u/vis/x1/sergeyk/mysql/mysql.sock')
+    elif os.path.exists('/home/tobibaum/'):    
+      self.db = sql.connect(db='CSRec')
 
   def rqst(self, request):
     t = time.time()
@@ -18,7 +21,12 @@ class Sqler:
     t -=time.time()
     
     print 'db request took %f seconds'%(-t)
-    return self.db.use_result()
+    res = self.db.use_result()
+    self.res = res
+    return res
+
+  def get_row(self, style=1):
+    return self.res.fetch_row(1,style)
 
   def get_top_host(self, table, top_k):
     res = self.rqst('SELECT host_user_id FROM ( SELECT host_user_id, \
@@ -49,9 +57,10 @@ class Sqler:
     return rows
   
   def get_requests(self, table, lower, upper,machine):
-    the_table = "(select * from "+table+" join map_host_machine on \
-    (couchrequest.host_user_id = map_host_machine.host_user_id) where \
-    map_host_machine.num = "+machine+" ) as T"
+    the_table = "(select couchrequest.host_user_id, couchrequest.status, \
+    couchrequest.surf_user_id, couchrequest.id, couchrequest.rmd from couchrequest join \
+    map_host_machine on (couchrequest.host_user_id = map_host_machine.host_user_id) \
+    where map_host_machine.num = "+str(machine)+" ) as T"
     res = self.rqst("select host_user_id, status, surf_user_id, id, rmd from " + \
                     the_table+" order by host_user_id, rmd limit "+str(lower)+","+str(upper))
     # instead of all at a time fetch  the rows one after the other.
@@ -71,7 +80,7 @@ class Sqler:
       rows.append(row)
       del row
     return rows
-  
+
   def get_requests_for_host_just_june(self, host_id):
     res = self.rqst("SELECT * FROM ( SELECT `date_arrival` , `date_departure` ," +
                     " `rcd` , `rmd` , `status` FROM `couchrequest` WHERE `host_user_id` = " +

@@ -18,15 +18,15 @@ print dataobject.get_sample(17) # yields a competitorset
 from features.user_features import FeatureGetter
 
 fg = FeatureGetter()
-print fg.get_features(907345, 907345, 1)
-print fg.get_dimension()
+#print fg.get_features(907345, 907345, 1)
+dimension = fg.get_dimension()
 
 
 # create SGD object, sample different competitorsets, and do learning
 from gradientdescent import SGDLearning
 import random
 
-sgd = SGDLearning()
+sgd = SGDLearning(dimension, fg.get_features)
 
 niter = 10
 N = dataobject.get_nsamples()

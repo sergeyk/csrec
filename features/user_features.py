@@ -1,6 +1,7 @@
 import cPickle
 import numpy as np
 import bucketizer
+
 import csrec_paths
 
 DATA_FILE = 'sampled_user_data.pkl' #'user_data.pkl'

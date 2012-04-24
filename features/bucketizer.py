@@ -15,7 +15,7 @@ class Bucketizer():
             self.dimension += self.num_expanded_buckets(dividers_lst)
 
     def init_bucket_dividers(self):
-        self.dividers_lol = cPickle.load(open('bucket_dividers.pkl', 'rb'))
+        self.dividers_lol = cPickle.load(open(csrec_paths.get_dataset_dir()+'bucket_dividers.pkl', 'rb'))
 
     def cross_bucketized_features(self, user1_vec, user2_vec, req_vec):
         output = np.zeros(self.dimension, np.dtype(np.int32))

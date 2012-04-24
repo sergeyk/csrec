@@ -205,34 +205,14 @@ def get_sessions(suffix,lower,upper,force=False, machine=0):
         for r in cl:
           winner = (r[1] == 'Y')
           curr_rqst += "( "+str(r[3])+" , "+ str(comp_set_id)+" , "+str(last_hid) + \
-            " , "+ str(r[2])+" , "+str(int(winner))+ " , '"+str(r[4])+ "' ),"
+            " , "+ str(r[2])+" , "+str(int(winner))+ " , '"+str(r[4])+ "', " +str(comm_rank)+" ),"
         #print "r", curr_rqst
         comp_set_id += 1
-      sq_write.rqst(curr_rqst[:-1]+";")
+      try:
+        sq_write.rqst(curr_rqst[:-1]+";")
+      except:
+        print curr_rqst[:-1]+";"
         
-            
-#      print '\tclus: %f'%(-t_clus)      
-#      
-#      t_add_reqs = time.time()
-#      for idx, cl in enumerate(clus):
-#        winner = None
-##        suitor_set = {'hostID':int(last_hid)}
-#        surfs = []
-#        try:
-#          for r in cl:
-#            if r[1] == 'Y':
-#              #host_user_id, status, surf_user_id, id, rmd
-#              winner = int(r[2])
-#            surfs.append((int(r[2]), int(r[3])))
-#        except:
-#          embed()
-##        suitor_set['list_surfers'] = surfs
-##        suitor_set['winner'] = winner 
-#        suitor_set2 = (int(last_hid), surfs, winner)
-##        suitor_sets.append(suitor_set)
-#        suitor_sets2.append(suitor_set2)
-#      t_add_reqs -= time.time()
-#      print '\tadd: %f'%(-t_add_reqs)
       if into_next:
         reqs = [row]
       else:
@@ -257,7 +237,7 @@ if __name__=='__main__':
 #  upper = 2*lower+1
   lower = 0
   #upper = 5464099
-  upper = 10000
+  upper = 11000000
   
   
   suffix = 'train'#'train_'+str(lower)+'_'+str(upper)
