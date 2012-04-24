@@ -3,7 +3,7 @@ import datetime
 import Image, ImageDraw
 import numpy as np
 import sklearn.cluster
-from IPython import embed
+#from IPython import embed
 import time
 import cPickle
 import os
@@ -14,6 +14,10 @@ class Sqler:
       self.db = sql.connect(db='csrec',user='tobibaum',unix_socket='/u/vis/x1/sergeyk/mysql/mysql.sock')
     elif os.path.exists('/home/tobibaum/'):    
       self.db = sql.connect(db='CSRec')
+    else:
+      username = os.environ['MYSQL_USER']
+      password = os.environ['MYSQL_PASS']
+      self.db = sql.connect(db='csrec', user=username, passwd=password)
 
   def rqst(self, request):
     t = time.time()
