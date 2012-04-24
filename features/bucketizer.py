@@ -2,7 +2,6 @@ import cPickle
 import numpy as np
 import math
 import csrec_paths
-from IPython import embed
 
 
 class Bucketizer():
