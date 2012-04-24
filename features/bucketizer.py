@@ -9,6 +9,7 @@ class Bucketizer():
 
     def init_dimensions(self):
         self.dimension = 0
+        self.base_dimensions = len(self.dividers_lol)
         for dividers_lst in self.dividers_lol:
             self.dimension += self.num_expanded_buckets(dividers_lst)
 
@@ -48,16 +49,18 @@ class Bucketizer():
         return self.dimension
 
     @classmethod
-    def generate_bucket_dividers(cls):
+    def generate_bucket_dividers(cls,
+                                 user_data_pkl_name = 'user_data.pkl',
+                                 divider_name = 'bucket_dividers.pkl'):
         rows_lst = []
         print 'loading user data...'
-        user_data = cPickle.load(open('user_data.pkl', 'rb'))
+        user_data = cPickle.load(open(user_data_pkl_name, 'rb'))
         print 'data for %s users loaded' % (len(user_data))
         for user_id, features in user_data.iteritems():
             rows_lst.append(features)
         matrix = np.matrix(rows_lst)
         dividers = cls.find_matrix_dividers(matrix)
-        cPickle.dump(dividers, open('bucket_dividers.pkl', 'wb'))
+        cPickle.dump(dividers, open(divider_name, 'wb'))
 
     @classmethod
     def find_matrix_dividers(cls, m):
@@ -71,6 +74,8 @@ class Bucketizer():
 if __name__ == "__main__":
     #Bucketizer.generate_bucket_dividers()
     #Bucketizer.find_matrix_dividers(np.matrix([[1,2],[3,4]]))
+    #Bucketizer.generate_bucket_dividers('sampled_user_data.pkl',
+    #                                    'bucket_dividers.pkl')
     b = Bucketizer()
-    a = np.ones(126)
+    a = np.ones(b.base_dimensions)
     b.cross_bucketized_features(a, a, None)

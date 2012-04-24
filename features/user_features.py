@@ -2,6 +2,8 @@ import cPickle
 import numpy as np
 import bucketizer
 
+DATA_FILE = 'sampled_user_data.pkl' #'user_data.pkl'
+
 class FeatureGetter():
     """ Generates crossed features for ids
 
@@ -23,7 +25,7 @@ class FeatureGetter():
 
     def load_user_features_pkl(self):
         print 'loading user data...'
-        self.user_data = cPickle.load(open('user_data.pkl', 'rb'))
+        self.user_data = cPickle.load(open(DATA_FILE, 'rb'))
         print 'data for %s users loaded' % (len(self.user_data))
 
     def get_features(self, user_id, host_id, req_id):
@@ -36,7 +38,7 @@ class FeatureGetter():
 
 def test():
     fg = FeatureGetter()
-    arr = fg.get_features(907345, 907345, 1)
+    arr = fg.get_features(1346062, 2722310, 1)
     print 'dimension', fg.get_dimension()
     print arr
     print 'memory size of a feature', arr.itemsize, 'bytes'
