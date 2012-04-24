@@ -1,6 +1,7 @@
 import cPickle
 import numpy as np
 import math
+import csrec_paths
 
 class Bucketizer():
     def __init__(self):
@@ -17,7 +18,7 @@ class Bucketizer():
         self.dividers_lol = cPickle.load(open('bucket_dividers.pkl', 'rb'))
 
     def cross_bucketized_features(self, user1_vec, user2_vec, req_vec):
-        output = np.zeros(self.dimension, np.dtype(int))
+        output = np.zeros(self.dimension, np.dtype(np.int32))
         offset = 0
         for i in range(len(user1_vec)):
             num_buckets = self.num_expanded_buckets(self.dividers_lol[i])
@@ -26,8 +27,6 @@ class Bucketizer():
             true_index = offset + self.crossed_index(num_buckets, bucket_i_1, bucket_i_2)
             output[true_index] = 1
             offset += num_buckets
-        print output
-        print self.dividers_lol
         return output 
     
     def num_expanded_buckets(self, dividers_lst):
@@ -54,7 +53,7 @@ class Bucketizer():
                                  divider_name = 'bucket_dividers.pkl'):
         rows_lst = []
         print 'loading user data...'
-        user_data = cPickle.load(open(user_data_pkl_name, 'rb'))
+        user_data = cPickle.load(open(csrec_paths.get_dataset_dir()+user_data_pkl_name, 'rb'))
         print 'data for %s users loaded' % (len(user_data))
         for user_id, features in user_data.iteritems():
             rows_lst.append(features)

@@ -5,10 +5,12 @@ import MySQLdb as mdb
 import sys, os
 import cPickle
 import feature_contractor
+import csrec_paths
 
 def pickle_sample_user_info(cursor):
     print 'loading sampled user data...'
-    user_data = cPickle.load(open('user_data.pkl', 'rb'))
+    user_data = cPickle.load(open(csrec_paths.get_features_dir()+'user_data.pkl', 
+                                  'rb'))
     print 'querying database...'
     sql_cmd = "select host_id,  surfer_id "+ \
         "from competitor_sets"
@@ -30,12 +32,14 @@ def pickle_sample_user_info(cursor):
     print not_found_ids
     #print sampled_user_data
     print 'dumping...'
-    cPickle.dump(sampled_user_data, open('sampled_user_data.pkl', 'wb'))
+    cPickle.dump(sampled_user_data, 
+                 open(csrec_paths.get_features_dir()+'sampled_user_data.pkl', 'wb'))
 
 def pickle_user_info(cursor):
     try:
         print 'loading data...'    
-        all_results = cPickle.load(open('db_query_results.pkl', 'rb'))
+        all_results = cPickle.load(open(csrec_paths.get_features_dir()+'db_query_results.pkl', 
+                                        'rb'))
     except IOError:
         print 'querying database 1...'
         sql_cmd = "select u.* "+ \
@@ -53,7 +57,8 @@ def pickle_user_info(cursor):
         cur.execute(sql_cmd)
         print 'finished query 2'
         all_results += list(cur.fetchall())
-        cPickle.dump(all_results, open('db_query_results.pkl', 'wb'))
+        cPickle.dump(all_results, 
+                     open(csrec_paths.get_features_dir()+'db_query_results.pkl', 'wb'))
     print len(all_results)
 
     converter = feature_contractor.Converter()
@@ -68,7 +73,8 @@ def pickle_user_info(cursor):
     del(all_results)
     print len(user_data), 'users loaded'
     print 'dumping user data...'
-    cPickle.dump(user_data, open('user_data.pkl', 'wb'))
+    cPickle.dump(user_data, 
+                 open(csrec_paths.get_features_dir()+'user_data.pkl', 'wb'))
 
 con = None
 username = os.environ['MYSQL_USER']

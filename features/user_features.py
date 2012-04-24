@@ -26,8 +26,7 @@ class FeatureGetter():
 
     def load_user_features_pkl(self):
         print 'loading user data...'
-        self.user_data = cPickle.load(open(DATA_FILE, 'rb'))
-        self.user_data = cPickle.load(open(csrec_paths.get_dataset_dir()+DATA_FILE, 'rb'))
+        self.user_data = cPickle.load(open(csrec_paths.get_features_dir()+DATA_FILE, 'rb'))
         print 'data for %s users loaded' % (len(self.user_data))
 
     def get_features(self, user_id, host_id, req_id):
@@ -39,11 +38,15 @@ class FeatureGetter():
         return self.bucketizer.get_dimension()
 
 def test():
+    import time
     fg = FeatureGetter()
+    t0 = time.time()
     arr = fg.get_features(1346062, 2722310, 1)
-    print 'dimension', fg.get_dimension()
+    run_time = time.time() - t0
     print arr
-    print 'memory size of a feature', arr.itemsize, 'bytes'
+    print 'time to cross and expand feature:', (run_time)*1000, 'ms'
+    print 'feature dimension', fg.get_dimension()
+    print 'memory size of feature vector', arr.itemsize*fg.get_dimension(), 'bytes'
 
 if __name__ == "__main__":
     test()
