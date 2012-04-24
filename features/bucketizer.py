@@ -2,6 +2,8 @@ import cPickle
 import numpy as np
 import math
 import csrec_paths
+from IPython import embed
+
 
 class Bucketizer():
     def __init__(self):
@@ -24,8 +26,11 @@ class Bucketizer():
             num_buckets = self.num_expanded_buckets(self.dividers_lol[i])
             bucket_i_1 = self.bucketize_feature(user1_vec[i], i)
             bucket_i_2 = self.bucketize_feature(user2_vec[i], i)
-            true_index = offset + self.crossed_index(num_buckets, bucket_i_1, bucket_i_2)
-            output[true_index] = 1
+            true_index = offset + self.crossed_index(len(self.dividers_lol[i]), bucket_i_1, bucket_i_2)
+            try:
+              output[true_index] = 1
+            except:
+              embed()
             offset += num_buckets
         return output 
     

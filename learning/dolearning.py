@@ -4,6 +4,7 @@ Created on Thu Apr 19 17:34:55 2012
 
 @author: Tim
 """
+from IPython import embed
 
 from competitor_sets.competitor_sets import CompetitorSet, CompetitorSetCollection
 
@@ -28,7 +29,7 @@ import random
 
 sgd = SGDLearning(dimension, fg.get_features)
 
-niter = 10
+niter = 100
 N = dataobject.get_nsamples()
 featuredimension = fg.get_dimension()
 get_feature_function = fg.get_features
@@ -42,7 +43,7 @@ for i in range(niter):
     competitorset = dataobject.get_sample(sampleindex)  
     
     print "iteration", i
-    print "\ttheta", sgd.theta
+    #print "\ttheta", sgd.theta
     print "\tr", sgd.r
     print "\tr_hosts", sgd.r_hosts
     print "\ttrue", competitorset.get_winner()
@@ -53,9 +54,16 @@ for i in range(niter):
     
 # TESTING
 errors = 0
-for i in range(N):
+for i in range(N-8):
+    #TODO: dirty hack
+    if i < 8:
+      i += 8
     competitorset = dataobject.get_sample(i)
-    pred = sgd.predict(competitorset)
+    
+    try:
+      pred = sgd.predict(competitorset)
+    except:
+      embed()
     true = competitorset.get_winner()
     errors += (pred!=true)
     
