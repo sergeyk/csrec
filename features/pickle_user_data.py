@@ -5,10 +5,12 @@ import MySQLdb as mdb
 import sys, os
 import cPickle
 import feature_contractor
+import csrec_paths
 
 def pickle_sample_user_info(cursor):
-    print 'loading user data...'
-    user_data = cPickle.load(open('user_data.pkl', 'rb'))
+    print 'loading sampled user data...'
+    user_data = cPickle.load(open(csrec_paths.get_features_dir()+'user_data.pkl', 
+                                  'rb'))
     print 'querying database...'
     sql_cmd = "select host_id,  surfer_id "+ \
         "from competitor_sets"
@@ -16,23 +18,47 @@ def pickle_sample_user_info(cursor):
     cur.execute(sql_cmd)
     print 'finished query'
     all_results = cur.fetchall()
-    print all_results
+    id_set = set([])
+    for result in all_results:
+        for i in result:
+            id_set.add(i)
+    sampled_user_data = {}
+    not_found_ids = set([])
+    for user_id in id_set:
+        if user_id in user_data:
+            sampled_user_data[user_id] = user_data[user_id]
+        else:
+            not_found_ids.add(user_id)
+    print not_found_ids
+    #print sampled_user_data
+    print 'dumping...'
+    cPickle.dump(sampled_user_data, 
+                 open(csrec_paths.get_features_dir()+'sampled_user_data.pkl', 'wb'))
 
 def pickle_user_info(cursor):
     try:
-        print 'loading data...'
-        all_results = cPickle.load(open('db_query_results.pkl', 'rb'))
+        print 'loading data...'    
+        all_results = cPickle.load(open(csrec_paths.get_features_dir()+'db_query_results.pkl', 
+                                        'rb'))
     except IOError:
-        print 'querying database...'
-        sql_cmd = "select * "+ \
-            "from couchrequest as r inner join (user as us, user as uh) " + \
-            "on (r.surf_user_id=us.user_id and r.host_user_id=uh.user_id) " + \
-            "group by uh.user_id;"
+        print 'querying database 1...'
+        sql_cmd = "select u.* "+ \
+            "from couchrequest as r inner join (user as u) " + \
+            "on (r.surf_user_id=u.user_id) group by u.user_id;"
         print sql_cmd
         cur.execute(sql_cmd)
-        print 'finished query'
-        all_results = cur.fetchall()
-        cPickle.dump(all_results, open('db_query_results.pkl', 'wb'))
+        print 'finished query 1'
+        all_results = list(cur.fetchall())
+        print 'querying database 2...'
+        sql_cmd = "select u.* "+ \
+            "from couchrequest as r inner join (user as u) " + \
+            "on (r.host_user_id=u.user_id) group by u.user_id;"
+        print sql_cmd
+        cur.execute(sql_cmd)
+        print 'finished query 2'
+        all_results += list(cur.fetchall())
+        cPickle.dump(all_results, 
+                     open(csrec_paths.get_features_dir()+'db_query_results.pkl', 'wb'))
     print len(all_results)
 
     converter = feature_contractor.Converter()
@@ -41,16 +67,14 @@ def pickle_user_info(cursor):
     for result in all_results:
         i += 1
         print 'stored %s/%s' % (i, len(all_results))
-        half = len(result)/2
-        u1 = list(result[:half])
-        u2 = list(result[half:])
+        u1 = list(result)
         if u1[0] not in user_data:
             user_data[u1[0]] = converter.convert(u1)
-        if u2[0] not in user_data:
-            user_data[u2[0]] = converter.convert(u2)
     del(all_results)
+    print len(user_data), 'users loaded'
     print 'dumping user data...'
-    cPickle.dump(user_data, open('user_data.pkl', 'wb'))
+    cPickle.dump(user_data, 
+                 open(csrec_paths.get_features_dir()+'user_data.pkl', 'wb'))
 
 con = None
 username = os.environ['MYSQL_USER']
@@ -62,8 +86,11 @@ try:
         password, 'csrec');
 
     cur = con.cursor()
-    #pickle_user_info(cur)
-    pickle_sample_user_info(cur)
+    print len(sys.argv)
+    if len(sys.argv) == 1:
+        pickle_user_info(cur)
+    else:    
+        pickle_sample_user_info(cur)
 
 except mdb.Error, e:
     print e

@@ -168,7 +168,7 @@ def get_sessions(suffix,lower,upper,force=False, machine=0):
     res = sq.get_requests(table,lower,upper,machine)
     t -= time.time()
     print 'db query took %f sec'%(-t)
-    #cPickle.dump(all_rqsts, open(filename, 'w'))
+    cPickle.dump(all_rqsts, open(filename, 'w'))
       
   # format all_rqsts: host_user_id, status, surf_user_id, id, rmd
   #num_rows = len(all_rqsts)
@@ -213,29 +213,6 @@ def get_sessions(suffix,lower,upper,force=False, machine=0):
       except:
         print curr_rqst[:-1]+";"
         
-            
-#      print '\tclus: %f'%(-t_clus)      
-#      
-#      t_add_reqs = time.time()
-#      for idx, cl in enumerate(clus):
-#        winner = None
-##        suitor_set = {'hostID':int(last_hid)}
-#        surfs = []
-#        try:
-#          for r in cl:
-#            if r[1] == 'Y':
-#              #host_user_id, status, surf_user_id, id, rmd
-#              winner = int(r[2])
-#            surfs.append((int(r[2]), int(r[3])))
-#        except:
-#          embed()
-##        suitor_set['list_surfers'] = surfs
-##        suitor_set['winner'] = winner 
-#        suitor_set2 = (int(last_hid), surfs, winner)
-##        suitor_sets.append(suitor_set)
-#        suitor_sets2.append(suitor_set2)
-#      t_add_reqs -= time.time()
-#      print '\tadd: %f'%(-t_add_reqs)
       if into_next:
         reqs = [row]
       else:

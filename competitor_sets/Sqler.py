@@ -13,7 +13,7 @@ class Sqler:
     if os.path.exists('/u/vis/'):
       self.db = sql.connect(db='csrec',user='tobibaum',unix_socket='/u/vis/x1/sergeyk/mysql/mysql.sock')
     elif os.path.exists('/home/tobibaum/'):    
-      self.db = sql.connect(db='CSrec')
+      self.db = sql.connect(db='CSRec')
       
 
   def rqst(self, request):
@@ -22,7 +22,11 @@ class Sqler:
     t -=time.time()
     
     print 'db request took %f seconds'%(-t)
-    return self.db.use_result()
+    self.res = self.db.use_result()
+    return self.res
+
+  def get_row(self, style=1):
+    return self.res.fetch_row(1,style)
 
   def get_top_host(self, table, top_k):
     res = self.rqst('SELECT host_user_id FROM ( SELECT host_user_id, \
@@ -76,7 +80,7 @@ class Sqler:
       rows.append(row)
       del row
     return rows
-  
+
   def get_requests_for_host_just_june(self, host_id):
     res = self.rqst("SELECT * FROM ( SELECT `date_arrival` , `date_departure` ," +
                     " `rcd` , `rmd` , `status` FROM `couchrequest` WHERE `host_user_id` = " +
