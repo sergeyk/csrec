@@ -1,6 +1,7 @@
 import cPickle
 import numpy as np
 import bucketizer
+from csrec_paths import * 
 
 class FeatureGetter():
     """ Generates crossed features for ids
@@ -23,7 +24,7 @@ class FeatureGetter():
 
     def load_user_features_pkl(self):
         print 'loading user data...'
-        self.user_data = cPickle.load(open('user_data.pkl', 'rb'))
+        self.user_data = cPickle.load(open(get_dataset_dir()+'user_data.pkl', 'rb'))
         print 'data for %s users loaded' % (len(self.user_data))
 
     def get_features(self, user_id, host_id, req_id):

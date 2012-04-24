@@ -16,6 +16,7 @@ class Sqler:
     t = time.time()
     self.db.query(request)
     t -=time.time()
+    
     print 'db request took %f seconds'%(-t)
     return self.db.use_result()
 
@@ -47,9 +48,12 @@ class Sqler:
     rows = res.fetch_row(num,1)
     return rows
   
-  def get_requests(self, table, lower, upper):
+  def get_requests(self, table, lower, upper,machine):
+    the_table = "(select * from "+table+" join map_host_machine on \
+    (couchrequest.host_user_id = map_host_machine.host_user_id) where \
+    map_host_machine.num = "+machine+" ) as T"
     res = self.rqst("select host_user_id, status, surf_user_id, id, rmd from " + \
-                    table+" order by host_user_id, rmd limit "+str(lower)+","+str(upper))
+                    the_table+" order by host_user_id, rmd limit "+str(lower)+","+str(upper))
     # instead of all at a time fetch  the rows one after the other.
     return res # TODO: changing here!
   

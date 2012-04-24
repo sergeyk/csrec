@@ -1,0 +1,27 @@
+== Create table with host_user_id and reject-counts ==
+CREATE TABLE t_num_requests
+  AS (SELECT host_user_id, COUNT( * ) FROM couchrequest GROUP BY host_user_id)
+
+== Create table with host_user_id and accept-counts ==
+CREATE TABLE t_num_accepts
+  AS (SELECT host_user_id, COUNT( * ) as `count` FROM (SELECT * FROM `couchrequest` WHERE `status`='Y') as T GROUP BY host_user_id)
+
+== People with accepts and ~30 requests ==
+SELECT t_num_requests.host_user_id, t_num_requests.count AS `requests` , t_num_accepts.count AS `accepts`
+FROM t_num_requests
+JOIN t_num_accepts ON t_num_requests.host_user_id = t_num_accepts.host_user_id
+WHERE t_num_accepts.count >0
+AND t_num_requests.count >28
+AND t_num_requests.count <32
+
+== Requests that are not flexible but got accepted after arrival date O_o ==
+SELECT *
+FROM (
+
+SELECT * , DATE_FORMAT( `rmd` , '%Y-%m-%d 00:00:00' ) AS rmd2
+FROM couchrequest
+WHERE `status` = 'Y'
+AND date_arrival_is_flexible =0
+) AS T
+WHERE date_arrival < T.rmd2
+

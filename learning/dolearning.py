@@ -5,8 +5,10 @@ Created on Thu Apr 19 17:34:55 2012
 @author: Tim
 """
 
+from competitor_sets.competitor_sets import CompetitorSet, CompetitorSetCollection
+
 # get data (Tobi)
-dataobject = None
+dataobject = CompetitorSetCollection()
 print dataobject.get_nsamples() # N
 print dataobject.get_sample(17) # yields a competitorset
 # TODO: Tobi - put your stuff here
@@ -52,7 +54,7 @@ for i in range(niter):
 # TESTING
 errors = 0
 for i in range(N):
-    competitorset = dataobject.get_sample(i) # TODO: Tobi, here we need a way to access the test set
+    competitorset = dataobject.get_sample(i)
     pred = sgd.predict(competitorset)
     true = competitorset.get_winner()
     errors += (pred!=true)

@@ -52,7 +52,7 @@ class CompetitorSetCollection:
       
     self.num_sets = self.sq.rqst('select max(set_id) from '+self.db).fetch_row(1)[0][0]
     
-  def get_num_samples(self):
+  def get_nsamples(self):
     ''' Get the overall number of samples (= competitor sets) in our data'''
     return self.num_sets
   
@@ -65,7 +65,7 @@ class CompetitorSetCollection:
 
 if __name__=='__main__':
   cs_coll = CompetitorSetCollection()
-  print cs_coll.get_num_samples()
+  print cs_coll.get_nsamples()
   cs = cs_coll.get_sample(43)
   print cs.get_hostID()
   print cs.get_surferlist()
