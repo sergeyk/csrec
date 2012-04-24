@@ -8,6 +8,11 @@ import time
 import cPickle
 import os
 from Sqler import *
+from mpi4py import MPI
+comm = MPI.COMM_WORLD
+comm_rank = comm.Get_rank()
+comm_size = comm.Get_size()
+
 
 
 def plot_host(sq, reqs, cluster):
@@ -147,25 +152,23 @@ def clusterize(sq, reqs):
 
   return req_sets  
 
-def get_sessions(suffix,lower,upper,force=False):
+def get_sessions(suffix,lower,upper,force=False, machine=0):
   sq = Sqler()
   sq_write = Sqler()
 #  sq.count_user_columns()
 #  table = 't_good_hosts_2010_requests'
-  table = 'couchrequest'
-
+  table = 'couchrequest'  
   
-  
-  filename = 'all_requests_'+suffix
+  filename = 'all_requests_'+suffix+'_'+str(machine)
   if os.path.isfile(filename) and not force:
     all_rqsts = cPickle.load(open(filename, 'r'))
     print 'load db from file'
   else:
     t = time.time() 
-    res = sq.get_requests(table,lower,upper)
+    res = sq.get_requests(table,lower,upper,machine)
     t -= time.time()
     print 'db query took %f sec'%(-t)
-    #cPickle.dump(all_rqsts, open(filename, 'w'))
+    cPickle.dump(all_rqsts, open(filename, 'w'))
       
   # format all_rqsts: host_user_id, status, surf_user_id, id, rmd
   #num_rows = len(all_rqsts)
@@ -174,7 +177,6 @@ def get_sessions(suffix,lower,upper,force=False):
   comp_set_id = 0
   t = time.time()
 #  suitor_sets = []
-  #for rowdex in range(num_rows):
   while True:
     row = res.fetch_row(1,0)      
     if row == ():
@@ -198,15 +200,15 @@ def get_sessions(suffix,lower,upper,force=False):
       clus = clusterize(sq_write, reqs)
       t_clus -= time.time()
       
-      curr_rqst = 'INSERT INTO `competitor_sets_val` VALUES'
+      curr_rqst = "INSERT INTO `competitor_sets` VALUES"
       for cl in clus:        
         for r in cl:
           winner = (r[1] == 'Y')
-          curr_rqst += '( '+str(r[3])+' , '+ str(comp_set_id)+' , '+str(last_hid) + \
-            ' , '+ str(r[2])+' , '+str(int(winner))+ '),'
-        #print 'r', curr_rqst
+          curr_rqst += "( "+str(r[3])+" , "+ str(comp_set_id)+" , "+str(last_hid) + \
+            " , "+ str(r[2])+" , "+str(int(winner))+ " , '"+str(r[4])+ "' ),"
+        #print "r", curr_rqst
         comp_set_id += 1
-      sq_write.rqst(curr_rqst[:-1]+';')
+      sq_write.rqst(curr_rqst[:-1]+";")
         
             
 #      print '\tclus: %f'%(-t_clus)      
@@ -253,11 +255,11 @@ if __name__=='__main__':
   
 #  lower = 5464099
 #  upper = 2*lower+1
-  lower = 10001
+  lower = 0
   #upper = 5464099
   upper = 10000
   
   
   suffix = 'train'#'train_'+str(lower)+'_'+str(upper)
-  get_sessions(suffix, lower, upper, force=True)
+  get_sessions(suffix, lower, upper, force=True, machine=comm_rank)
   #get_sessions('test', 5464099, 5464100)
