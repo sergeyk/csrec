@@ -10,12 +10,17 @@ import os
 
 class Sqler:
   def __init__(self):
-    self.db = sql.connect(db='CSRec')
+    if os.path.exists('/u/vis/'):
+      self.db = sql.connect(db='csrec',user='tobibaum',unix_socket='/u/vis/x1/sergeyk/mysql/mysql.sock')
+    elif os.path.exists('/home/tobibaum/'):    
+      self.db = sql.connect(db='CSrec')
+      
 
   def rqst(self, request):
     t = time.time()
     self.db.query(request)
     t -=time.time()
+    
     print 'db request took %f seconds'%(-t)
     return self.db.use_result()
 
@@ -47,9 +52,13 @@ class Sqler:
     rows = res.fetch_row(num,1)
     return rows
   
-  def get_requests(self, table, lower, upper):
+  def get_requests(self, table, lower, upper,machine):
+    the_table = "(select couchrequest.host_user_id, couchrequest.status, \
+    couchrequest.surf_user_id, couchrequest.id, couchrequest.rmd from couchrequest join \
+    map_host_machine on (couchrequest.host_user_id = map_host_machine.host_user_id) \
+    where map_host_machine.num = "+str(machine)+" ) as T"
     res = self.rqst("select host_user_id, status, surf_user_id, id, rmd from " + \
-                    table+" order by host_user_id, rmd limit "+str(lower)+","+str(upper))
+                    the_table+" order by host_user_id, rmd limit "+str(lower)+","+str(upper))
     # instead of all at a time fetch  the rows one after the other.
     return res # TODO: changing here!
   
