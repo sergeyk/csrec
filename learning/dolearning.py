@@ -4,7 +4,6 @@ Created on Thu Apr 19 17:34:55 2012
 
 @author: Tim
 """
-from IPython import embed
 
 from competitor_sets.competitor_sets import CompetitorSet, CompetitorSetCollection
 
@@ -60,10 +59,7 @@ for i in range(N-8):
       i += 8
     competitorset = dataobject.get_sample(i)
     
-    try:
-      pred = sgd.predict(competitorset)
-    except:
-      embed()
+    pred = sgd.predict(competitorset)
     true = competitorset.get_winner()
     errors += (pred!=true)
     
