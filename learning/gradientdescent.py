@@ -7,7 +7,7 @@ We assume the following format:
     - competitorset structure: dict with keys hostID, list_surfers [(surferID, requestID), ...], winner (surferID or None if all rejected)
 
 TODO:
-    - 
+    - allow to initialize learning with given parameters (e.g. "in the middle of learning")
 
 @author: Tim
 """
@@ -17,11 +17,11 @@ import numpy as np
 
 class SGDLearning:
 
-    def __init__(self, featuredimension, get_feature_function):
-        self.theta = np.zeros(featuredimension)
-        self.r = 0
+    def __init__(self, featuredimension, get_feature_function, theta=None, r=None, r_hosts=None):
+        self.theta = theta if theta else np.zeros(featuredimension) 
+        self.r = r if r else 0
         #r_hosts = np.zeros(nhosts) # do I need dictionary here: hostID -> param?
-        self.r_hosts = {}
+        self.r_hosts = r_hosts if r_hosts else {}
         self.get_feature = get_feature_function
     
     def get_score(self, feature):
