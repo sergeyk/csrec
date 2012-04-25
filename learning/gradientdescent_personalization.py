@@ -26,16 +26,21 @@ def inthash(x,y,N): # take this one
 
 class SGDLearningPersonalized:
 
-    def __init__(self, featuredimension, get_feature_function, memory_for_personalized_parameters):
+    def __init__(self, featuredimension, get_feature_function, memory_for_personalized_parameters, theta=None, r=None, r_hosts=None, theta_hosts=None):
         self.featuredimension = featuredimension
-        self.theta = np.zeros(featuredimension)
-        self.r = 0
+        self.theta = theta if theta!=None else np.zeros(featuredimension) 
+        self.r = r if r else 0
         #r_hosts = np.zeros(nhosts) # do I need dictionary here: hostID -> param?
-        self.r_hosts = {}
+        self.r_hosts = r_hosts if r_hosts else {}
         self.get_feature = get_feature_function
-        # build large array that the personalized host parameters are hashed into
-        self.nelements = memory_for_personalized_parameters * 1000000 / 8 # assuming 64bit floats, and memory in MB
-        self.theta_hosts = np.zeros(self.nelements)
+        
+        if theta_hosts!=None:
+            self.theta_hosts = theta_hosts
+            self.nelements = len(self.theta_hosts)
+        else:
+            # build large array that the personalized host parameters are hashed into
+            self.nelements = memory_for_personalized_parameters * 1000000 / 8 # assuming 64bit floats, and memory in MB
+            self.theta_hosts = np.zeros(self.nelements)
     
     def get_score(self, feature, theta_h):
         return np.exp(np.dot(self.theta + theta_h,feature))
@@ -185,8 +190,14 @@ if __name__=='__main__':
     featuredimension = 3
     get_feature_function = get_feature # here Ron's function should go
     memsize = 1 #MB
-    sgd = SGDLearningPersonalized(featuredimension, get_feature_function, memsize)
-    niter = 100
+    #sgd = SGDLearningPersonalized(featuredimension, get_feature_function, memsize)
+    theta = np.arange(3)
+    r = 17
+    r_hosts = {}
+    theta_hosts = np.random.rand(20) - 0.5
+    sgd = SGDLearningPersonalized(featuredimension, get_feature_function, memsize, theta=theta, r=r, r_hosts=r_hosts, theta_hosts=theta_hosts)    
+    
+    niter = 1000
     
     # do a couple update steps
     for i in range(niter):
