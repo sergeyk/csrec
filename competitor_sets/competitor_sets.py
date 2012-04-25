@@ -4,6 +4,7 @@
 import numpy as np
 from Sqler import *
 
+
 class CompetitorSet:
   
   def __init__(self, dict):
@@ -23,8 +24,9 @@ class CompetitorSet:
   def get_winner(self):
     winner = None
     for r in self.dict:
-      if r['winner'] == 1:
+      if int(r['winner']) == 1:
         winner = int(r['surfer_id'])
+        #print 'winner is', winner
         break
     return winner
   
@@ -52,7 +54,7 @@ class CompetitorSetCollection:
       
     self.sq.rqst('select max(set_id) from '+self.db+';')
     req = self.sq.get_row(0)[0][0]
-    self.num_sets = int(req)
+    self.num_sets = int(req)-8
     self.sq.get_row()
     
   def get_nsamples(self):
@@ -61,7 +63,9 @@ class CompetitorSetCollection:
   
   def get_sample(self, n):
     ''' Get an CompetitorSet object of the sample with index n'''
-    request = 'select * from '+self.db+' where set_id = '+str(n)+';'
+    if n < 8:
+      n += 8
+    request = 'select * from '+self.db+' where set_id = '+str(n+1)+';'
     res = self.sq.rqst(request)
     rows = res.fetch_row(res.num_rows(),1)
     return CompetitorSet(rows) 

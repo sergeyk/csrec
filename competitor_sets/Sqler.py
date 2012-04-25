@@ -15,12 +15,13 @@ class Sqler:
     elif os.path.exists('/home/tobibaum/'):    
       self.db = sql.connect(db='CSRec')
 
-  def rqst(self, request):
+  def rqst(self, request, verbose=False):
     t = time.time()
     self.db.query(request)
     t -=time.time()
     
-    print 'db request took %f seconds'%(-t)
+    if verbose:
+      print 'db request took %f seconds'%(-t)
     res = self.db.use_result()
     self.res = res
     return res
