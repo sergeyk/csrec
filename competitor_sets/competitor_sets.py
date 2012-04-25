@@ -3,6 +3,7 @@
 
 import numpy as np
 from Sqler import *
+from IPython import embed
 
 
 class CompetitorSet:
@@ -44,28 +45,31 @@ class CompetitorSetCollection:
   ''' Storage of all competitor sets for all hosts. Load from dump, provide 
   CompetitorSet object'''
   
-  def __init__(self, validation=False):
+  def __init__(self, validation=False, testing=False):
     # TODO: Load the competitor sets and determine number of sets.
     self.sq = Sqler()
-    if validation:
-      self.db = 'competitor_sets_val'
+    if testing:
+      if validation:
+        self.db = 'competitor_sets_test_val'
+      else:
+        self.db = 'competitor_sets_test_train'
     else:
       self.db = 'competitor_sets'
-      
-    self.sq.rqst('select max(set_id) from '+self.db+';')
-    req = self.sq.get_row(0)[0][0]
-    self.num_sets = int(req)-8
-    self.sq.get_row()
-    
+        
+    res = self.sq.rqst('select set_id from '+self.db+' group by set_id;')
+    all_sets = res.fetch_row(10000,0)
+    self.set_ids = [ int(x[0]) for x in all_sets]
+#    print self.set_ids
+    self.num_sets = len(self.set_ids) 
+            
   def get_nsamples(self):
     ''' Get the overall number of samples (= competitor sets) in our data'''
     return self.num_sets
   
   def get_sample(self, n):
     ''' Get an CompetitorSet object of the sample with index n'''
-    if n < 8:
-      n += 8
-    request = 'select * from '+self.db+' where set_id = '+str(n+1)+';'
+    set_id = self.set_ids[n]
+    request = 'select * from '+self.db+' where set_id = '+str(set_id)+';'
     res = self.sq.rqst(request)
     rows = res.fetch_row(res.num_rows(),1)
     return CompetitorSet(rows) 
