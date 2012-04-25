@@ -8,6 +8,8 @@ import cPickle
 import os
 from Sqler import *
 from mpi4py import MPI
+import shutil
+import csrec_paths
 
 comm = MPI.COMM_WORLD
 comm_rank = comm.Get_rank()
@@ -25,7 +27,8 @@ def rename_clusters(cluster):
     index = cluster[idx]
     if not index == last_ind:
       if index < smallest_ind:
-        raise RuntimeError("Well...What? they should be ordered!")
+        embed()
+        #raise RuntimeError("Well...What? they should be ordered!")
       # swap vals
       swap_inds(cluster, smallest_ind, index)
       last_ind = smallest_ind
@@ -49,7 +52,6 @@ def split_requests(reqs, cluster):
   return req_sets
   
 def clusterize(sq, reqs):
-  # TODO: This can definitely be sped up!
   # ========= Cluster Responses =============
   rsps_raw = [sq.convert_datetime(x[4]) for x in reqs]
   
@@ -76,83 +78,47 @@ def clusterize(sq, reqs):
 
 def get_sessions(lower, upper, force=False):
   sq = Sqler()
-  sq_write = Sqler()
   table = 'couchrequest'  
+  
+  filename = 'cluss_'+str(comm_rank)
+  if os.path.exists(filename) and not force:
+    return
   
   t = time.time() 
   res = sq.get_requests(table,lower,upper)
   t -= time.time()
   print 'db query took %f sec'%(-t)  
       
-  # format all_rqsts: host_user_id, status, surf_user_id, id, rmd
   last_hid = -1
-  reqs = []
-  comp_set_id = 0
-  t = time.time()
-  last_disp_time = time.time() 
-  count = 0
-  complain_filename = 'complain_file'
+  reqs = [] 
   rows = res.fetch_row(11000000,0)
   print 'read all rows'
   num_rows = len(rows)
   print 'there are %d rows'%num_rows
-#  cPickle.dump(rows, open('dump_rows_'+comm_rank,'r'))
-#  return
-  
+
+  cluss = []
   for rowdex in range(num_rows):
     row = rows[rowdex]
-    count += 1
     
     hid = row[0]
     if not last_hid == hid and not last_hid == -1:
       # we have a new host
       print 'at host %s'%last_hid
-      # do something with reqs
       into_next = False
       if len(reqs) == 0:
         reqs.append(row)
       else:
-        into_next = True  
-    
-      t_clus = time.time()
-      clus = clusterize(sq_write, reqs)
-      t_clus -= time.time()
-      
-      curr_rqst = "INSERT INTO `competitor_sets2` VALUES"
-      
-      for cl in clus:        
-        for r in cl:
-          winner = (r[1] == 'Y')
-          curr_rqst += "( "+str(r[3])+" , "+ str(comp_set_id)+" , "+str(last_hid) + \
-            " , "+ str(r[2])+" , "+str(int(winner))+ " , '"+str(r[4])+ "', " +str(comm_rank)+" ),"
-        comp_set_id += 1
-      try:
-        sq_write.rqst(curr_rqst[:-1]+";")
-      except:
-        # What is going on here? print out this request and machine
-        cfile = open(complain_filename, 'a')
-        complain = '%d: %s\n'%(comm_rank, curr_rqst[:-1]+";")
-        cfile.writelines(complain)
-        cfile.close()
-                        
+        into_next = True    
+      clus = clusterize(sq, reqs)      
+      cluss += clus                              
       reqs = [row]      
     else:
-      reqs.append(row)
-    
-    last_hid = hid
-    
-  t -= time.time()
-  count = comm.reduce(count)
-  cfile = open(complain_filename, 'a')
-  complain = '%d had %d rows\n'%(comm_rank, count)
-  cfile.writelines(complain)
-  cfile.close()
-  if comm_rank == 0:
-    print 'We saw a total of %d line'%(count)  
-  return    
+      reqs.append(row)    
+    last_hid = hid  
+  cPickle.dump(cluss, open(filename,'w'))
 
-if __name__=='__main__':
-  
+
+def create_sessions():  
   num_hosts = 845024
   upper = num_hosts/comm_size
   lower = comm_rank*upper
@@ -160,4 +126,51 @@ if __name__=='__main__':
     # This is the last machine, why don't we just give it the remaining hosts.
     upper*=2  
   print '%d: %d - %d'%(comm_rank, lower,upper)
-  get_sessions(lower, upper, force=True)
+  get_sessions(lower, upper, force=False)
+  
+def new_filehandle(i):
+  filename = 'insert_file_%d.sql'%i
+  shutil.copyfile('fill_comp_set_blank', filename)
+  file_out = open(filename, 'a')
+  return file_out
+
+def compile_sessions():
+  fileextension = 0
+  file_out = new_filehandle(fileextension)    
+  very_first = True  
+  comp_set_id = 0
+  too_much_count = 0
+  
+  for i in range(2):
+    read_cluss = cPickle.load(open('cluss_%d'%i,'r'))
+    print 'opened file %d'%i
+    ###################
+    for cl in read_cluss:        
+      for r in cl:
+        if not very_first:
+          file_out.writelines(',\n')
+        else:
+          very_first=False  
+        winner = (r[1] == 'Y')
+        # in-order: host_user_id, status, surf_user_id, id, rmd
+        # out-order: req_id, set_id, host_id, surfer_id, winner, date
+        write_string = "( "+str(r[3])+" , "+ str(comp_set_id)+" , "+str(r[0]) + \
+          " , "+ str(r[2])+" , "+str(int(winner))+ " , '"+str(r[4])+ "' )"
+        file_out.writelines(write_string)
+      
+      print 'wrote comp set %d'%comp_set_id
+      too_much_count += 1
+      if too_much_count > 300000:
+        fileextension += 1
+        too_much_count = 0
+        file_out.close()
+        file_out = new_filehandle(fileextension)
+      comp_set_id += 1        
+    ###################
+  file_out.writelines(';')  
+  
+if __name__=='__main__':
+  if comm_size > 1:
+    create_sessions()
+  else:
+    compile_sessions()

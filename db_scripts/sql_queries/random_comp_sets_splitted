@@ -1,0 +1,2 @@
+select competitor_sets.* from competitor_sets join (select host_id from competitor_sets group by host_id order by rand() limit 0,100) as T on (competitor_sets.host_id = T.host_id) where date < '2011-03-29 11:41:04'
+
