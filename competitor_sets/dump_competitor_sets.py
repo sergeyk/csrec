@@ -74,11 +74,9 @@ def clusterize(sq, reqs):
     embed()
   return req_sets  
 
-def get_sessions(suffix,lower,upper,force=False):
+def get_sessions(lower, upper, force=False):
   sq = Sqler()
   sq_write = Sqler()
-#  sq.count_user_columns()
-#  table = 't_good_hosts_2010_requests'
   table = 'couchrequest'  
   
   t = time.time() 
@@ -94,9 +92,12 @@ def get_sessions(suffix,lower,upper,force=False):
   last_disp_time = time.time() 
   count = 0
   complain_filename = 'complain_file'
-  rows = res.fetch_row(1000000,0)
+  rows = res.fetch_row(11000000,0)
   print 'read all rows'
   num_rows = len(rows)
+  print 'there are %d rows'%num_rows
+#  cPickle.dump(rows, open('dump_rows_'+comm_rank,'r'))
+#  return
   
   for rowdex in range(num_rows):
     row = rows[rowdex]
@@ -139,6 +140,7 @@ def get_sessions(suffix,lower,upper,force=False):
       reqs.append(row)
     
     last_hid = hid
+    
   t -= time.time()
   count = comm.reduce(count)
   cfile = open(complain_filename, 'a')
@@ -158,6 +160,4 @@ if __name__=='__main__':
     # This is the last machine, why don't we just give it the remaining hosts.
     upper*=2  
   print '%d: %d - %d'%(comm_rank, lower,upper)
-  suffix = 'train'#'train_'+str(lower)+'_'+str(upper)
-  get_sessions(suffix, lower, upper, force=True)
-  #get_sessions('test', 5464099, 5464100)
+  get_sessions(lower, upper, force=True)

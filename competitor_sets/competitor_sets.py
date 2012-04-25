@@ -57,7 +57,7 @@ class CompetitorSetCollection:
       self.db = 'competitor_sets'
         
     res = self.sq.rqst('select set_id from '+self.db+' group by set_id;')
-    all_sets = res.fetch_row(10000,0)
+    all_sets = res.fetch_row(10000,0) # TODO: this must change
     self.set_ids = [ int(x[0]) for x in all_sets]
 #    print self.set_ids
     self.num_sets = len(self.set_ids) 
