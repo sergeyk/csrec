@@ -6,7 +6,7 @@ def find_missing_requests(max_rows):
   sqA = Sqler()
   sqB = Sqler()
   sqA.rqst("select id from couchrequest order by id")
-  sqB.rqst("select req_id from competitor_sets order by req_id")
+  sqB.rqst("select req_id from competitor_sets2 order by req_id")
   
   moveB = True
   missing = []
@@ -46,18 +46,18 @@ def write_missing_to_table(missing):
   miss_chunks = chunks(missing,10000)
   sq = Sqler() 
   for miss in miss_chunks:    
-    curr_rqst = "INSERT INTO `missing_requests` VALUES"
+    curr_rqst = "INSERT INTO `missing_requests2` VALUES"
     for m in miss:
       curr_rqst += "( "+str(m)+" ),"
     sq.rqst(curr_rqst[:-1]+";")
   
 
 if __name__=='__main__':
-#  max_rows = 1000
-#  missing = find_missing_requests(max_rows)
-#  cPickle.dump(missing, open('missing_requests', 'w'))
+  max_rows = 12000000
+  missing = find_missing_requests(max_rows)
+  cPickle.dump(missing, open('missing_requests2', 'w'))
 #  #print missing
-#  print 'there are %d missing'%len(missing)
-  missing = cPickle.load(open('missing_requests', 'r'))
+  print 'there are %d missing'%len(missing)
+  missing = cPickle.load(open('missing_requests2', 'r'))
   write_missing_to_table(missing)
   
