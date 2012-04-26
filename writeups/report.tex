@@ -1,0 +1,184 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\pagestyle{headings}
+\usepackage[top=1in, bottom=1in]{geometry}
+\usepackage{amsmath,amsfonts,amsthm,amssymb}
+\usepackage[pdftex]{graphicx}
+\usepackage{url}
+\usepackage{subfig}
+\usepackage{color}
+\usepackage[pagebackref=true,breaklinks=true,colorlinks,bookmarks=false,citecolor=red,linkcolor=red]{hyperref}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{amssymb}
+\usepackage{ifthen}
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+
+%% Command definitions
+\def\subsectionautorefname{section}
+\newcommand{\todo}[1]{\textcolor{red}{#1}}
+\definecolor{light-gray}{gray}{0.3}
+\newcommand{\aside}[1]{\textcolor{light-gray}{\emph{#1}}}
+\newcommand{\comment}[1]{}
+
+\newcommand{\shownotes}{0}
+\ifthenelse{ \shownotes = 1}
+{ \newcommand{\note}[3]{\marginpar{\textcolor{black}{#1:} \textcolor{red}{\emph{#2}}} \textcolor{red}{#3}} }
+{ \newcommand{\note}[3]{\textcolor{black}{#3}} }
+
+\title{Recommending Couches to Surf: Machine Learning for Social Travel}
+\author{Ron Sun, Tobi Baumgartner, Tim Althoff, Sergey Karayev}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+Check.
+
+\begin{quote}
+Among those to whom I did not write “couch requests” were “a travelling magician and professional fool” from New Mexico; a sixty-three-year-old gay semi-retired handyman in Pahoa, Hawaii, whose mission is “looking for more nudists” (there are plenty of “clothing optional” possibilities on CouchSurfing); another Hawaiian, this one describing himself as “just a guy who has three acres of land, living in a shipping container house”; a woman in Bozeman, Montana, who declared that her “home is oppression-free. Yay!” and also contains high-speed Wi-Fi; a thirty-one-year-old female “daydreamer” from Berkeley who loves pajamas; a Tarot-card reader in Marfa, Texas; a housewife in Charleston, South Carolina, who owns a pole-dancing studio called Dolphin Dance; a kite-surfing physician (again, Charleston) whose ambition is to start a flavored-envelope company; a freelance photographer in San Francisco who claims she’s had hiccups every day for the past five years; a Savannah, Georgia, scientist who is also a “free man,” doing “whatever I want, whenever I want”; a male in Antarctica who wishes to live as a female; a “lovetarian” who grew up in Doylestown, Pennsylvania; [...] and eighty-four people in Brunei Darussalam.
+\footnote{Marx, Patricia. You're Welcome: Couch-surfing the globe. April 16, 2012. \emph{New Yorker.} Retrieved from \url{http://www.newyorker.com/reporting/2012/04/16/120416fa_fact_marx}}
+\end{quote}
+
+Our new global interconnectedness has made social interactions that were previously unthinkable commonplace.
+Whereas even a few decades ago a traveler had to either have a friend or pay for a hotel for lodging while traveling, today people so inclined can stay for free at complete strangers' residences, in locations that span all countries and continents.
+Such accomodations are arranged via special-purpose websites that let users list their apartment as available to host travelers (people in this use case are henceforth referred to as ``hosts''), and to request lodging from the hosts (``suitors'').
+Among these websites, by far the biggest is CouchSurfing~\footnote{~\url{http://www.couchsurfing.org/}}, a company started in \todo{look this stuff up in the new yorker article: when started, usage stats.}
+
+As the New Yorker writer detailed, there is a staggering variety of people on CouchSurfing.
+While a certain fraternizing spirit is strong with most users of the site (after all, they are willing to host or guest with strangers in exchange for no money), people still enjoy the company of kindred spirits the most.
+
+When a suitor is looking for lodging, they do a search for available couches (or beds, or the floor, as the case may be) in the destination location.
+Usually, they are presented with an array of choices, often more than can quickly be looked through---or messaged.
+It would be beneficial to a searching suitor to have hosts that are available, agreeable, and likely to respond positively displayed at the top of the list.
+Similarly, hosts in popular locations are inundated with requests for accomodation.
+To save time, suitors that would be agreeable to them should be displayed at the top.
+
+In discussion with the developers of CouchSurfing, we established that they perceived the second scenario to be highly prevalent and more in need of a recommendation system solution than the first.
+In this work, we develop a system to automatically evaluate the couch requests that hosts get with respect to the likelihood of a successful and pleasant visit, and so make the CouchSurfing experience as convenient as possible.
+We focus on the second scenario, but note that a good solution to it benefits the first use case as well.
+
+\subsection{Related Work}
+\todo{smooth this out}
+
+\paragraph{Harvesting Social Network Profiles for Recommendations} \cite{Liu2005}
+Their research is so similar to what we're doing it's scary.
+I think if we combine their normalization techniques + Koren's collaborative filtering algorithms, we'll be in good shape.
+
+\paragraph{Like like alike} \cite{Yang2011}
+In this paper the joint information in friendships and interests is used (although Couchsurfing friendships are probably presumably more sparse).
+A graphical model is used to do a joint propagation of interest.
+One idea might be be not only to take the host's and the surfer' interests from there profiles, but assume that they are incomplete and try to predict other interests similar to this paper. While they practically only have positives we will also have negative feedback (couch request rejects), but they have an interesting idea of using randomly sampled "weak negatives" to correct for a bias towards positive samples.
+Furthermore they use SGD learning and the feature hashing trick which is very relevant to our project.
+Their evaluation part describes standard ranking metrics that become interesting/necessary if we pool "all positives (i.e. all accepted couch requests)" instead of having a "1 positive, multiple negatives" problem.
+Also interesting is the idea of homophily: people with similar interests attract each other. This provides a general motivation of what we are doing in our project.
+
+\paragraph{CoFiRank} \cite{Weimer2009}
+This paper learns features/latent factors but does not allow for additional observations (apart from ratings).
+We, however, have more features we want to use (i.e. demographic and geographic papers).
+hey learn how to rank as opposed to how to score and also provide a definition of nDCG.
+It leads to a structured estimation SVM-like optimization problem and there seems to be C++ software available.
+Still, we should start with an easier (probably linear) model and we might use a classification instead of a ranking framework.
+
+\paragraph{Fair and Balanced} \cite{Ahmed2012}
+This paper is very tailored towards news articles and implicit click data (that we don't have) and therefore not very applicable.
+The notion of submodularity / diminishing returns is not applicable for us since or hosts can only accept one request at a time.
+Most interesting and applicable is the personalization idea leading to the hashing trick.
+
+\paragraph{Optimizing Search Engines through clickthrough data} \cite{Joachims2002}
+While the application is very different from ours (because we don't have implicit click feedback) the general idea of using an SVM type of optimization problem is very applicable.
+If we modeled our general problem as a ranking instead of a classification problem we could use the formulation of Problem 2 in Section 4.2.
+The constraints will be all the order relations based on accepts/rejects of couch requests.
+
+\paragraph{An Enhanced Semantic Layer for Hybrid Recommender Systems} \cite{Cantador2011}
+%Ontology: They use \url{http://ir.ii.uam.es/news-at-hand/iptc-ontology_v01.rdfs} which comes from the news codes ontology at \url{http://www.iptc.org/site/NewsCodes}.
+This paper deals with semantic annotation, which is essentially mapping a document to its ontology entities (almost like topic modeling). They extract terms, map the terms to ontology entities (by looking up the term's wikipedia article and construct a vector of applicable ontology entities based on what categories appear in the wikipedia article), and then measure the strength of those mappings using the tf-idf measure.
+They build a news recommender system that recommends based on activation propagation.
+
+\section{Data Exploration}
+The CouchSurfing dataset was made privately available to the authors in the form of an anonymized MySQL database dump.
+In the process of 	
+
+\subsection{Host and suitor distribution}
+\todo{add visualizations such as the ones Tobi made}
+
+\subsection{Matters of time}
+\todo{visualize and discuss the kind of plots we've been drawing on the white board showing viability and preference order of requests}
+
+\subsection{User interests}
+
+\subsection{Model}
+Ranking:
+Does anyone have a clear idea of how to learn feature weights?  I guess before we worry about learning the weights, we should figure out what kind of features we want.  I think there's really 3 possibilities:
+
+What Sergey explained on the white board.  You have a feature vector per suitor and you dot that with your trained "host preferences" weights. And then do some black magic exponentiation to make things nice. We haven't figured out how to make this "reversible".  This makes no assumption for homophily.
+Generate a feature vector for the host and each suitor. Compute a cosine similarityish thing between the host vector and each suitor vector and rank by most similar. Each vector can have demographic, socioeconomic, and interest features.  This makes the assumption of homophily. We assume more similar = higher conversion rate. This method is reversible.
+
+%Interest graph: the compatibility strength between suitor and host is determined by $num_overlapping_interest(host, suitor)$ through some type of decaying activation propagation.  This will be based on the "Taste Fabric" paper and the "Semantic Recommendation" paper.  This method assumes homophily and that interests are the strongest attractors between people (doesn't take into account demographics etc.).  This method is reversible.
+
+\subsection{Temporally blind prediction of host-suitor pairings}
+The first formulation of the problem ignores the temporal nature of the requests.
+We simply wish to answer the prediction problem of which couch requests to a host will result in a match, ignoring any notions of ranking against contemporal requests.
+
+From the CouchSurfing user database, we form a set of \emph{hosts} $\mathcal{H}$ such that every $h \in \mathcal{H}$ has hosted at least $K$ persons since signing up for a user account.
+We initially set $K=1$, but the proper setting may be higher to reduce the amount of noise in the set of hosts.
+
+For every host $h_n$, there is a corresponding list of t least $K$ \emph{suitors} $\mathcal{S}_n$, where a suitor $s \in \mathcal{S}_n$ has made at least one couch request to $h_n$.
+
+\subsection{Implicit Negatives}
+\label{sec:implicitNeg}
+In order to apply learning algorithms to our problem and evaluate the resulting recommendations for the hosts, we need to get positive as well as negative samples from the data. If we just had the positive data (i.e. accepted couches) the only thing we could evaluate for would be \textit{true positives} and \textit{false negatives}, but for a meaningful computation of \textit{precision} and \textit{recall} we also want to learn about \textit{false positives}, which can only be gathered given negative test samples.
+
+In the following, requests carry the same index as the user/suitor that invoked them, i.e., suitor $s_i$ send request $r_{i,j}$ to host $h$. Wlog we can assume for now that each user just sends at most one request to each couch. $h$ is fixed in the upcoming examples, so we just denote requests as $r_i$.
+ 
+The CS system allows hosts to reject a couch request, which indicates a negative sample. We call those \textit{explicit negatives}. Over that it is also possible to imply negatives from other information; If we take for example a host $h$ with a very popular couch in Paris with \note{TB}{reasonable number?}{10s} of requests per day, it is reasonable to assume that $h$ will not look into every request, but will stop reading more requests after deciding for a specific suitor $s_i$. For a given period $\tau$, let $R_{j}^{\tau} = r_1, r_2,\ldots,r_n$ be the requests send to $h$. Assuming that $h$ picks a suitor after reading $k$ requests, we now also have to handle the fact that requests may not be seen at all. Also it might happen that $h$ sees a certain request but decides not to respond to it which is like a negative response. These are called \textit{implicit negatives}. We hereby assume that if at a certain time host $h$ accepts a request $r_i$ for period $\tau$, she prefers the requesting suitor $s_i$ over all other users whose requests she read that overlap with $\tau$. An efficient sweep-line algorithm to find sets of overlapping requests is depicted in \note{TB}{Do we even need this?}{algorithm~\ref{alg:overlap}}. One more important thing to keep in mind is that if $h$ accepted a request for period $\tau$ at time $t_0$ and gets another request $r_l$ for $\tau$ at time $t_1 > t_0$, there is no information about whether or not $h$ likes $s_i$, because his couch is already taken, so we have to filter these out before moving on. Now we observe the positive samples as the accepted requests, explicit and implicit negatives as described above and can evaluate our method.
+
+\begin{algorithm}
+\caption{Find overlapping requests}
+\label{alg:overlap}
+\begin{algorithmic} 
+\REQUIRE $R = (r_1, r_2,\ldots,r_n)$, $r_i = (t_i^{start}, t_i^{end})$
+\ENSURE $S\subseteq \mathcal{P}(R)$ 
+\STATE $S \leftarrow \emptyset$
+\STATE $A \leftarrow \emptyset$ 
+\STATE $T {(i, start/end, t_i^{s/t}) |r_i \in R}$
+\STATE $sort(T, t_i^{s/t})$ 
+\STATE $b\_incr \leftarrow True$ 
+\FOR{$t$ in $T$}
+\IF{$t$ == $v_j^{start}$}
+\STATE $A.append(t)$
+\STATE $b\_incr \leftarrow True$
+\ELSE
+\IF{$b\_incr == True$}
+\STATE $b\_incr \leftarrow False$
+\STATE $S.append({r_i | (i, \_, \_) \in A})$
+\ENDIF
+\STATE $A.delete(t)$
+\ENDIF
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+It might also be beneficial to soften the notion of ``overlap'' just because it might be very stressful for a host to have suitors without a gap in between the two visits. Analyzing the data for statistics on gaps for each host seperately will reveal their willingness to host several suitors in a row. The above algorithm can easily be adapted by modifying the input times accordingly.
+
+\subsection{Filter rejects by temporal constraints}
+Using a very similar technique we can filter rejects that are not actually rejects for the reason of a mismatching suitor. Imagine $h$ gets a request $r_1$ at time $t_1$, accepts this request at time $t_2$ and gets another request $r_2$ for the same period as $r_1$ at $t_3$. If we have that $t_1 < t_2 < t_3$, there is no valid information about whether or not $h$ likes suitor $s_2$. By the time he gets the second request, his couch is already booked out and so he has to reject $s_2$ no matter if he would even prefer him over $s_1$. Because of this scenario we filter our training data for exactly those \textit{uninformative rejects} using again algorithm~\ref{alg:overlap} and temporal orderings on requests and acceptances/rejects.
+
+\subsection{Unseen Requests}
+\label{sec:unseen}
+The current state of the system is that $h$ gets an email as soon as a new request is filed and on their profile the requests are presented in \note{TB}{true?}{chronological order} as well. For the mentioned couch in Paris these mails might be archived without being read and interesting request could get lost. For each request $r_i$ we have a binary random variable $seen(h, r_i)$ which is $1$ if $h$ took a look at request $r_i$, independent of whether he click accept/reject/maybe or nothing at all. The probability $p(seen(h,r_i))$ directly corresponds to the objective of this project. The goal is to present the requests to $h$ in order by how likely she is to accept them, or in other words, we want to maximize the probability that $h$ \textit{sees} requests that she would accept by moving them upwards in our ranking and hence reducing the number of overall requests to look at. Maximizing the acceptance/\#views rate is the same as minimizing the rejection/\#views rate, which can be expressed as finding a permutation $\sigma^*$, such that:
+$$\sigma^* = \arg\min_{\sigma}\sum_{i=1}^k p(reject(h, r_{\sigma_i}))$$
+where $k$ is the number of requests that are shown to $h$. 
+In section~\ref{sec:implicitNeg} we assumed that all requests in the \textit{implicit negatives} have been seen by $h$, which is not a perfectly valid model as just stated. Instead we have to compute the following:
+$$p(reject(h, r_i)) = \int p(reject(h, r_i)|seen(h, r_i))\cdot p(seen(h, s_i))$$
+To do so we need a way to estimate $p(seen(h,s_i))$. This probability is both dependent on the manner of $h$ as well as on the order of how the requests are shown to $h$, which is dependent on the time $h$ looks at the requests. We do not have log-files of the website, so we cannot determine which requests $h$ has acutally seen, but we can again try to infer this information from the behavior of the host. Assuming that $h$ acts during each visit of her request-list at least once with a click onto accept/reject/maybe (\textit{active visit}), we can interpolate for each of these events the request-list she saw and assume that $h$ looked at the first $l$ of these requests. We can now for each \textit{active visit} sum up the number of requests $h$ actually saw and reacted upon and the discounted number of the first $l$ request in the list, discounted by $\lambda_i$ for their position $i$ in the list as well as with another host-specific factor $\lambda$.
+
+%\subsection{Evaluation}
+
+
+\bibliographystyle{ieeetr}
+\small
+\bibliography{sergeyk_csrec}
+\end{document}
