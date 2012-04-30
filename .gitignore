@@ -8,3 +8,5 @@ neo4j/datasets/*
 littlepy/
 *.tsv
 *.pkl
+*.brf
+writeups/*.pdf
