@@ -13,13 +13,14 @@ TODO:
 """
 
 import numpy as np
-
+from IPython import embed
 
 class SGDLearning:
 
     def __init__(self, featuredimension, get_feature_function, theta=None, r=None, r_hosts=None):
-        self.theta = theta if theta else np.zeros(featuredimension) 
-        self.r = r if r else 0
+        #self.theta = theta if theta else np.zeros(featuredimension) 
+        self.theta = theta if theta!=None else 0.2*(np.random.rand(featuredimension+1) - 0.5) # +1 to learn bias term
+        self.r = r if r else 0.0
         #r_hosts = np.zeros(nhosts) # do I need dictionary here: hostID -> param?
         self.r_hosts = r_hosts if r_hosts else {}
         self.get_feature = get_feature_function
@@ -42,11 +43,15 @@ class SGDLearning:
         if not self.r_hosts.has_key(hostID):
             self.r_hosts[competitorset.get_hostID()] = 0.0
         
-        features = [self.get_feature(surferID,hostID,requestID) for (surferID, requestID) in competitorset.get_surferlist()]
+        #features = [self.get_feature(surferID,hostID,requestID) for (surferID, requestID) in competitorset.get_surferlist()] # before without bias
+        #features = [np.append(self.get_feature(surferID,hostID,requestID),np.ones(1)) for (surferID, requestID) in competitorset.get_surferlist()] # with appended 1 feature for bias term
+        features = [np.hstack((self.get_feature(surferID,hostID,requestID),np.ones(1)*(surferID==competitorset.get_winner()), np.ones(1))) for (surferID, requestID) in competitorset.get_surferlist()] # CHEAT TODO REMOVE
+        #features = [np.append(2*(np.ones(1)*(surferID==competitorset.get_winner()))-1, np.ones(1)) for (surferID, requestID) in competitorset.get_surferlist()] # w Bias CHEAT TODO REMOVE
         scores = [self.get_score(f) for f in features]
         rejectscore = self.get_rejectscore(hostID)
         
         maxsurfer = np.argmax(scores)
+        # TODO comment out
         #print "rejectscore", rejectscore
         #print "maxsurferscore", scores[maxsurfer]
         #print ""
@@ -56,37 +61,42 @@ class SGDLearning:
             return competitorset.get_surferlist()[maxsurfer][0]
         
     
-    def update(self, competitorset, eta=0.01, regularization_lambda=1):
+    def update(self, competitorset, eta=0.01, lambda_winner=0.1, lambda_reject=1.0):
         hostID = competitorset.get_hostID() 
         # if we don't have a r_host yet create one with param zero
         if not self.r_hosts.has_key(hostID):
             self.r_hosts[hostID] = 0.0        
         
         # get features, scores, and probabilities
-        features = [self.get_feature(surferID,hostID,requestID) for (surferID, requestID) in competitorset.get_surferlist()]
+        #features = [self.get_feature(surferID,hostID,requestID) for (surferID, requestID) in competitorset.get_surferlist()] # before without bias
+        #features = [np.append(self.get_feature(surferID,hostID,requestID),np.ones(1)) for (surferID, requestID) in competitorset.get_surferlist()] # with appended 1 feature for bias term
+        features = [np.hstack((self.get_feature(surferID,hostID,requestID),np.ones(1)*(surferID==competitorset.get_winner()), np.ones(1))) for (surferID, requestID) in competitorset.get_surferlist()] # CHEAT TODO REMOVE
+        #features = [np.append(2*(np.ones(1)*(surferID==competitorset.get_winner()))-1, np.ones(1)) for (surferID, requestID) in competitorset.get_surferlist()] # w Bias CHEAT TODO REMOVE
         scores = [self.get_score(f) for f in features]
         rejectscore = self.get_rejectscore(hostID)
         normalizer = float(np.sum(scores) + rejectscore)
         probabilities = [s/normalizer for s in scores]
         rejectprobability = rejectscore / normalizer
+
         
         # update params based on ground truth
         if competitorset.get_winner()==None:
             # gt -> all got rejected
             temp = [p*f for (p,f) in zip(probabilities,features)]
-            self.theta =  (1 - eta * regularization_lambda) * self.theta - eta * np.sum(temp, axis=0)
-            self.r = self.r - eta * (rejectprobability - 1)
-            self.r_hosts[hostID] =  (1 - eta * regularization_lambda) * self.r_hosts[hostID] - eta * (rejectprobability - 1) 
+            self.theta =  (1 - eta * lambda_winner) * self.theta - eta * np.sum(temp, axis=0)
+            #self.r = self.r - eta * (rejectprobability - 1)
+            self.r = (1 - eta * lambda_reject) * self.r - eta * (rejectprobability - 1)
+            self.r_hosts[hostID] =  (1 - eta * lambda_reject) * self.r_hosts[hostID] - eta * (rejectprobability - 1) 
         else:
             # there was a winner
             winneridx = zip(*competitorset.get_surferlist())[0].index(competitorset.get_winner())
             
             temp = [p*f for (p,f) in zip(probabilities,features)]
-            self.theta = (1 - eta * regularization_lambda) * self.theta - eta * (np.sum(temp, axis=0) - features[winneridx])
-            self.r = self.r - eta * rejectprobability
-            self.r_hosts[hostID] =  (1 - eta * regularization_lambda) * self.r_hosts[hostID] - eta * rejectprobability 
- 
- 
+            self.theta = (1 - eta * lambda_winner) * self.theta - eta * (np.sum(temp, axis=0) - features[winneridx])
+            #self.r = self.r - eta * rejectprobability
+            self.r = (1 - eta * lambda_reject) * self.r - eta * rejectprobability
+            self.r_hosts[hostID] =  (1 - eta * lambda_reject) * self.r_hosts[hostID] - eta * rejectprobability 
+            
 
 if __name__=='__main__':
     print 'Preliminary testing of gradient descent update equations:'

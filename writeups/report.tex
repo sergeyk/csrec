@@ -1,0 +1,56 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\pagestyle{headings}
+\usepackage[top=1in, bottom=1in]{geometry}
+\usepackage{amsmath,amsfonts,amsthm,amssymb}
+\usepackage[pdftex]{graphicx}
+\usepackage{url}
+\usepackage{subfig}
+\usepackage{color}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{amssymb}
+\usepackage{ifthen}
+\usepackage[pagebackref=true,breaklinks=true,colorlinks,bookmarks=false,citecolor=red,linkcolor=red]{hyperref}
+
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+
+%% Command definitions
+\def\subsectionautorefname{section}
+\newcommand{\todo}[1]{\textcolor{red}{#1}}
+\definecolor{light-gray}{gray}{0.3}
+\newcommand{\aside}[1]{\textcolor{light-gray}{\emph{#1}}}
+\newcommand{\comment}[1]{}
+
+\newcommand{\shownotes}{0}
+\ifthenelse{ \shownotes = 1}
+{ \newcommand{\note}[3]{\marginpar{\textcolor{black}{#1:} \textcolor{red}{\emph{#2}}} \textcolor{red}{#3}} }
+{ \newcommand{\note}[3]{\textcolor{black}{#3}} }
+
+\title{Recommending Couches to Surf: Machine Learning for Social Travel}
+\author{Ron Sun, Tobi Baumgartner, Tim Althoff, Sergey Karayev}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+New technologies have made social interactions that were previously unthinkable commonplace.
+When traveling, a viable new option is to be hosted by a friendly resident of the destination, for free---to ``couchsurf.''
+When arranging such accomodation through a web interface, travelers face a daunting list of potential hosts, while hosts in popular destinations are inundated with requests for lodging.
+We postulate that some connections are more likely to happen than others, based on general desired compatibility between host and visitor and on personal host preferences.
+We present a system for predicting successful host-visitor matches, trained and evaluated on data from the most popular website for this purpose: \url{couchsurfing.com}.
+A re-ranking of visitor requests based on our system would be beneficial to the user experience on the website, as hosts would have to look through fewer requests and visitors would be more likely to be matched to a host that is likely to accept them.
+\end{abstract}
+
+\input{introduction}
+\input{related_work}
+\input{data_exploration}
+\input{model}
+\input{evaluation}
+
+\bibliographystyle{ieeetr}
+\small
+\bibliography{sergeyk_csrec}
+\end{document}

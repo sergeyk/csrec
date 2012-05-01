@@ -1,0 +1,47 @@
+% !TEX root=report.tex
+\section{Data Exploration}
+
+The CouchSurfing dataset was made privately available to the authors in the form of an anonymized MySQL database dump.
+In the course of formulating the prediction problem and our approach to it, we explored and visualized some aspects of the data.
+
+\subsection{Host and suitor distribution}
+\todo{discuss this}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=1\linewidth]{figures/req_received_dist.png}
+\caption{Distribution of requests received by a host.}
+\label{fig:requests_distribution}
+\end{figure}
+
+\subsection{Matters of time}
+\todo{discuss this}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=1\linewidth]{figures/temporal_filtering.png}
+\caption{Temporal filtering example.}
+\label{fig:temporal_filtering}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\subfloat[Requested]{
+  \includegraphics[width=0.45\linewidth]{figures/top_requested.png}
+}
+\subfloat[Accepted]{
+  \includegraphics[width=0.45\linewidth]{figures/top_accepted.png}
+}
+\caption{\todo{decribe this}}
+\label{fig:timeline_view}
+\end{figure}
+
+\subsection{User interests}
+\todo{discuss this}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=1\linewidth]{figures/interest_graph.png}
+\caption{Interest graph.}
+\label{fig:interest_graph}
+\end{figure}

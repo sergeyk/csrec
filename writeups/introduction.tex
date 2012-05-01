@@ -1,0 +1,34 @@
+% !TEX root=report.tex
+\section{Introduction}
+
+\begin{quotation}
+Among those to whom I did not write “couch requests” were “a travelling magician and professional fool” from New Mexico; a sixty-three-year-old gay semi-retired handyman in Pahoa, Hawaii, whose mission is “looking for more nudists” (there are plenty of “clothing optional” possibilities on CouchSurfing); another Hawaiian, this one describing himself as “just a guy who has three acres of land, living in a shipping container house”; a woman in Bozeman, Montana, who declared that her “home is oppression-free. Yay!” and also contains high-speed Wi-Fi; a thirty-one-year-old female “daydreamer” from Berkeley who loves pajamas; a Tarot-card reader in Marfa, Texas; a housewife in Charleston, South Carolina, who owns a pole-dancing studio called Dolphin Dance; a kite-surfing physician (again, Charleston) whose ambition is to start a flavored-envelope company; a freelance photographer in San Francisco who claims she’s had hiccups every day for the past five years; a Savannah, Georgia, scientist who is also a “free man,” doing “whatever I want, whenever I want”; a male in Antarctica who wishes to live as a female; a “lovetarian” who grew up in Doylestown, Pennsylvania; ... and eighty-four people in Brunei Darussalam.
+
+-- Patricia Marx. \emph{You're Welcome: Couch-surfing the globe}. New Yorker, April 16, 2012.\footnote{Retrieved from \url{http://www.newyorker.com/reporting/2012/04/16/120416fa_fact_marx}}
+\end{quotation}
+
+Our new global interconnectedness has made social interactions that were previously unthinkable commonplace.
+Whereas even a few decades ago a traveler had to either have a friend or pay for a hotel for lodging while traveling, today people so inclined can stay for free at complete strangers' residences, in locations that span all countries and continents.
+Such accomodations are arranged via special-purpose websites that let users list their apartment as available to host travelers (people in this use case are henceforth referred to as ``hosts''), and to request lodging from the hosts (``suitors'').
+Among these websites, by far the biggest is CouchSurfing (\url{http://couchsurfing.org/}), a company started in \todo{look this stuff up in the new yorker article: when started, usage stats.}
+
+As the New Yorker writer detailed, there is a staggering variety of people on CouchSurfing.
+While a certain fraternizing spirit is strong with most users of the site (after all, they are willing to host or guest with strangers in exchange for no money), people still enjoy the company of kindred spirits the most.
+
+When a suitor is looking for lodging, they do a search for available couches (or beds, or the floor, as the case may be) in the destination location.
+Usually, they are presented with an array of choices, often more than can quickly be looked through---or messaged.
+It would be beneficial to a searching suitor to have hosts that are available, agreeable, and likely to respond positively displayed at the top of the list.
+Similarly, hosts in popular locations are inundated with requests for accomodation.
+To save time, suitors that would be agreeable to them should be displayed at the top.
+An example of a host's inbox is presented in \autoref{fig:sample_request}.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=1\linewidth]{figures/screenshots/requests.png}
+\caption{Example of a host's inbox view.}
+\label{fig:sample_request}
+\end{figure}
+
+In discussion with the developers of CouchSurfing, we established that they perceived the second scenario to be highly prevalent and more in need of a recommendation system solution than the first.
+In this work, we develop a system to automatically evaluate the couch requests that hosts get with respect to the likelihood of a successful and pleasant visit, and so make the CouchSurfing experience as convenient as possible.
+We focus on the second scenario, but note that a good solution to it benefits the first use case as well.
