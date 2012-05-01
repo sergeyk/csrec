@@ -29,8 +29,8 @@ def inthash(x,y,N): # take this one
 class SGDLearningPersonalized:
 
     def __init__(self, featuredimension, get_feature_function, memory_for_personalized_parameters, theta=None, r=None, r_hosts=None, theta_hosts=None):
-        self.featuredimension = featuredimension
-        self.theta = theta if theta else 0.2*(np.random.rand(featuredimension+1) - 0.5) # +1 to learn bias term
+        self.featuredimension = int(featuredimension)
+        self.theta = theta if theta!=None else 0.2*(np.random.rand(featuredimension+1) - 0.5) # +1 to learn bias term
         self.r = r if r else 0.0
         #r_hosts = np.zeros(nhosts) # do I need dictionary here: hostID -> param?
         self.r_hosts = r_hosts if r_hosts else {}
@@ -41,7 +41,7 @@ class SGDLearningPersonalized:
             self.nelements = len(self.theta_hosts)
         else:
             # build large array that the personalized host parameters are hashed into
-            self.nelements = memory_for_personalized_parameters * 1000000 / 8 # assuming 64bit floats, and memory in MB
+            self.nelements = int(memory_for_personalized_parameters * 1000000 / 8.0) # assuming 64bit floats, and memory in MB
 			#TODO: does it make sense to initialize this randomly?
             self.theta_hosts = 0.2*(np.random.rand(self.nelements) - 0.5) #np.zeros(self.nelements)
     
@@ -56,7 +56,7 @@ class SGDLearningPersonalized:
         return np.exp(self.r + self.r_hosts[hostID])
 
     def get_hostparameters(self, hostID):
-        indizes = [inthash(hostID,i,self.nelements) for i in range(self.featuredimension)]
+        indizes = [inthash(hostID,i,self.nelements) for i in range(self.featuredimension+1)] # +1 because of bias term
         theta_h = self.theta_hosts[indizes]
         return theta_h
    
@@ -69,13 +69,13 @@ class SGDLearningPersonalized:
             self.r_hosts[competitorset.get_hostID()] = 0.0
         
         #features = [self.get_feature(surferID,hostID,requestID) for (surferID, requestID) in competitorset.get_surferlist()] # before without bias
-        #features = [np.append(self.get_feature(surferID,hostID,requestID),np.ones(1)) for (surferID, requestID) in competitorset.get_surferlist()] # with appended 1 feature for bias term
-        features = [np.hstack((self.get_feature(surferID,hostID,requestID),np.ones(1)*(surferID==competitorset.get_winner()), np.ones(1))) for (surferID, requestID) in competitorset.get_surferlist()] # CHEAT TODO REMOVE
+        features = [np.append(self.get_feature(surferID,hostID,requestID),np.ones(1)) for (surferID, requestID) in competitorset.get_surferlist()] # with appended 1 feature for bias term
+        #features = [np.hstack((self.get_feature(surferID,hostID,requestID),np.ones(1)*(surferID==competitorset.get_winner()), np.ones(1))) for (surferID, requestID) in competitorset.get_surferlist()] # CHEAT TODO REMOVE
         #features = [np.append(2*(np.ones(1)*(surferID==competitorset.get_winner()))-1, np.ones(1)) for (surferID, requestID) in competitorset.get_surferlist()] # w Bias CHEAT TODO REMOVE
         
         # get personalized hostparameters
         #theta_h = self.get_hostparameters(hostID)
-        indizes = [inthash(hostID,i,self.nelements) for i in range(self.featuredimension)]
+        indizes = [inthash(hostID,i,self.nelements) for i in range(self.featuredimension+1)] # +1 because of bias term
         theta_h = self.theta_hosts[indizes]
         #print "PERS PARAMS", hostID, theta_h # TODO remove
         
@@ -101,14 +101,14 @@ class SGDLearningPersonalized:
         
         # get features, scores, and probabilities
         #features = [self.get_feature(surferID,hostID,requestID) for (surferID, requestID) in competitorset.get_surferlist()] # before without bias
-        #features = [np.append(self.get_feature(surferID,hostID,requestID),np.ones(1)) for (surferID, requestID) in competitorset.get_surferlist()] # with appended 1 feature for bias term
-        features = [np.hstack((self.get_feature(surferID,hostID,requestID),np.ones(1)*(surferID==competitorset.get_winner()), np.ones(1))) for (surferID, requestID) in competitorset.get_surferlist()] # CHEAT TODO REMOVE
+        features = [np.append(self.get_feature(surferID,hostID,requestID),np.ones(1)) for (surferID, requestID) in competitorset.get_surferlist()] # with appended 1 feature for bias term
+        #features = [np.hstack((self.get_feature(surferID,hostID,requestID),np.ones(1)*(surferID==competitorset.get_winner()), np.ones(1))) for (surferID, requestID) in competitorset.get_surferlist()] # CHEAT TODO REMOVE
         #features = [np.append(2*(np.ones(1)*(surferID==competitorset.get_winner()))-1, np.ones(1)) for (surferID, requestID) in competitorset.get_surferlist()] # w Bias CHEAT TODO REMOVE
 
                 
         # get personalized hostparameters
         #theta_h = self.get_hostparameters(hostID) 
-        indizes = [inthash(hostID,i,self.nelements) for i in range(self.featuredimension)]
+        indizes = [inthash(hostID,i,self.nelements) for i in range(self.featuredimension+1)] # +1 because of bias term
         theta_h = self.theta_hosts[indizes]
         
         scores = [self.get_score(f, theta_h) for f in features]
@@ -210,7 +210,8 @@ if __name__=='__main__':
     r = 17
     r_hosts = {}
     theta_hosts = np.random.rand(20) - 0.5
-    sgd = SGDLearningPersonalized(featuredimension, get_feature_function, memsize, theta=theta, r=r, r_hosts=r_hosts, theta_hosts=theta_hosts)    
+    sgd = SGDLearningPersonalized(featuredimension, get_feature_function, memsize) # the +1 is if were cheating, inside the object definition is another +1 which is for the bias term
+    #sgd = SGDLearningPersonalized(featuredimension+1, get_feature_function, memsize, theta=theta, r=r, r_hosts=r_hosts, theta_hosts=theta_hosts)    
     
     niter = 1000
     
@@ -230,6 +231,6 @@ if __name__=='__main__':
         print "\ttrue", cs.get_winner()
         print "\tpredicted", sgd.predict(cs)
         
-        sgd.update(cs, eta=0.1, regularization_lambda=0.1)
+        sgd.update(cs, eta=0.1, lambda_winner=0.1, lambda_reject=0.1)
         
     

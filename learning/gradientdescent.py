@@ -19,7 +19,7 @@ class SGDLearning:
 
     def __init__(self, featuredimension, get_feature_function, theta=None, r=None, r_hosts=None):
         #self.theta = theta if theta else np.zeros(featuredimension) 
-        self.theta = theta if theta else 0.2*(np.random.rand(featuredimension+1) - 0.5) # +1 to learn bias term
+        self.theta = theta if theta!=None else 0.2*(np.random.rand(featuredimension+1) - 0.5) # +1 to learn bias term
         self.r = r if r else 0.0
         #r_hosts = np.zeros(nhosts) # do I need dictionary here: hostID -> param?
         self.r_hosts = r_hosts if r_hosts else {}

@@ -17,6 +17,7 @@ dimension = fg.get_dimension()
 
 # create SGD object, sample different competitorsets, and do learning
 from gradientdescent import SGDLearning
+from gradientdescent_personalization import SGDLearningPersonalized
 import random
 
 
@@ -86,13 +87,14 @@ def test(sgd, data):
  
 
 # CV over lamba1, lambda2
-#lambdas = [10**-4, 10**-3, 10**-2, 10**-1, 10**0, 10**+1, 10**+2]
-lambdas = [10**-3]
+lambdas = [10**-4, 10**-3, 10**-2, 10**-1, 10**0, 10**+1, 10**+2]
+#lambdas = [10**-3]
 trainerrors = np.zeros((len(lambdas),len(lambdas)))
 testerrors = np.zeros((len(lambdas),len(lambdas)))
 
 featuredimension = fg.get_dimension()
 get_feature_function = fg.get_features
+memory_for_personalized_parameters = 10.0 # memory in MB if using personalized SGD learning
 
 # learning parameters
 niter = int(10.0 * Ntrain)
@@ -106,7 +108,8 @@ for i,lambda_winner in enumerate(lambdas):
     for j,lambda_reject in enumerate(lambdas):
         #sgd = SGDLearning(featuredimension, get_feature_function)
         #sgd = SGDLearning(1, get_feature_function) # CHEAT TODO REMOVE
-        sgd = SGDLearning(featuredimension+1, get_feature_function) # CHEAT TODO REMOVE
+        #sgd = SGDLearning(featuredimension+1, get_feature_function) # CHEAT TODO REMOVE
+        sgd = SGDLearningPersonalized(featuredimension, get_feature_function, memory_for_personalized_parameters) # featdim +1 iff cheating
   
         # TRAINING
         train(sgd, competitorsets_train, niter, alpha, beta, lambda_winner, lambda_reject, verbose)
