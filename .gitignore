@@ -9,4 +9,5 @@ littlepy/
 *.tsv
 *.pkl
 *.brf
+*.fls
 writeups/*.pdf
