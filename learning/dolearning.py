@@ -8,8 +8,8 @@ import numpy as np
 # get data (Tobi)
 testing = True
 dataobject = CompetitorSetCollection(testing=testing,validation=False)
-print dataobject.get_nsamples() # N
-print dataobject.get_sample(17) # yields a competitorset
+#print dataobject.get_nsamples() # N
+#print dataobject.get_sample(17) # yields a competitorset
 # TODO: Tobi - put your stuff here
 
 # get featuremethod (Ron)
@@ -72,9 +72,9 @@ def test(sgd, data):
     errors = 0
     truenones = 0
     prednones = 0
-    N = len(data)
+    N = data.get_nsamples()
     for i in range(N):
-        competitorset = data[i]
+        competitorset = data.get_sample(i)
         pred = sgd.predict(competitorset)
         true = competitorset.get_winner()
         #if true:
@@ -90,63 +90,63 @@ def test(sgd, data):
     prednonerate = prednones/float(N) 
     return errorrate, truenonerate, prednonerate
  
-
-# CV over lamba1, lambda2
-lambdas = [10**-4, 10**-3, 10**-2, 10**-1, 10**0, 10**+1, 10**+2]
-#lambdas = [10**-3]
-trainerrors = np.zeros((len(lambdas),len(lambdas)))
-testerrors = np.zeros((len(lambdas),len(lambdas)))
-
-featuredimension = fg.get_dimension()
-get_feature_function = fg.get_features
-
-memory_for_personalized_parameters = 10.0 # memory in MB if using personalized SGD learning
-
-# learning parameters
-niter = int(10.0 * Ntrain)
-alpha = 100.0
-beta = 0.01
-#lambda_winner = 0.01#0.01
-#lambda_reject = 0.1
-verbose = False
-
-for i,lambda_winner in enumerate(lambdas):
-    for j,lambda_reject in enumerate(lambdas):
-        #sgd = SGDLearning(featuredimension, get_feature_function)
-        #sgd = SGDLearning(1, get_feature_function) # CHEAT TODO REMOVE
-        #sgd = SGDLearning(featuredimension+1, get_feature_function) # CHEAT TODO REMOVE
-        sgd = SGDLearningPersonalized(featuredimension, get_feature_function, memory_for_personalized_parameters) # featdim +1 iff cheating
+if __name__=='__main__':
+  # CV over lamba1, lambda2
+  lambdas = [10**-4, 10**-3, 10**-2, 10**-1, 10**0, 10**+1, 10**+2]
+  #lambdas = [10**-3]
+  trainerrors = np.zeros((len(lambdas),len(lambdas)))
+  testerrors = np.zeros((len(lambdas),len(lambdas)))
   
-        # TRAINING
-        train(sgd, competitorsets_train, niter, alpha, beta, lambda_winner, lambda_reject, verbose)
-
-        # TESTING - TRAINSET
-        errorrate, truenonerate, prednonerate = test(sgd, competitorsets_train)
-        trainerrors[i,j] = errorrate
-        if verbose:
-            print "[TRAIN] Errorrate: %f"%(errorrate)
-            print "TrueNone-Rate: %f -> error: %f"%(truenonerate, 1.0 - truenonerate)
-            print "PredNone-Rate: %f"%(prednonerate)
+  featuredimension = fg.get_dimension()
+  get_feature_function = fg.get_features
   
-        # TESTING - TESTSET
-        errorrate, truenonerate, prednonerate = test(sgd, competitorsets_test)
-        testerrors[i,j] = errorrate
-        if verbose:
-            print "[TEST] Errorrate: %f"%(errorrate)
-            print "TrueNone-Rate: %f -> error: %f"%(truenonerate, 1.0 - truenonerate)
-            print "PredNone-Rate: %f"%(prednonerate)
-            
-
-print "lambdas:", lambdas
-print "winner/reject"            
-print "TRAINerrormatrix"
-print trainerrors            
-
-print "TESTerrormatrix"
-print testerrors            
-
-
-embed()       
+  memory_for_personalized_parameters = 10.0 # memory in MB if using personalized SGD learning
+  
+  # learning parameters
+  niter = int(10.0 * Ntrain)
+  alpha = 100.0
+  beta = 0.01
+  #lambda_winner = 0.01#0.01
+  #lambda_reject = 0.1
+  verbose = False
+  
+  for i,lambda_winner in enumerate(lambdas):
+      for j,lambda_reject in enumerate(lambdas):
+          #sgd = SGDLearning(featuredimension, get_feature_function)
+          #sgd = SGDLearning(1, get_feature_function) # CHEAT TODO REMOVE
+          #sgd = SGDLearning(featuredimension+1, get_feature_function) # CHEAT TODO REMOVE
+          sgd = SGDLearningPersonalized(featuredimension, get_feature_function, memory_for_personalized_parameters) # featdim +1 iff cheating
     
+          # TRAINING
+          train(sgd, competitorsets_train, niter, alpha, beta, lambda_winner, lambda_reject, verbose)
+  
+          # TESTING - TRAINSET
+          errorrate, truenonerate, prednonerate = test(sgd, competitorsets_train)
+          trainerrors[i,j] = errorrate
+          if verbose:
+              print "[TRAIN] Errorrate: %f"%(errorrate)
+              print "TrueNone-Rate: %f -> error: %f"%(truenonerate, 1.0 - truenonerate)
+              print "PredNone-Rate: %f"%(prednonerate)
     
-    
+          # TESTING - TESTSET
+          errorrate, truenonerate, prednonerate = test(sgd, competitorsets_test)
+          testerrors[i,j] = errorrate
+          if verbose:
+              print "[TEST] Errorrate: %f"%(errorrate)
+              print "TrueNone-Rate: %f -> error: %f"%(truenonerate, 1.0 - truenonerate)
+              print "PredNone-Rate: %f"%(prednonerate)
+              
+  
+  print "lambdas:", lambdas
+  print "winner/reject"            
+  print "TRAINerrormatrix"
+  print trainerrors            
+  
+  print "TESTerrormatrix"
+  print testerrors            
+  
+  
+  embed()       
+      
+      
+      
