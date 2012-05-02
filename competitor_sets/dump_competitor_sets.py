@@ -128,49 +128,45 @@ def create_sessions():
   print '%d: %d - %d'%(comm_rank, lower,upper)
   get_sessions(lower, upper, force=False)
   
-def new_filehandle(i):
-  filename = 'insert_file_%d.sql'%i
-  shutil.copyfile('fill_comp_set_blank', filename)
-  file_out = open(filename, 'a')
-  return file_out
-
-def compile_sessions():
-  fileextension = 0
-  file_out = new_filehandle(fileextension)    
-  very_first = True  
+def compile_sessions():  
+  sq = Sqler()
+  first_lines = True  
   comp_set_id = 0
   too_much_count = 0
-  
-  for i in range(2):
+  default_string = "INSERT INTO `competitor_sets2` (`id`, `req_id`, `set_id`, \
+    `host_id`, `surfer_id`, `winner`, `date`) VALUES "
+  index = 1
+  write_string = default_string
+  for i in range(comm_rank, 20, comm_size):
     read_cluss = cPickle.load(open('cluss_%d'%i,'r'))
     print 'opened file %d'%i
     ###################
     for cl in read_cluss:        
       for r in cl:
-        if not very_first:
-          file_out.writelines(',\n')
+        if not first_lines:
+          write_string += ','
         else:
-          very_first=False  
+          first_lines=False  
+          
         winner = (r[1] == 'Y')
         # in-order: host_user_id, status, surf_user_id, id, rmd
         # out-order: req_id, set_id, host_id, surfer_id, winner, date
-        write_string = "( "+str(r[3])+" , "+ str(comp_set_id)+" , "+str(r[0]) + \
+        write_string += "( "+str(index)+','+str(r[3])+" , "+ str(comp_set_id)+" , "+str(r[0]) + \
           " , "+ str(r[2])+" , "+str(int(winner))+ " , '"+str(r[4])+ "' )"
-        file_out.writelines(write_string)
+        index+=1
       
-      print 'wrote comp set %d'%comp_set_id
+      print '%d wrote comp set %d'%(comm_rank, comp_set_id)
       too_much_count += 1
-      if too_much_count > 300000:
-        fileextension += 1
+      if too_much_count > 8000:
         too_much_count = 0
-        file_out.close()
-        file_out = new_filehandle(fileextension)
+        #print write_string
+        sq.rqst(write_string+';')       
+        del write_string
+        write_string = default_string
+        first_lines = True
       comp_set_id += 1        
-    ###################
-  file_out.writelines(';')  
+    ###################  
   
 if __name__=='__main__':
-  if comm_size > 1:
-    create_sessions()
-  else:
-    compile_sessions()
+  #create_sessions()  
+  compile_sessions()

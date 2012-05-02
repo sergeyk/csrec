@@ -1,5 +1,0 @@
-set @csum:=0;
-create table map_host_machine as
-(select host_user_id, floor(cum_sum/520000) as num from (select *, (@csum := @csum + cnt) as cum_sum
-from (select count(host_user_id) as cnt, host_user_id from couchrequest group by host_user_id) as T) as TT)
-

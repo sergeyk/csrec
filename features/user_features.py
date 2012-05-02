@@ -4,8 +4,6 @@ import bucketizer
 
 import csrec_paths
 
-DATA_FILE = 'sampled_user_data.pkl' #'user_data.pkl'
-
 class FeatureGetter():
     """ Generates crossed features for ids
 
@@ -18,16 +16,21 @@ class FeatureGetter():
     'user_data.pkl'
     """
 
-    def __init__(self):
+    def __init__(self, testing=True):
+        if testing:
+          self.DATA_FILE = 'sampled_user_data.pkl' #'user_data.pkl'
+        else:
+          self.DATA_FILE = 'user_data.pkl'
         self.load_user_features_pkl()
         self.init_bucketizer()
+        
          
     def init_bucketizer(self):
         self.bucketizer = bucketizer.Bucketizer()
 
     def load_user_features_pkl(self):
         print 'loading user data...'
-        self.user_data = cPickle.load(open(csrec_paths.get_features_dir()+DATA_FILE, 'rb'))
+        self.user_data = cPickle.load(open(csrec_paths.get_features_dir()+self.DATA_FILE, 'rb'))
         print 'data for %s users loaded' % (len(self.user_data))
 
     def get_features(self, user_id, host_id, req_id):

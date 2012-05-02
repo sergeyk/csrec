@@ -17,7 +17,7 @@ class Sqler:
 
   def rqst(self, request, verbose=False):
     t = time.time()
-    self.db.query(request)
+    self.db.query(request)    
     t -=time.time()
     
     if verbose:
@@ -36,6 +36,11 @@ class Sqler:
       (couchrequest.host_user_id = T.host_user_id) order by host_user_id, rmd")
     # instead of all at a time fetch  the rows one after the other.
     return res 
+  
+  def get_num_compsets(self):
+    res = self.rqst('SELECT count(DISTINCT set_id) FROM `competitor_sets`')
+    num_compsets = int(res.fetch_row(1,0)[0][0])
+    return num_compsets
 
   def get_max_depart(self, reqs):
     return np.max([self.convert_datetime(x['date_departure']) for x in reqs])
