@@ -1,0 +1,1 @@
+create table missed_requests2 as (select couchrequest.host_user_id, couchrequest.status, couchrequest.surf_user_id, couchrequest.id, couchrequest.rmd from couchrequest join (select * from (select host_user_id, id from couchrequest as t1 join missing_requests t2 on(t1.id = t2.req_id)) as T) as T on (couchrequest.id = T.id));

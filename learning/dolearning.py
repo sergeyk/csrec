@@ -4,13 +4,18 @@ from time import time
 from IPython import embed
 import numpy as np
 
+
 # get data (Tobi)
-#dataobject = CompetitorSetCollection(testing=True,validation=False)
+testing = True
+dataobject = CompetitorSetCollection(testing=testing,validation=False)
+print dataobject.get_nsamples() # N
+print dataobject.get_sample(17) # yields a competitorset
+# TODO: Tobi - put your stuff here
 
 # get featuremethod (Ron)
 from features.user_features import FeatureGetter
 
-fg = FeatureGetter()
+fg = FeatureGetter(testing)
 #print fg.get_features(907345, 907345, 1)
 dimension = fg.get_dimension()
 
@@ -94,6 +99,7 @@ testerrors = np.zeros((len(lambdas),len(lambdas)))
 
 featuredimension = fg.get_dimension()
 get_feature_function = fg.get_features
+
 memory_for_personalized_parameters = 10.0 # memory in MB if using personalized SGD learning
 
 # learning parameters
@@ -140,14 +146,7 @@ print "TESTerrormatrix"
 print testerrors            
 
 
-embed()   
-    
-    
-    
-    
-    
-    
-    
+embed()       
     
     
     
