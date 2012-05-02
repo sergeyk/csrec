@@ -8,14 +8,15 @@ We assume the following format:
     - competitorset structure: dict with keys hostID, list_surfers [(surferID, requestID), ...], winner (surferID or None if all rejected)
 
 TODO:
-    - update similarly to nonpersonalized version
-    - rademacher hash 
+    - sparse dot product -> sparse features and only compute hash for nonzeroparts
+      -> seems simpler than to compute features here on the fly
+    - rademacher hash (seems to work but be careful :-))
 
 @author: Tim
 """
 
 import numpy as np
-from IPython import embed
+#from IPython import embed
 
 def inthash(x,y,N): # take this one
     a = (x * 0x1f1f1f1f) ^ y
@@ -24,7 +25,25 @@ def inthash(x,y,N): # take this one
     a = a ^ (a >> 4)
     a = a * 0x27d4eb2d
     a = a ^ (a >> 15)
-    return a%N  
+    # use last bit as rademacher hash
+    # and rest for location
+    r = 2*float(a&1)-1
+    a = (a>>1)%N
+    return a,r 
+
+## rademacher (binary) hash: TODO: is there a better/easier way to do it?
+#def rademacher(x,y):
+#    a = ((y & 0xffff) << 16) | (x & 0xffff)
+#    a = (a ^ 61) ^ (a >> 16)
+#    a = a + (a << 3)
+#    a = a ^ (a >> 4)
+#    a = a * 0x27d4eb2d
+#    a = a ^ (a >> 15)
+#    # make it binary by looking at a bit in the middle
+#    a = a>>7 & 1
+#    a = 2*a - 1
+#    return a      
+    
 
 class SGDLearningPersonalized:
 
@@ -56,8 +75,13 @@ class SGDLearningPersonalized:
         return np.exp(self.r + self.r_hosts[hostID])
 
     def get_hostparameters(self, hostID):
+        # TODO: I could compute indizes for nonzero elements of the feature only
         indizes = [inthash(hostID,i,self.nelements) for i in range(self.featuredimension+1)] # +1 because of bias term
+        indizes, rademacherflips = zip(*indizes)
+        indizes = np.array(indizes)
+        rademacherflips = np.array(rademacherflips) # tuple -> array
         theta_h = self.theta_hosts[indizes]
+        theta_h = theta_h * rademacherflips
         return theta_h
    
     def predict(self, competitorset):
@@ -76,7 +100,11 @@ class SGDLearningPersonalized:
         # get personalized hostparameters
         #theta_h = self.get_hostparameters(hostID)
         indizes = [inthash(hostID,i,self.nelements) for i in range(self.featuredimension+1)] # +1 because of bias term
+        indizes, rademacherflips = zip(*indizes)
+        indizes = np.array(indizes)
+        rademacherflips = np.array(rademacherflips) # tuple -> array
         theta_h = self.theta_hosts[indizes]
+        theta_h = theta_h * rademacherflips
         #print "PERS PARAMS", hostID, theta_h # TODO remove
         
         scores = [self.get_score(f, theta_h) for f in features]
@@ -109,7 +137,11 @@ class SGDLearningPersonalized:
         # get personalized hostparameters
         #theta_h = self.get_hostparameters(hostID) 
         indizes = [inthash(hostID,i,self.nelements) for i in range(self.featuredimension+1)] # +1 because of bias term
+        indizes, rademacherflips = zip(*indizes)
+        indizes = np.array(indizes)
+        rademacherflips = np.array(rademacherflips) # tuple -> array
         theta_h = self.theta_hosts[indizes]
+        theta_h = theta_h * rademacherflips
         
         scores = [self.get_score(f, theta_h) for f in features]
         rejectscore = self.get_rejectscore(hostID)
@@ -127,7 +159,7 @@ class SGDLearningPersonalized:
             self.r_hosts[hostID] =  (1 - eta * lambda_reject) * self.r_hosts[hostID] - eta * (rejectprobability - 1) 
 
             # update of personalized host parameters
-            self.theta_hosts[indizes] = (1 - eta * lambda_winner) * theta_h - eta * np.sum(temp, axis=0)
+            self.theta_hosts[indizes] = rademacherflips * ((1 - eta * lambda_winner) * theta_h - eta * np.sum(temp, axis=0)) # TODO make sure that the flipping makes sense!
         else:
             # there was a winner
             winneridx = zip(*competitorset.get_surferlist())[0].index(competitorset.get_winner())
@@ -139,7 +171,7 @@ class SGDLearningPersonalized:
             self.r_hosts[hostID] =  (1 - eta * lambda_reject) * self.r_hosts[hostID] - eta * rejectprobability 
 
             # update of personalized host parameters
-            self.theta_hosts[indizes] = (1 - eta * lambda_winner) * theta_h - eta * (np.sum(temp, axis=0) - features[winneridx])
+            self.theta_hosts[indizes] = rademacherflips * ((1 - eta * lambda_winner) * theta_h - eta * (np.sum(temp, axis=0) - features[winneridx]))
     
 
 

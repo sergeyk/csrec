@@ -39,27 +39,44 @@ def hash5(x,y,N): # take this one
     a = a ^ (a >> 4)
     a = a * 0x27d4eb2d
     a = a ^ (a >> 15)
-    return a%N  
+    return a%N 
+    
+    
+# trying to build rademacher hash
+def hash6(x,y):
+    a = ((y & 0xffff) << 16) | (x & 0xffff)
+    a = (a ^ 61) ^ (a >> 16)
+    a = a + (a << 3)
+    a = a ^ (a >> 4)
+    a = a * 0x27d4eb2d
+    a = a ^ (a >> 15)
+    # make it binary by looking at a bit in the middle
+    a = a>>7 & 1
+    a = 2*a - 1
+    return a  
     
 hashsize = 10 # size in MB
 N = hashsize * 1000000 / 8 # assuming 64bit floats 
 
-hashfunction = hash5
+hashfunction = hash6
 #N = 1<<32
-nhosts = 1000
-nfeatures = 10000
+nhosts = 100
+nfeatures = 1000
 
-nbins = 1000
+nbins = 10 #1000
 
 t0 = time.time()
 hashvalues = []
 for host in xrange(nhosts):
     print "host", host
     for feature in xrange(nfeatures):
-        hashvalues.append(hashfunction(host,feature,N))
+        #hashvalues.append(hashfunction(host,feature,N))
+        hashvalues.append(hashfunction(host,feature))
+        #print hashfunction(host,feature)
 t1 = time.time()
 
-plt.hist(hashvalues, bins=np.linspace(0, N, nbins, endpoint=True), normed=True)
+plt.hist(hashvalues, normed=True)
+#plt.hist(hashvalues, bins=np.linspace(0, N, nbins, endpoint=True), normed=True)
 plt.title("Histogram over hashvalues")
 plt.xlabel("Value")
 plt.ylabel("Frequency")
