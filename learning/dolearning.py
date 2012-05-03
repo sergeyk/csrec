@@ -47,29 +47,29 @@ for i in range(niter):
     
 # TESTING
 errors = 0
+correct_non_reject_guesses = 0
+total_non_reject_winners = 0
+times_guessed_reject = 0
+times_guessed_non_reject = 0
 for i in range(N):
     #TODO: dirty hack
     competitorset = dataobject.get_sample(i)
     
     pred = sgd.predict(competitorset)
     true = competitorset.get_winner()
+    if not pred:
+        times_guessed_reject += 1
+    else:
+        times_guessed_non_reject += 1
     if true:
-      print pred
-      print true
+        total_non_reject_winners += 1
+        if true==pred:
+            correct_non_reject_guesses += 1
       
     errors += (pred!=true)
     
+print 'Training size:', niter
 print "Errorrate: %f (%d/%d)"%(errors/float(N), errors, N)
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+print "non-reject recall: (%s/%s)" %(correct_non_reject_guesses, total_non_reject_winners)
+print "Num reject guesses: (%s/%s)" % (times_guessed_reject, N)
+print "Num non-reject guesses: (%s/%s)" % (times_guessed_non_reject, N)
