@@ -17,6 +17,6 @@ res_rec = res.fetch_row(100000,0)
 rec_tab = np.matrix(res_rec, dtype=int)
 plt.loglog(rec_tab[:,0],-np.sort(-rec_tab[:,1],0), label='Hosts (received)')
 plt.legend()
+plt.savefig('requests.png')
 plt.show()
 
-plt.savefig('requests.png')

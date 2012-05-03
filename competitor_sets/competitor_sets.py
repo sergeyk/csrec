@@ -49,7 +49,7 @@ class CompetitorSetCollection:
   ''' Storage of all competitor sets for all hosts. Load from dump, provide 
   CompetitorSet object'''
   
-  def __init__(self, num_sets=100, split_date='2011-03-29 11:41:04', testing=False, validation=False):
+  def __init__(self, num_sets=100, split_date='2011-08-16 16:24:47', testing=False, validation=False):
     self.sq = Sqler()
     if testing:
       if validation:
@@ -60,8 +60,7 @@ class CompetitorSetCollection:
       res = self.sq.rqst('select * from '+self.db+' group by set_id;')
     else:
       # Otherwise we want to create a random subset of  
-      self.db = 'competitor_sets'
-          
+      self.db = 'competitor_sets'          
       
       self.split_date = "'2011-03-29 11:41:04'" 
       self.num_sets = num_sets # How much do we want
@@ -73,14 +72,13 @@ class CompetitorSetCollection:
       
       request = "select competitor_sets.* from competitor_sets join (select set_id \
        from competitor_sets  where date "+date_restrict+" group by set_id order \
-       by rand() limit 0," +str(self.num_sets)+") as T on (competitor_sets.set_id = T.set_id) \
+       by rand() limit 0, " +str(self.num_sets)+" ) as T on (competitor_sets.set_id = T.set_id) \
        order by set_id"
       
       res = self.sq.rqst(request)       
     
     sets = res.fetch_row(11000000,0)
     last_set_id = sets[0][CompetitorSet.TRANS['set_id']]
-    print last_set_id
     curr_set = []
     self.all_sets = []
     for cset in sets:
