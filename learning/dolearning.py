@@ -96,7 +96,6 @@ if __name__=='__main__':
   #lambdas = [10**-3]
   trainerrors = np.zeros((len(lambdas),len(lambdas)))
   testerrors = np.zeros((len(lambdas),len(lambdas)))
->>>>>>> d2b26ed99ea0632f3e42cbde202ec3b89974540d
   
   featuredimension = fg.get_dimension()
   get_feature_function = fg.get_features
