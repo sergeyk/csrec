@@ -8,8 +8,8 @@ import numpy as np
 # get data (Tobi)
 testing = True
 dataobject = CompetitorSetCollection(testing=testing,validation=False)
-print dataobject.get_nsamples() # N
-print dataobject.get_sample(17) # yields a competitorset
+#print dataobject.get_nsamples() # N
+#print dataobject.get_sample(17) # yields a competitorset
 # TODO: Tobi - put your stuff here
 
 # get featuremethod (Ron)
@@ -100,7 +100,7 @@ testerrors = np.zeros((len(lambdas),len(lambdas)))
 featuredimension = fg.get_dimension()
 get_feature_function = fg.get_features
 
-memory_for_personalized_parameters = 10.0 # memory in MB if using personalized SGD learning
+memory_for_personalized_parameters = 20.0 # memory in MB if using personalized SGD learning
 
 # learning parameters
 niter = int(10.0 * Ntrain)
