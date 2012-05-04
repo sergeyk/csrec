@@ -59,7 +59,11 @@ class CompetitorSetCollection:
         self.db = 'competitor_sets_test_train'
       
       if just_winning_sets:
-        res = self.sq.rqst("SELECT * FROM `competitor_sets` where winner=1 group by set_id")
+        
+        res = self.sq.rqst("select set_id from (select set_id, count(winner) as \
+          cnt, sum(winner) as sum from competitor_sets group by set_id)as t where \
+          cnt >1 and sum > 0;")
+        
       else:    
         res = self.sq.rqst('select * from '+self.db+' group by set_id;')
     else:
@@ -80,9 +84,12 @@ class CompetitorSetCollection:
               
       ## Now create this table with:
       if just_winning_sets:
-        cr_tab_request = "create table "+self.set_ids_table_name+" as (select set_id from (select set_id, count(winner) as cnt \
-         from competitor_sets  where date "+date_restrict+" and winner=1 group by set_id order \
-         by rand()  ) as T where cnt > 1 limit 0, " +str(self.num_sets)+");"      
+# select set_id from (select set_id, count(winner) as cnt, sum(winner) as 
+# sum from competitor_sets group by set_id)as t where cnt >1 and sum > 0;
+        cr_tab_request = "create table "+self.set_ids_table_name+" as (select set_id from \
+         (select set_id, count(winner) as cnt, sum(winner) as sum \
+         from competitor_sets  where date "+date_restrict+" group by set_id order \
+         by rand()  ) as T where cnt > 1 and sum > 0 limit 0, " +str(self.num_sets)+");"      
         
       else:
         cr_tab_request = "create table "+self.set_ids_table_name+" as (select set_id \
