@@ -49,15 +49,18 @@ class CompetitorSetCollection:
   ''' Storage of all competitor sets for all hosts. Load from dump, provide 
   CompetitorSet object'''
   
-  def __init__(self, num_sets=100, split_date='2011-08-16 16:24:47', testing=False, validation=False):
+  def __init__(self, num_sets=100, split_date='2011-08-16 16:24:47', testing=False, validation=False, just_winning_sets = False):
     self.sq = Sqler()
     if testing:
       if validation:
         self.db = 'competitor_sets_test_val'
       else:
         self.db = 'competitor_sets_test_train'
-        
-      res = self.sq.rqst('select * from '+self.db+' group by set_id;')
+      
+      if just_winning_sets:
+        res = self.sq.rqst("SELECT * FROM `competitor_sets` where winner=1 group by set_id")
+      else:    
+        res = self.sq.rqst('select * from '+self.db+' group by set_id;')
     else:
       # Otherwise we want to create a random subset of  
       self.db = 'competitor_sets'          
@@ -75,11 +78,17 @@ class CompetitorSetCollection:
       self.sq.rqst("drop table if exists "+self.set_ids_table_name)
               
       ## Now create this table with:
-      cr_tab_request = "create table "+self.set_ids_table_name+" as (select set_id \
-       from competitor_sets  where date "+date_restrict+" group by set_id order \
-       by rand() limit 0, " +str(self.num_sets)+" );"      
-      res = self.sq.rqst(cr_tab_request)
+      if just_winning_sets:
+        cr_tab_request = "create table "+self.set_ids_table_name+" as (select set_id \
+         from competitor_sets  where date "+date_restrict+" where winner=1 group by set_id order \
+         by rand() limit 0, " +str(self.num_sets)+" );"      
+        
+      else:
+        cr_tab_request = "create table "+self.set_ids_table_name+" as (select set_id \
+         from competitor_sets  where date "+date_restrict+" group by set_id order \
+         by rand() limit 0, " +str(self.num_sets)+" );"      
       
+      res = self.sq.rqst(cr_tab_request)
       
       # create the users table. First a table with two columns for host/surfer
       self.user_table_name = "temp_users_table_%d"%comm_rank
@@ -123,7 +132,11 @@ class CompetitorSetCollection:
     # Drop the set_id table (we are just interested in the user id table from 
     # now on
     if not testing:
-      self.sq.rqst("drop table %s"%(self.set_ids_table_name)) 
+      self.sq.rqst("drop table %s"%(self.set_ids_table_name))
+    
+    # We just want sets where we actually observe a winner. 
+    #if just_winning_sets:
+       
   
   def get_user_dict(self, table):
     '''
