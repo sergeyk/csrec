@@ -15,8 +15,6 @@ Roadmap:
 # return params
 '''
 from learning.gradientdescent_personalization import SGDLearningPersonalized
-from mpi4py import MPI
-from mpi.safebarrier import safebarrier
 from competitor_sets.competitor_sets import CompetitorSetCollection
 from competitor_sets.Sqler import Sqler
 from features.user_features import FeatureGetter
@@ -26,9 +24,7 @@ import random
 import os
 import numpy as np
 from learning.dolearning import test
-comm = MPI.COMM_WORLD
-comm_rank = comm.Get_rank()
-comm_size = comm.Get_size()
+from mpi.mpi_imports import *
 
 
 
@@ -37,7 +33,7 @@ def run():
     testing = True
   else:
     testing = False
-  testing = True
+  #testing = True
   memory_for_personalized_parameters = 10.0 # memory in MB if using personalized SGD learning  
   percentage = 0.2 # Dependent on machines in future min:10%, 2nodes->80%
   outer_iterations = 10
