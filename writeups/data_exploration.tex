@@ -22,7 +22,7 @@ We simply wish to answer the prediction problem of which couch requests to a hos
 From the CouchSurfing user database, we form a set of \emph{hosts} $\mathcal{H}$ such that every $h \in \mathcal{H}$ has hosted at least $K$ persons since signing up for a user account.
 We initially set $K=1$, but the proper setting may be higher to reduce the amount of noise in the set of hosts.
 
-For every host $h_n$, there is a corresponding list of t least $K$ \emph{suitors} $\mathcal{S}_n$, where a suitor $s \in \mathcal{S}_n$ has made at least one couch request to $h_n$.
+For every host $h_n$, there is a corresponding list of t least $K$ \emph{surfers} $\mathcal{S}_n$, where a suitor $s \in \mathcal{S}_n$ has made at least one couch request to $h_n$.
 
 \subsection{Implicit Negatives}
 \label{sec:implicitNeg}
@@ -58,7 +58,7 @@ The CS system allows hosts to reject a couch request, which indicates a negative
 \end{algorithmic}
 \end{algorithm}
 
-It might also be beneficial to soften the notion of ``overlap'' just because it might be very stressful for a host to have suitors without a gap in between the two visits. Analyzing the data for statistics on gaps for each host seperately will reveal their willingness to host several suitors in a row. The above algorithm can easily be adapted by modifying the input times accordingly.
+It might also be beneficial to soften the notion of ``overlap'' just because it might be very stressful for a host to have surfers without a gap in between the two visits. Analyzing the data for statistics on gaps for each host seperately will reveal their willingness to host several surfers in a row. The above algorithm can easily be adapted by modifying the input times accordingly.
 
 \subsection{Filter rejects by temporal constraints}
 Using a very similar technique we can filter rejects that are not actually rejects for the reason of a mismatching suitor. Imagine $h$ gets a request $r_1$ at time $t_1$, accepts this request at time $t_2$ and gets another request $r_2$ for the same period as $r_1$ at $t_3$. If we have that $t_1 < t_2 < t_3$, there is no valid information about whether or not $h$ likes suitor $s_2$. By the time he gets the second request, his couch is already booked out and so he has to reject $s_2$ no matter if he would even prefer him over $s_1$. Because of this scenario we filter our training data for exactly those \textit{uninformative rejects} using again algorithm~\ref{alg:overlap} and temporal orderings on requests and acceptances/rejects.
