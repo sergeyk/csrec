@@ -5,6 +5,7 @@ import numpy as np
 from Sqler import *
 from IPython import embed
 from mpi.mpi_imports import *
+import random
 
 class CompetitorSet:
   
@@ -79,9 +80,9 @@ class CompetitorSetCollection:
               
       ## Now create this table with:
       if just_winning_sets:
-        cr_tab_request = "create table "+self.set_ids_table_name+" as (select set_id \
-         from competitor_sets  where date "+date_restrict+" where winner=1 group by set_id order \
-         by rand() limit 0, " +str(self.num_sets)+" );"      
+        cr_tab_request = "create table "+self.set_ids_table_name+" as (select set_id from (select set_id, count(winner) as cnt \
+         from competitor_sets  where date "+date_restrict+" and winner=1 group by set_id order \
+         by rand()  ) as T where cnt > 1 limit 0, " +str(self.num_sets)+");"      
         
       else:
         cr_tab_request = "create table "+self.set_ids_table_name+" as (select set_id \
@@ -112,6 +113,7 @@ class CompetitorSetCollection:
       res = self.sq.rqst(request)       
     
     sets = res.fetch_row(11000000,0)
+    #embed()
     last_set_id = sets[0][CompetitorSet.TRANS['set_id']]
     curr_set = []
     self.all_sets = []
@@ -166,10 +168,13 @@ class CompetitorSetCollection:
     return CompetitorSet(row)   
 
 if __name__=='__main__':
-  cs_coll = CompetitorSetCollection()
-  cs_coll.get_user_dict("examplar_user_table")
-  print cs_coll.get_nsamples()
-  cs = cs_coll.get_sample(43)
+  cs_coll_train = CompetitorSetCollection(num_sets=10000, just_winning_sets=True)
+  cs_coll_test = CompetitorSetCollection(num_sets=10000, just_winning_sets=True, validation=True)
+  #cs_coll.get_user_dict("examplar_user_table")
+  N = cs_coll_train.get_nsamples()
+  N2 = cs_coll_test.get_nsamples()
+  print N, N2
+  cs = cs_coll_train.get_sample(random.randint(0,N-1))
   print cs.get_hostID()
   print cs.get_surferlist()
   print cs.get_winner()
