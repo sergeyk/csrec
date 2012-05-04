@@ -1,0 +1,10 @@
+CREATE TABLE temp_table_0 AS (
+SELECT set_id
+FROM competitor_sets
+WHERE date '2011-08-16 16:24:47'
+GROUP BY set_id
+ORDER BY rand( )
+LIMIT 0 , 100
+);
+
+select distinct val from (select host_id as  val from TT union all select surfer_id as val from TT) as T3;

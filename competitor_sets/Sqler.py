@@ -11,7 +11,7 @@ import os
 class Sqler:
   def __init__(self):
     if os.path.exists('/u/vis/'):
-      self.db = sql.connect(db='csrec',user='sergeyk',unix_socket='/u/vis/x1/sergeyk/mysql/mysql.sock')#,host='orange4')
+      self.db = sql.connect(db='csrec',user='sergeyk',unix_socket='/u/vis/x1/sergeyk/mysql/mysql.sock', host='orange4', port=8081)
     elif os.path.exists('/home/tobibaum/'):    
       self.db = sql.connect(db='CSRec')
 
