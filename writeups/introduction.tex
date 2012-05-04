@@ -9,21 +9,17 @@ Among those to whom I did not write “couch requests” were “a travelling ma
 
 Our new global interconnectedness has made social interactions that were previously unthinkable commonplace.
 Whereas even a few decades ago a traveler had to either have a friend or pay for a hotel for lodging while traveling, today people so inclined can stay for free at complete strangers' residences, in locations that span all countries and continents.
-Such accomodations are arranged via special-purpose websites that let users list their apartment as available to host travelers (people in this use case are henceforth referred to as ``hosts''), and to request lodging from the hosts (``surfers'').
-Among these websites, by far the biggest is CouchSurfing (\url{http://couchsurfing.org/}), a website launched in 2004 and boasting almost 4 million users.
+Such accomodations are arranged via special-purpose websites that let users willing to host travelers to list their apartments (``hosts''), and users wanting to with someone for free to request lodging from the hosts (``surfers'').
+Among these websites, by far the biggest is CouchSurfing (\url{http://couchsurfing.org/}), a website launched in 2004 now boasting almost four million users.
 
-As the New Yorker writer detailed, there is a staggering variety of people on CouchSurfing.
+There is a staggering variety of people on CouchSurfing.
 There are members in every country, speaking over three hundred different languages.
-The average age is twenty-eight.
+The age distribution skews young: the average age is twenty-eight and a third are between 18 and 24.
 The website has facilitated over six million positively-reviewed visits, with ``only a tiny fraction of one per cent negative.''\footnote{from the article quoted in the epigraph.}
-While a certain fraternizing spirit is strong with most users of the site (after all, they are willing to host or guest with strangers in exchange for no money), people still enjoy the company of kindred spirits the most.
 
-When a surfer is looking for lodging, they do a search for available couches (or beds, or the floor, as the case may be) in the destination location.
-Usually, they are presented with an array of choices, often more than can quickly be looked through---or messaged.
-It would be beneficial to a searching surfer to have hosts that are available, agreeable, and likely to respond positively displayed at the top of the list.
-Similarly, hosts in popular locations are inundated with requests for accomodation.
-To save time, surfers that would be agreeable to them should be displayed at the top.
-An example of a host's inbox is presented in \autoref{fig:sample_request}.
+A fraternizing spirit is strong with most users of the site, as they are willing to host or guest with strangers in exchange for no money.
+All the same, we believe that people enjoy the company of kindred spirits the most---or at the least, that there are some user-match relationships that are more successful than others.
+Our aim is to facilitate matching surfers and hosts to maximize the success rate.
 
 \begin{figure}[ht]
 \centering
@@ -32,6 +28,14 @@ An example of a host's inbox is presented in \autoref{fig:sample_request}.
 \label{fig:sample_request}
 \end{figure}
 
-In discussion with the developers of CouchSurfing, we established that they perceived the second scenario to be highly prevalent and more in need of a recommendation system solution than the first.
+When a surfer is looking for lodging, they do a search for available couches (or beds, or the floor, as the case may be) in the destination location.
+Usually, they are presented with an array of choices, often more than can quickly be looked through---or messaged.
+An example of a host's inbox is presented in \autoref{fig:sample_request}.
+It would be beneficial to a searching surfer to have hosts that are available, agreeable, and likely to respond positively displayed at the top of the list.
+Similarly, hosts in popular locations are inundated with requests for accomodation.
+To save time, surfers that would be agreeable to them should be displayed at the top.
+
+In private discussion with the developers of CouchSurfing, we established that they perceived the second scenario to be prevalent as a negative user experience and more in need of a recommendation system solution than the first.
+
 In this work, we develop a system to automatically evaluate the couch requests that hosts get with respect to the likelihood of a successful and pleasant visit, and so make the CouchSurfing experience as convenient as possible.
-We focus on the second scenario, but note that a good solution to it benefits the first use case as well.
+While we train and evaluate our approach from the perspective of the hosts, our solution to the problem---predicting the probability of a host accepting a surfer request---benefits surfers just as much, as their search results can be ranked accordingly to save them message-writing effort.
