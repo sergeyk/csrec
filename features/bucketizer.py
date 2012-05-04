@@ -134,5 +134,5 @@ class Bucketizer():
 
 
 if __name__ == "__main__":
-    #Bucketizer.generate_bucket_dividers()
-    Bucketizer.show_histogram()
+    Bucketizer.generate_bucket_dividers()
+    #Bucketizer.show_histogram()
