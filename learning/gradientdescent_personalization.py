@@ -8,12 +8,15 @@ We assume the following format:
     - competitorset structure: dict with keys hostID, list_surfers [(surferID, requestID), ...], winner (surferID or None if all rejected)
 
 TODO:
-    - 
+    - sparse dot product -> sparse features and only compute hash for nonzeroparts
+      -> seems simpler than to compute features here on the fly
+    - rademacher hash (seems to work but be careful :-))
 
 @author: Tim
 """
 
 import numpy as np
+#from IPython import embed
 
 def inthash(x,y,N): # take this one
     a = (x * 0x1f1f1f1f) ^ y
@@ -22,20 +25,44 @@ def inthash(x,y,N): # take this one
     a = a ^ (a >> 4)
     a = a * 0x27d4eb2d
     a = a ^ (a >> 15)
-    return a%N  
+    # use last bit as rademacher hash
+    # and rest for location
+    r = 2*float(a&1)-1
+    a = (a>>1)%N
+    return a,r 
+
+## rademacher (binary) hash: TODO: is there a better/easier way to do it?
+#def rademacher(x,y):
+#    a = ((y & 0xffff) << 16) | (x & 0xffff)
+#    a = (a ^ 61) ^ (a >> 16)
+#    a = a + (a << 3)
+#    a = a ^ (a >> 4)
+#    a = a * 0x27d4eb2d
+#    a = a ^ (a >> 15)
+#    # make it binary by looking at a bit in the middle
+#    a = a>>7 & 1
+#    a = 2*a - 1
+#    return a      
+    
 
 class SGDLearningPersonalized:
 
-    def __init__(self, featuredimension, get_feature_function, memory_for_personalized_parameters):
-        self.featuredimension = featuredimension
-        self.theta = np.zeros(featuredimension)
-        self.r = 0
+    def __init__(self, featuredimension, get_feature_function, memory_for_personalized_parameters, theta=None, r=None, r_hosts=None, theta_hosts=None):
+        self.featuredimension = int(featuredimension)
+        self.theta = theta if theta!=None else 0.2*(np.random.rand(featuredimension+1) - 0.5) # +1 to learn bias term
+        self.r = r if r else 0.0
         #r_hosts = np.zeros(nhosts) # do I need dictionary here: hostID -> param?
-        self.r_hosts = {}
+        self.r_hosts = r_hosts if r_hosts else {}
         self.get_feature = get_feature_function
-        # build large array that the personalized host parameters are hashed into
-        self.nelements = memory_for_personalized_parameters * 1000000 / 8 # assuming 64bit floats, and memory in MB
-        self.theta_hosts = np.zeros(self.nelements)
+        
+        if theta_hosts!=None:
+            self.theta_hosts = theta_hosts
+            self.nelements = len(self.theta_hosts)
+        else:
+            # build large array that the personalized host parameters are hashed into
+            self.nelements = int(memory_for_personalized_parameters * 1000000 / 8.0) # assuming 64bit floats, and memory in MB
+			#TODO: does it make sense to initialize this randomly?
+            self.theta_hosts = 0.2*(np.random.rand(self.nelements) - 0.5) #np.zeros(self.nelements)
     
     def get_score(self, feature, theta_h):
         return np.exp(np.dot(self.theta + theta_h,feature))
@@ -48,8 +75,13 @@ class SGDLearningPersonalized:
         return np.exp(self.r + self.r_hosts[hostID])
 
     def get_hostparameters(self, hostID):
-        indizes = [inthash(hostID,i,self.nelements) for i in range(self.featuredimension)]
+        # TODO: I could compute indizes for nonzero elements of the feature only
+        indizes = [inthash(hostID,i,self.nelements) for i in range(self.featuredimension+1)] # +1 because of bias term
+        indizes, rademacherflips = zip(*indizes)
+        indizes = np.array(indizes)
+        rademacherflips = np.array(rademacherflips) # tuple -> array
         theta_h = self.theta_hosts[indizes]
+        theta_h = theta_h * rademacherflips
         return theta_h
    
     def predict(self, competitorset):
@@ -60,18 +92,26 @@ class SGDLearningPersonalized:
         if not self.r_hosts.has_key(hostID):
             self.r_hosts[competitorset.get_hostID()] = 0.0
         
-        features = [self.get_feature(surferID,hostID,requestID) for (surferID, requestID) in competitorset.get_surferlist()]
+        #features = [self.get_feature(surferID,hostID,requestID) for (surferID, requestID) in competitorset.get_surferlist()] # before without bias
+        features = [np.append(self.get_feature(surferID,hostID,requestID),np.ones(1)) for (surferID, requestID) in competitorset.get_surferlist()] # with appended 1 feature for bias term
+        #features = [np.hstack((self.get_feature(surferID,hostID,requestID),np.ones(1)*(surferID==competitorset.get_winner()), np.ones(1))) for (surferID, requestID) in competitorset.get_surferlist()] # CHEAT TODO REMOVE
+        #features = [np.append(2*(np.ones(1)*(surferID==competitorset.get_winner()))-1, np.ones(1)) for (surferID, requestID) in competitorset.get_surferlist()] # w Bias CHEAT TODO REMOVE
         
         # get personalized hostparameters
         #theta_h = self.get_hostparameters(hostID)
-        indizes = [inthash(hostID,i,self.nelements) for i in range(self.featuredimension)]
+        indizes = [inthash(hostID,i,self.nelements) for i in range(self.featuredimension+1)] # +1 because of bias term
+        indizes, rademacherflips = zip(*indizes)
+        indizes = np.array(indizes)
+        rademacherflips = np.array(rademacherflips) # tuple -> array
         theta_h = self.theta_hosts[indizes]
+        theta_h = theta_h * rademacherflips
         #print "PERS PARAMS", hostID, theta_h # TODO remove
         
         scores = [self.get_score(f, theta_h) for f in features]
         rejectscore = self.get_rejectscore(hostID)
         
         maxsurfer = np.argmax(scores)
+		# TODO comment out	
         #print "rejectscore", rejectscore
         #print "maxsurferscore", scores[maxsurfer]
         #print ""
@@ -81,19 +121,27 @@ class SGDLearningPersonalized:
             return competitorset.get_surferlist()[maxsurfer][0]
         
     
-    def update(self, competitorset, eta=0.01, regularization_lambda=1):
+    def update(self, competitorset, eta=0.01, lambda_winner=0.1, lambda_reject=1.0):
         hostID = competitorset.get_hostID() 
         # if we don't have a r_host yet create one with param zero
         if not self.r_hosts.has_key(hostID):
             self.r_hosts[hostID] = 0.0        
         
         # get features, scores, and probabilities
-        features = [self.get_feature(surferID,hostID,requestID) for (surferID, requestID) in competitorset.get_surferlist()]
+        #features = [self.get_feature(surferID,hostID,requestID) for (surferID, requestID) in competitorset.get_surferlist()] # before without bias
+        features = [np.append(self.get_feature(surferID,hostID,requestID),np.ones(1)) for (surferID, requestID) in competitorset.get_surferlist()] # with appended 1 feature for bias term
+        #features = [np.hstack((self.get_feature(surferID,hostID,requestID),np.ones(1)*(surferID==competitorset.get_winner()), np.ones(1))) for (surferID, requestID) in competitorset.get_surferlist()] # CHEAT TODO REMOVE
+        #features = [np.append(2*(np.ones(1)*(surferID==competitorset.get_winner()))-1, np.ones(1)) for (surferID, requestID) in competitorset.get_surferlist()] # w Bias CHEAT TODO REMOVE
+
                 
         # get personalized hostparameters
         #theta_h = self.get_hostparameters(hostID) 
-        indizes = [inthash(hostID,i,self.nelements) for i in range(self.featuredimension)]
+        indizes = [inthash(hostID,i,self.nelements) for i in range(self.featuredimension+1)] # +1 because of bias term
+        indizes, rademacherflips = zip(*indizes)
+        indizes = np.array(indizes)
+        rademacherflips = np.array(rademacherflips) # tuple -> array
         theta_h = self.theta_hosts[indizes]
+        theta_h = theta_h * rademacherflips
         
         scores = [self.get_score(f, theta_h) for f in features]
         rejectscore = self.get_rejectscore(hostID)
@@ -105,21 +153,25 @@ class SGDLearningPersonalized:
         if competitorset.get_winner()==None:
             # gt -> all got rejected
             temp = [p*f for (p,f) in zip(probabilities,features)]
-            self.theta =  (1 - eta * regularization_lambda) * self.theta - eta * np.sum(temp, axis=0)
-            self.r = self.r - eta * (rejectprobability - 1)
-            self.r_hosts[hostID] =  (1 - eta * regularization_lambda) * self.r_hosts[hostID] - eta * (rejectprobability - 1) 
+            self.theta =  (1 - eta * lambda_winner) * self.theta - eta * np.sum(temp, axis=0)
+            #self.r = self.r - eta * (rejectprobability - 1)
+            self.r = (1 - eta * lambda_reject) * self.r - eta * (rejectprobability - 1)
+            self.r_hosts[hostID] =  (1 - eta * lambda_reject) * self.r_hosts[hostID] - eta * (rejectprobability - 1) 
+
             # update of personalized host parameters
-            self.theta_hosts[indizes] = (1 - eta * regularization_lambda) * theta_h - eta * np.sum(temp, axis=0)
+            self.theta_hosts[indizes] = rademacherflips * ((1 - eta * lambda_winner) * theta_h - eta * np.sum(temp, axis=0)) # TODO make sure that the flipping makes sense!
         else:
             # there was a winner
             winneridx = zip(*competitorset.get_surferlist())[0].index(competitorset.get_winner())
             
             temp = [p*f for (p,f) in zip(probabilities,features)]
-            self.theta = (1 - eta * regularization_lambda) * self.theta - eta * (np.sum(temp, axis=0) - features[winneridx])
-            self.r = self.r - eta * rejectprobability
-            self.r_hosts[hostID] =  (1 - eta * regularization_lambda) * self.r_hosts[hostID] - eta * rejectprobability 
+            self.theta = (1 - eta * lambda_winner) * self.theta - eta * (np.sum(temp, axis=0) - features[winneridx])
+            #self.r = self.r - eta * rejectprobability
+            self.r = (1 - eta * lambda_reject) * self.r - eta * rejectprobability
+            self.r_hosts[hostID] =  (1 - eta * lambda_reject) * self.r_hosts[hostID] - eta * rejectprobability 
+
             # update of personalized host parameters
-            self.theta_hosts[indizes] = (1 - eta * regularization_lambda) * theta_h - eta * (np.sum(temp, axis=0) - features[winneridx])
+            self.theta_hosts[indizes] = rademacherflips * ((1 - eta * lambda_winner) * theta_h - eta * (np.sum(temp, axis=0) - features[winneridx]))
     
 
 
@@ -166,7 +218,7 @@ if __name__=='__main__':
         def get_winner(self):
             return 2 
             
-    class CompetitorSet3: # reject Host
+    class CompetitorSet3: # reje!=Nonect Host
         def get_hostID(self):
             return 2
             
@@ -185,8 +237,15 @@ if __name__=='__main__':
     featuredimension = 3
     get_feature_function = get_feature # here Ron's function should go
     memsize = 1 #MB
-    sgd = SGDLearningPersonalized(featuredimension, get_feature_function, memsize)
-    niter = 100
+    #sgd = SGDLearningPersonalized(featuredimension, get_feature_function, memsize)
+    theta = np.arange(3)
+    r = 17
+    r_hosts = {}
+    theta_hosts = np.random.rand(20) - 0.5
+    sgd = SGDLearningPersonalized(featuredimension, get_feature_function, memsize) # the +1 is if were cheating, inside the object definition is another +1 which is for the bias term
+    #sgd = SGDLearningPersonalized(featuredimension+1, get_feature_function, memsize, theta=theta, r=r, r_hosts=r_hosts, theta_hosts=theta_hosts)    
+    
+    niter = 1000
     
     # do a couple update steps
     for i in range(niter):
@@ -204,6 +263,6 @@ if __name__=='__main__':
         print "\ttrue", cs.get_winner()
         print "\tpredicted", sgd.predict(cs)
         
-        sgd.update(cs, eta=0.1, regularization_lambda=0.1)
+        sgd.update(cs, eta=0.1, lambda_winner=0.1, lambda_reject=0.1)
         
     

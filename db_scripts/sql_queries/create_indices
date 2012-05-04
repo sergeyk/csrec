@@ -1,0 +1,2 @@
+CREATE INDEX set_index USING BTREE ON competitor_sets_test_train (set_id ASC)
+

@@ -1,79 +1,19 @@
-\documentclass[11pt]{article}
-\usepackage[utf8]{inputenc}
-\pagestyle{headings}
-%\usepackage[top=1in, bottom=1in]{geometry}
-\usepackage{amsmath,amsfonts,amsthm,amssymb}
-\usepackage[pdftex]{graphicx}
-\usepackage{url}
-\usepackage{subfig}
-\usepackage{color}
-\usepackage[pagebackref=true,breaklinks=true,letterpaper=true,colorlinks,bookmarks=false,citecolor=red,linkcolor=blue]{hyperref}
-\usepackage{algorithm}
-\usepackage{algorithmic}
-\usepackage{amssymb}
-\usepackage{ifthen}
-\renewcommand{\algorithmicrequire}{\textbf{Input:}}
-\renewcommand{\algorithmicensure}{\textbf{Output:}}
+% !TEX root=report.tex
+\section{Data Exploration}
 
-%% Command definitions
-\def\subsectionautorefname{section}
-\newcommand{\todo}[1]{\textcolor{red}{#1}}
-\definecolor{light-gray}{gray}{0.3}
-\newcommand{\aside}[1]{\textcolor{light-gray}{\emph{#1}}}
-\newcommand{\comment}[1]{}
+The CouchSurfing dataset was made privately available to the authors in the form of an anonymized MySQL database dump.
+In the course of formulating the prediction problem and our approach to it, we explored and visualized some aspects of the data.
 
-\newcommand{\shownotes}{0}
-\ifthenelse{ \shownotes = 1}
-{ \newcommand{\note}[3]{\marginpar{\textcolor{black}{#1:} \textcolor{red}{\emph{#2}}} \textcolor{red}{#3}} }
-{ \newcommand{\note}[3]{\textcolor{black}{#3}} }
+\subsection{Grouping by host and request set.}
+Distribution of number of requests received is logarithmic on a logarithmic scale. 
+See \autoref{fig:requests_distribution}.
 
-\title{Recommender System for Social Roomsharing}
-\author{Ron Sun, Tobi Baumgartner, Tim Althoff, Sergey Karayev}
-\date{\today}
-
-\begin{document}
-\maketitle
-
-\section{Introduction}
-In this project we work on solving a problem in the CouchSurfing~\footnote{~\url{http://www.couchsurfing.org/}} domain. CouchSurfing is a platform for travellers around the world to find accomodations on other user's couches. Each user can either act as a \textit{host} and offer her couch, or a \textit{suitor} who requests hosts to stay at their place for a couple of days. While first focusing on finding the best matching couch for a suitor, further discussion with CouchSurfing revealed that the main problem is to find in the opposite direction. For hosts who have a lot of requests it is hard to find the suitor they like the most and will want to host. We present an approach to classify the requests one hosts gets and order them to make the CouchSurfing experience for hosts as convenient as possible. 
-
-\subsection{Related Work}
-
-%\paragraph{Harvesting Social Network Profiles for Recommendations} \cite{Liu2005}
-%Their research is so similar to what we're doing it's scary. I think if we combine their normalization techniques + Koren's collaborative filtering algorithms, we'll be in good shape. Liu also has other interesting papers I'm going to read.
-
-\paragraph{Like like alike} \cite{Yang2011}
-In this paper the joint information in friendships and interests is used (although Couchsurfing friendships are probably presumably more sparse).
-A graphical model is used to do a joint propagation of interest.
-One idea might be be not only to take the host's and the surfer' interests from there profiles, but assume that they are incomplete and try to predict other interests similar to this paper. While they practically only have positives we will also have negative feedback (couch request rejects), but they have an interesting idea of using randomly sampled "weak negatives" to correct for a bias towards positive samples.
-Furthermore they use SGD learning and the feature hashing trick which is very relevant to our project.
-Their evaluation part describes standard ranking metrics that become interesting/necessary if we pool "all positives (i.e. all accepted couch requests)" instead of having a "1 positive, multiple negatives" problem.
-Also interesting is the idea of homophily: people with similar interests attract each other. This provides a general motivation of what we are doing in our project.
-
-\paragraph{CoFiRank} \cite{Weimer2009}
-This paper learns features/latent factors but does not allow for additional observations (apart from ratings). We, however, have more features we want to use (i.e. demographic and geographic papers). They learn how to rank as opposed to how to score and also provide a definition of nDCG. It leads to a structured estimation SVM-like optimization problem and there seems to be C++ software available. Still, we should start with an easier (probably linear) model and we might use a classification instead of a ranking framework.
-
-\paragraph{Fair and Balanced} \cite{Ahmed2012}
-This paper is very tailored towards news articles and implicit click data (that we don't have) and therefore not very applicable. The notion of submodularity / diminishing returns is not applicable for us since or hosts can only accept one request at a time. Most interesting and applicable is the personalization idea leading to the hashing trick.
-
-\paragraph{Optimizing Search Engines through clickthrough data} \cite{Joachims2002}
-While the application is very different from ours (because we don't have implicit click feedback) the general idea of using an SVM type of optimization problem is very applicable. If we modeled our general problem as a ranking instead of a classification problem we could use the formulation of Problem 2 in Section 4.2. The constraints will be all the order relations based on accepts/rejects of couch requests.
-
-\paragraph{An Enhanced Semantic Layer for Hybrid Recommender Systems} \cite{Cantador2011}
-%Ontology: They use \url{http://ir.ii.uam.es/news-at-hand/iptc-ontology_v01.rdfs} which comes from the news codes ontology at \url{http://www.iptc.org/site/NewsCodes}.
-This paper deals with semantic annotation, which is essentially mapping a document to its ontology entities (almost like topic modeling). They extract terms, map the terms to ontology entities (by looking up the term's wikipedia article and construct a vector of applicable ontology entities based on what categories appear in the wikipedia article), and then measure the strength of those mappings using the tf-idf measure.
-They build a news recommender system that recommends based on activation propagation.
-
-
-\section{Proposal}
-\subsection{Model}
-Ranking:
-Does anyone have a clear idea of how to learn feature weights?  I guess before we worry about learning the weights, we should figure out what kind of features we want.  I think there's really 3 possibilities:
-
-What Sergey explained on the white board.  You have a feature vector per suitor and you dot that with your trained "host preferences" weights. And then do some black magic exponentiation to make things nice. We haven't figured out how to make this "reversible".  This makes no assumption for homophily.
-Generate a feature vector for the host and each suitor. Compute a cosine similarityish thing between the host vector and each suitor vector and rank by most similar. Each vector can have demographic, socioeconomic, and interest features.  This makes the assumption of homophily. We assume more similar = higher conversion rate. This method is reversible.
-
-%Interest graph: the compatibility strength between suitor and host is determined by $num_overlapping_interest(host, suitor)$ through some type of decaying activation propagation.  This will be based on the "Taste Fabric" paper and the "Semantic Recommendation" paper.  This method assumes homophily and that interests are the strongest attractors between people (doesn't take into account demographics etc.).  This method is reversible.
+\begin{figure}[ht]
+\centering
+\includegraphics[width=1\linewidth]{figures/req_received_dist2.png}
+\caption{Distribution of requests received by a host.}
+\label{fig:requests_distribution}
+\end{figure}
 
 \subsection{Temporally blind prediction of host-suitor pairings}
 The first formulation of the problem ignores the temporal nature of the requests.
@@ -123,6 +63,28 @@ It might also be beneficial to soften the notion of ``overlap'' just because it 
 \subsection{Filter rejects by temporal constraints}
 Using a very similar technique we can filter rejects that are not actually rejects for the reason of a mismatching suitor. Imagine $h$ gets a request $r_1$ at time $t_1$, accepts this request at time $t_2$ and gets another request $r_2$ for the same period as $r_1$ at $t_3$. If we have that $t_1 < t_2 < t_3$, there is no valid information about whether or not $h$ likes suitor $s_2$. By the time he gets the second request, his couch is already booked out and so he has to reject $s_2$ no matter if he would even prefer him over $s_1$. Because of this scenario we filter our training data for exactly those \textit{uninformative rejects} using again algorithm~\ref{alg:overlap} and temporal orderings on requests and acceptances/rejects.
 
+
+See \autoref{fig:temporal_filtering}.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=1\linewidth]{figures/temporal_filtering.png}
+\caption{Temporal filtering example. \todo{Explain.}}
+\label{fig:temporal_filtering}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\subfloat[Requested]{
+  \includegraphics[width=0.45\linewidth]{figures/top_requested.png}
+}
+\subfloat[Accepted]{
+  \includegraphics[width=0.45\linewidth]{figures/top_accepted.png}
+}
+\caption{\todo{Explain.}}
+\label{fig:timeline_view}
+\end{figure}
+
 \subsection{Unseen Requests}
 \label{sec:unseen}
 The current state of the system is that $h$ gets an email as soon as a new request is filed and on their profile the requests are presented in \note{TB}{true?}{chronological order} as well. For the mentioned couch in Paris these mails might be archived without being read and interesting request could get lost. For each request $r_i$ we have a binary random variable $seen(h, r_i)$ which is $1$ if $h$ took a look at request $r_i$, independent of whether he click accept/reject/maybe or nothing at all. The probability $p(seen(h,r_i))$ directly corresponds to the objective of this project. The goal is to present the requests to $h$ in order by how likely she is to accept them, or in other words, we want to maximize the probability that $h$ \textit{sees} requests that she would accept by moving them upwards in our ranking and hence reducing the number of overall requests to look at. Maximizing the acceptance/\#views rate is the same as minimizing the rejection/\#views rate, which can be expressed as finding a permutation $\sigma^*$, such that:
@@ -132,9 +94,12 @@ In section~\ref{sec:implicitNeg} we assumed that all requests in the \textit{imp
 $$p(reject(h, r_i)) = \int p(reject(h, r_i)|seen(h, r_i))\cdot p(seen(h, s_i))$$
 To do so we need a way to estimate $p(seen(h,s_i))$. This probability is both dependent on the manner of $h$ as well as on the order of how the requests are shown to $h$, which is dependent on the time $h$ looks at the requests. We do not have log-files of the website, so we cannot determine which requests $h$ has acutally seen, but we can again try to infer this information from the behavior of the host. Assuming that $h$ acts during each visit of her request-list at least once with a click onto accept/reject/maybe (\textit{active visit}), we can interpolate for each of these events the request-list she saw and assume that $h$ looked at the first $l$ of these requests. We can now for each \textit{active visit} sum up the number of requests $h$ actually saw and reacted upon and the discounted number of the first $l$ request in the list, discounted by $\lambda_i$ for their position $i$ in the list as well as with another host-specific factor $\lambda$.
 
-%\subsection{Evaluation}
+\subsection{User interests}
+Interest graph: the compatibility strength between suitor and host is determined by $num_overlapping_interest(host, suitor)$ through some type of decaying activation propagation.  This will be based on the "Taste Fabric" paper and the "Semantic Recommendation" paper.  This method assumes homophily and that interests are the strongest attractors between people (doesn't take into account demographics etc.).  This method is reversible.
 
-\bibliographystyle{ieeetr}
-\small
-\bibliography{sergeyk-bibtex}
-\end{document}
+\begin{figure}[ht]
+\centering
+\includegraphics[width=1\linewidth]{figures/interest_graph.png}
+\caption{Interest graph.}
+\label{fig:interest_graph}
+\end{figure}
