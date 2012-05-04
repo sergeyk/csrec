@@ -100,7 +100,7 @@ if __name__=='__main__':
   featuredimension = fg.get_dimension()
   get_feature_function = fg.get_features
   
-  memory_for_personalized_parameters = 10.0 # memory in MB if using personalized SGD learning
+  memory_for_personalized_parameters = 20.0 # memory in MB if using personalized SGD learning
   
   # learning parameters
   niter = int(10.0 * Ntrain)
