@@ -13,7 +13,6 @@ TODO:
 """
 
 import numpy as np
-from IPython import embed
 
 class SGDLearning:
 

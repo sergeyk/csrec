@@ -3,7 +3,6 @@
 
 import numpy as np
 from Sqler import *
-from IPython import embed
 
 
 class CompetitorSet:
@@ -16,7 +15,6 @@ class CompetitorSet:
 
     
   def get_hostID(self):
-    ''''''
     return int(self.dict[0][CompetitorSet.TRANS['host_id']])
   
   def get_surferlist(self):

@@ -21,7 +21,6 @@ from competitor_sets.competitor_sets import CompetitorSetCollection
 from competitor_sets.Sqler import Sqler
 from features.user_features import FeatureGetter
 from math import sqrt
-from IPython import embed
 import random
 import os
 import numpy as np
@@ -49,7 +48,13 @@ def run():
   verbose = True
   
   fg = FeatureGetter(testing)
+
+  #God mode features:
+  #featuredimension = 1
+
+  #Normal features:
   featuredimension = fg.get_dimension()
+
   get_feature_function = fg.get_features  
   
   sq = Sqler()

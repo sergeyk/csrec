@@ -18,6 +18,11 @@ TODO:
 import numpy as np
 #from IPython import embed
 
+
+# Set this to true if you would like to use "perfect" features. 
+# Also: turn on God mode in run_mpi
+SANITY_CHECK = False
+
 def inthash(x,y,N): # take this one
     a = (x * 0x1f1f1f1f) ^ y
     a = (a ^ 61) ^ (a >> 16)
@@ -92,10 +97,18 @@ class SGDLearningPersonalized:
         if not self.r_hosts.has_key(hostID):
             self.r_hosts[competitorset.get_hostID()] = 0.0
         
-        #features = [self.get_feature(surferID,hostID,requestID) for (surferID, requestID) in competitorset.get_surferlist()] # before without bias
-        features = [np.append(self.get_feature(surferID,hostID,requestID),np.ones(1)) for (surferID, requestID) in competitorset.get_surferlist()] # with appended 1 feature for bias term
-        #features = [np.hstack((self.get_feature(surferID,hostID,requestID),np.ones(1)*(surferID==competitorset.get_winner()), np.ones(1))) for (surferID, requestID) in competitorset.get_surferlist()] # CHEAT TODO REMOVE
-        #features = [np.append(2*(np.ones(1)*(surferID==competitorset.get_winner()))-1, np.ones(1)) for (surferID, requestID) in competitorset.get_surferlist()] # w Bias CHEAT TODO REMOVE
+        # before without bias
+        #features = [self.get_feature(surferID,hostID,requestID) for (surferID, requestID) in competitorset.get_surferlist()] 
+
+        # with appended 1 feature for bias term using ron's feature getter
+        features = [np.append(self.get_feature(surferID,hostID,requestID),np.ones(1)) for (surferID, requestID) in competitorset.get_surferlist()] 
+
+        # CHEAT TODO REMOVE
+        #features = [np.hstack((self.get_feature(surferID,hostID,requestID),np.ones(1)*(surferID==competitorset.get_winner()), np.ones(1))) for (surferID, requestID) in competitorset.get_surferlist()]
+
+        # w Bias CHEAT TODO REMOVE
+        if SANITY_CHECK:
+            features = [np.append(2*(np.ones(1)*(surferID==competitorset.get_winner()))-1, np.ones(1)) for (surferID, requestID) in competitorset.get_surferlist()]
         
         # get personalized hostparameters
         #theta_h = self.get_hostparameters(hostID)
@@ -131,9 +144,9 @@ class SGDLearningPersonalized:
         #features = [self.get_feature(surferID,hostID,requestID) for (surferID, requestID) in competitorset.get_surferlist()] # before without bias
         features = [np.append(self.get_feature(surferID,hostID,requestID),np.ones(1)) for (surferID, requestID) in competitorset.get_surferlist()] # with appended 1 feature for bias term
         #features = [np.hstack((self.get_feature(surferID,hostID,requestID),np.ones(1)*(surferID==competitorset.get_winner()), np.ones(1))) for (surferID, requestID) in competitorset.get_surferlist()] # CHEAT TODO REMOVE
-        #features = [np.append(2*(np.ones(1)*(surferID==competitorset.get_winner()))-1, np.ones(1)) for (surferID, requestID) in competitorset.get_surferlist()] # w Bias CHEAT TODO REMOVE
+        if SANITY_CHECK:
+            features = [np.append(2*(np.ones(1)*(surferID==competitorset.get_winner()))-1, np.ones(1)) for (surferID, requestID) in competitorset.get_surferlist()] # w Bias CHEAT TODO REMOVE
 
-                
         # get personalized hostparameters
         #theta_h = self.get_hostparameters(hostID) 
         indizes = [inthash(hostID,i,self.nelements) for i in range(self.featuredimension+1)] # +1 because of bias term
