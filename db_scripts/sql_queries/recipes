@@ -1,0 +1,14 @@
+Count accepted couch requests
+select count(*) from couchrequest where status='Y'
+
+Show interests of accpeted couch hosts
+select p.interests from couchrequest as r inner join user_profile as p on r.host_user_id=p.user_id where status='Y' limit 10;
+
+select r.status, p.user_id, p.interests from couchrequest as r inner join user_profile as p on r.host_user_id=p.user_id where status='Y' group by p.user_id limit 20;
+
+select r.status, p.user_id, p.interests" + \
+        "from couchrequest as r inner join user_profile as p " + \
+        "on r.host_user_id=p.user_id " + \
+        "where r.status='Y' " + \
+        "group by p.user_id " + \
+        "limit 20;"

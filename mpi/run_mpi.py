@@ -54,9 +54,10 @@ def test(sgd, data):
   truenones = comm.reduce(truenones)
   prednones = comm.reduce(prednones)
   
-  errorrate = errors/float(N)  
-  truenonerate = truenones/float(N)  
-  prednonerate = prednones/float(N) 
+  if comm_rank == 0:
+    errorrate = errors/float(N)  
+    truenonerate = truenones/float(N)  
+    prednonerate = prednones/float(N) 
   return errorrate, truenonerate, prednonerate
 
 
@@ -65,13 +66,16 @@ def run():
     testing = True
   else:
     testing = False
-
+    
+  ######## TODO: These are testing flags
   testing = True
+  just_winning_sets = True
+  ######## Erase them for the real thing
   memory_for_personalized_parameters = 50.0 # memory in MB if using personalized SGD learning  
   percentage = 0.2 # Dependent on machines in future min:10%, 2nodes->80%
 
   outer_iterations = 1 #10
-  nepoches = 0.02 #10
+  nepoches = 1 #10
 
   alpha = 100.0
   beta = 0.01
@@ -100,7 +104,7 @@ def run():
       
       # Create sgd object   
       sgd = SGDLearningPersonalized(featuredimension, get_feature_function, memory_for_personalized_parameters) # featdim +1 iff cheating
-      dataobject = CompetitorSetCollection(num_sets=num_sets, testing=testing,validation=False)
+      dataobject = CompetitorSetCollection(num_sets=num_sets, testing=testing, validation=False)
       N = dataobject.get_nsamples()
       niter = int(N*nepoches)
       
@@ -165,7 +169,7 @@ def run():
       # Compute the errors
       safebarrier(comm)
       
-      cs_train = CompetitorSetCollection(num_sets=overallnum_sets, testing=testing, validation=False)
+      cs_train = CompetitorSetCollection(num_sets=overallnum_sets, testing=testing, validation=False, just_winning_sets=just_winning_sets)
       
       errorrate, truenonerate, prednonerate = test(sgd, cs_train)
       trainerrors[lw,lr] = errorrate
@@ -176,7 +180,7 @@ def run():
           print "PredNone-Rate: %f"%(prednonerate)
       
       overallnum_testsets = sq.get_num_compsets(validation = True)
-      cs_test = CompetitorSetCollection(num_sets=overallnum_testsets, testing=testing, validation=True)
+      cs_test = CompetitorSetCollection(num_sets=overallnum_testsets, testing=testing, validation=True, just_winning_sets=just_winning_sets)
             
       errorrate, truenonerate, prednonerate = test(sgd, cs_test)
       testerrors[lw,lr] = errorrate
@@ -187,13 +191,15 @@ def run():
           print "PredNone-Rate: %f"%(prednonerate)
 
 
-      # Store the parameters to /tscratch/tmp/tobibaum
+      # Store the parameters to /tscratch/tmp/csrec
       if comm_rank == 0:
           dirname = '/tscratch/tmp/csrec/'
-          if not os.path.exists(dirname):
-            os.makedirs(dirname)
+          if os.path.exists('/tscratch'):
+            if not os.path.exists(dirname):
+              os.makedirs(dirname)
           filename = 'parameters_lwin_%f_lrej_%f_testing_%d.pkl'%(lambda_winner, lambda_reject, testing)
-          pickle.dump( (sgd.theta, sgd.theta_hosts, sgd.r, sgd.r_hosts), open( dirname+filename, "wb" ) )
+          if os.path.exists('/tscratch'):
+            pickle.dump( (sgd.theta, sgd.theta_hosts, sgd.r, sgd.r_hosts), open( dirname+filename, "wb" ) )
 
   # end of CV for loops
 
@@ -210,7 +216,9 @@ def run():
 
     # store errorrates somewhere
     filename = 'errors_testing_%d.pkl'%(testing)
-    pickle.dump( (trainerrors, testerrors), open( dirname+filename, "wb" ) )
+    
+    if os.path.exists('/tscratch'):
+      pickle.dump( (trainerrors, testerrors), open( dirname+filename, "wb" ) )
      
      
      
