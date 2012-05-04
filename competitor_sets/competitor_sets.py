@@ -4,7 +4,8 @@
 import numpy as np
 from Sqler import *
 from IPython import embed
-
+from mpi.mpi_imports import *
+import random
 
 class CompetitorSet:
   
@@ -49,19 +50,25 @@ class CompetitorSetCollection:
   ''' Storage of all competitor sets for all hosts. Load from dump, provide 
   CompetitorSet object'''
   
-  def __init__(self, num_sets=100, split_date='2011-03-29 11:41:04', testing=False, validation=False):
+  def __init__(self, num_sets=100, split_date='2011-08-16 16:24:47', testing=False, validation=False, just_winning_sets = False):
     self.sq = Sqler()
     if testing:
       if validation:
         self.db = 'competitor_sets_test_val'
       else:
         self.db = 'competitor_sets_test_train'
+      
+      if just_winning_sets:
         
-      res = self.sq.rqst('select * from '+self.db+' group by set_id;')
+        res = self.sq.rqst("select set_id from (select set_id, count(winner) as \
+          cnt, sum(winner) as sum from competitor_sets group by set_id)as t where \
+          cnt >1 and sum > 0;")
+        
+      else:    
+        res = self.sq.rqst('select * from '+self.db+' group by set_id;')
     else:
       # Otherwise we want to create a random subset of  
-      self.db = 'competitor_sets'
-          
+      self.db = 'competitor_sets'          
       
       self.split_date = "'2011-03-29 11:41:04'" 
       self.num_sets = num_sets # How much do we want
@@ -71,16 +78,50 @@ class CompetitorSetCollection:
         date_restrict = "<"        
       date_restrict += self.split_date
       
-      request = "select competitor_sets.* from competitor_sets join (select set_id \
-       from competitor_sets  where date "+date_restrict+" group by set_id order \
-       by rand() limit 0," +str(self.num_sets)+") as T on (competitor_sets.set_id = T.set_id) \
-       order by set_id"
+      ###### ASSUMPTION: For now assume, that we only have one active table at a time
+      self.set_ids_table_name = "temp_set_ids_%d"%comm_rank
+      self.sq.rqst("drop table if exists "+self.set_ids_table_name)
+              
+      ## Now create this table with:
+      if just_winning_sets:
+# select set_id from (select set_id, count(winner) as cnt, sum(winner) as 
+# sum from competitor_sets group by set_id)as t where cnt >1 and sum > 0;
+        cr_tab_request = "create table "+self.set_ids_table_name+" as (select set_id from \
+         (select set_id, count(winner) as cnt, sum(winner) as sum \
+         from competitor_sets  where date "+date_restrict+" group by set_id order \
+         by rand()  ) as T where cnt > 1 and sum > 0 limit 0, " +str(self.num_sets)+");"      
+        
+      else:
+        cr_tab_request = "create table "+self.set_ids_table_name+" as (select set_id \
+         from competitor_sets  where date "+date_restrict+" group by set_id order \
+         by rand() limit 0, " +str(self.num_sets)+" );"      
       
+      res = self.sq.rqst(cr_tab_request)
+      
+      # create the users table. First a table with two columns for host/surfer
+      self.user_table_name = "temp_users_table_%d"%comm_rank
+      self.sq.rqst("drop table if exists "+self.user_table_name)
+      self.sq.rqst("drop table if exists "+self.user_table_name+"temp")
+      self.sq.rqst("create table " +self.user_table_name+ "temp as(SELECT host_id, surfer_id FROM "+self.set_ids_table_name+" join \
+        competitor_sets on ( " + self.set_ids_table_name + ".set_id = competitor_sets.set_id))")
+      
+      # then both in one column
+      #create table a as (select * from (SELECT distinct host_id as user_id FROM TT union select surfer_id from TT) as T)
+      self.sq.rqst("create table " +self.user_table_name+ " as( select * from (SELECT distinct host_id \
+        as user_id FROM "+self.user_table_name+"temp union select surfer_id from " +self.user_table_name+"temp) as T)")
+      # drop the old unneeded table  
+      self.sq.rqst("drop table "+self.user_table_name+"temp")
+      # and create an index on the user_ids.
+      self.sq.rqst("create index ind using BTREE on "+self.user_table_name+" (user_id ASC)")
+        
+      request = "select competitor_sets.* from competitor_sets join " + \
+        self.set_ids_table_name + " on (competitor_sets.set_id = "+self.set_ids_table_name+".set_id) \
+        order by set_id"
       res = self.sq.rqst(request)       
     
     sets = res.fetch_row(11000000,0)
+    #embed()
     last_set_id = sets[0][CompetitorSet.TRANS['set_id']]
-    print last_set_id
     curr_set = []
     self.all_sets = []
     for cset in sets:
@@ -95,8 +136,35 @@ class CompetitorSetCollection:
       last_set_id = curr_set_id
     self.all_sets.append(curr_set)
     assert(len(sets) == sum([len(s) for s in self.all_sets]))        
-    self.num_sets = len(self.all_sets) 
-            
+    self.num_sets = len(self.all_sets)
+    
+    # Drop the set_id table (we are just interested in the user id table from 
+    # now on
+    if not testing:
+      self.sq.rqst("drop table %s"%(self.set_ids_table_name))
+    
+    # We just want sets where we actually observe a winner. 
+    #if just_winning_sets:
+       
+  
+  def get_user_dict(self, table):
+    '''
+    For each competitor_set we have a fixed set of users. Get the Features for 
+    all of 'em with one DB lookup.
+    '''
+    request = "SELECT "+table+".* FROM "+table+" join "+self.user_table_name+ \
+      " on ("+table+".user_id = "+self.user_table_name+".user_id)"
+    dbres = self.sq.rqst(request)
+    res = dbres.fetch_row(11000000)
+    ress = {}
+    for r in res:
+      r = np.array(r)
+      r[np.where(r == None)] = 0
+      ress[int(r[0])] = r
+    # And we erase that table
+    self.sq.rqst("drop table "+self.user_table_name)
+    return ress
+  
   def get_nsamples(self):
     ''' Get the overall number of samples (= competitor sets) in our data'''
     return self.num_sets
@@ -107,9 +175,13 @@ class CompetitorSetCollection:
     return CompetitorSet(row)   
 
 if __name__=='__main__':
-  cs_coll = CompetitorSetCollection()
-  print cs_coll.get_nsamples()
-  cs = cs_coll.get_sample(43)
+  cs_coll_train = CompetitorSetCollection(num_sets=10000, just_winning_sets=True)
+  cs_coll_test = CompetitorSetCollection(num_sets=10000, just_winning_sets=True, validation=True)
+  #cs_coll.get_user_dict("examplar_user_table")
+  N = cs_coll_train.get_nsamples()
+  N2 = cs_coll_test.get_nsamples()
+  print N, N2
+  cs = cs_coll_train.get_sample(random.randint(0,N-1))
   print cs.get_hostID()
   print cs.get_surferlist()
   print cs.get_winner()

@@ -11,7 +11,7 @@ import os
 class Sqler:
   def __init__(self):
     if os.path.exists('/u/vis/'):
-      self.db = sql.connect(db='csrec',user='sergeyk',unix_socket='/u/vis/x1/sergeyk/mysql/mysql.sock')#,host='orange4')
+      self.db = sql.connect(db='csrec',user='sergeyk',unix_socket='/u/vis/x1/sergeyk/mysql/mysql.sock', host='orange4', port=8081)
     elif os.path.exists('/home/tobibaum/'):    
       self.db = sql.connect(db='CSRec')
 
@@ -37,9 +37,16 @@ class Sqler:
     # instead of all at a time fetch  the rows one after the other.
     return res 
   
-  def get_num_compsets(self):
-    res = self.rqst('SELECT count(DISTINCT set_id) FROM `competitor_sets`')
+  def get_num_compsets(self, split_date="'2011-03-29 11:41:04'", validation=False):
+    if validation:
+      split_op = " > "
+    else:
+      split_op = " < "
+    split_param = split_op + split_date + " "
+    
+    res = self.rqst("SELECT count(DISTINCT set_id) FROM `competitor_sets` where date "+split_param)
     num_compsets = int(res.fetch_row(1,0)[0][0])
+    res.fetch_row(10,0)
     return num_compsets
 
   def get_max_depart(self, reqs):

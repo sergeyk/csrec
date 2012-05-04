@@ -1,6 +1,7 @@
 import cPickle
 import numpy as np
 import bucketizer
+import os
 
 import csrec_paths
 
@@ -21,6 +22,14 @@ class FeatureGetter():
           self.DATA_FILE = 'sampled_user_data.pkl' #'user_data.pkl'
         else:
           self.DATA_FILE = 'user_data.pkl'
+          
+        if os.path.exists('/u/vis/'):
+          if testing:
+            self.user_pklfile = csrec_paths.get_features_dir()+'sampled_user_data.pkl'
+          else:
+            self.user_pklfile = '/u/vis/x1/tobibaum/user_data.pkl'
+        else:
+          self.user_pklfile = csrec_paths.get_features_dir()+self.DATA_FILE
         self.load_user_features_pkl()
         self.init_bucketizer()
         
@@ -30,7 +39,7 @@ class FeatureGetter():
 
     def load_user_features_pkl(self):
         print 'loading user data...'
-        self.user_data = cPickle.load(open(csrec_paths.get_features_dir()+self.DATA_FILE, 'rb'))
+        self.user_data = cPickle.load(open(self.user_pklfile, 'rb'))
         print 'data for %s users loaded' % (len(self.user_data))
 
     def get_features(self, user_id, host_id, req_id):
