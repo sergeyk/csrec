@@ -1,0 +1,8 @@
+introduction:
+- after the initial example a sentence that security is taken care of, at least to a somewhat sufficient degree
+- figure 1 would be better if it had a lot more requests
+- two scenarios: host + surfer perspective
+--> I would argue that we solve both :-) we optimize it from the perspective of the host but since we estimate probabilities of winning or being accepted we can use the same model from the surfers perspective to recommend him hosts where he's most likely to be accepted
+--> essentially, thereby, we're optimizing the "conversion rate" something the CS people seem to really care about :-)
+
+Unfortunately, everything else doesn't seem to be relevant to our project anymore ;-) e.g. implicit negatives, temporal constraints...

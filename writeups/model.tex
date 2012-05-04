@@ -1,6 +1,16 @@
 % !TEX root=report.tex
 \section{Prediction Model Derivation}
 
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.6\linewidth]{figures/reject_vs_no_reject.pdf}
+\caption{
+Example of a case where modeling the reject option results in vastly different recommendation behavior.
+Consider surfer $s_1$'s perspective: without modeling the reject option, $h_2$ looks more likely to accept $s_1$.
+When modeling the reject option, however, the probabilities change and $h_1$ is now more likely to accept $s_1$, due to the ability to model how picky $h_2$ actually is.}
+\label{fig:reject_vs_no_reject}
+\end{figure}
+
 \begin{eqnarray}
 p(s_k | h_n, S_n) &=& \frac{\exp(\theta^T \Phi(s_k,h_n))}{\sum_{j \in S_n} \exp(\theta^T \Phi(s_j,h_n)) + \exp(r + r_{h_n})} \\
 p(\text{reject} | h_n, S_n) &=& \frac{\exp(r+r_{h_n})}{\sum_{j \in S_n} \exp(\theta^T \Phi(s_j,h_n)) + \exp(r + r_{h_n})}

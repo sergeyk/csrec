@@ -4,99 +4,78 @@
 import MySQLdb as mdb
 import sys, os
 import cPickle
-import feature_contractor
+import feature_processor
 import csrec_paths
+from MySQLdb import converters
+import pprint
 
-def pickle_sample_user_info(cursor):
-    print 'loading sampled user data...'
-    user_data = cPickle.load(open(csrec_paths.get_features_dir()+'user_data.pkl', 
-                                  'rb'))
-    print 'querying database...'
-    sql_cmd = "select host_id,  surfer_id "+ \
-        "from competitor_sets"
-    print sql_cmd
+def get_languages(cursor, user_id):
+    sql_cmd = "select * from %s where user_id=%s" % ('user_language', user_id)
     cur.execute(sql_cmd)
-    print 'finished query'
-    all_results = cur.fetchall()
-    id_set = set([])
+    all_results = list(cur.fetchall())
+    return list(all_results)
+
+def pull_data_for_user(cursor, user_id):
+    conv = converters.conversions
+    user_data = {}
+    tables = ['user', 'user_info']
+    for table in tables:
+        sql_cmd = "select * from %s where user_id=%s" % (table, user_id)
+        cur.execute(sql_cmd)
+        all_results = list(cur.fetchall())
+        description = cursor.description
+        for result in all_results:
+            for i in range(len(result)):
+                col_name = description[i][0]
+                col_type = conv[description[i][1]]
+                if col_name not in user_data:
+                    new_field = {'field_type': col_type}
+                    user_data[col_name] = new_field
+                user_data[col_name]['field_data'] = result[i]
+    user_data['languages'] = {'field_type': 'language_set',
+                              'field_data': get_languages(cursor, user_id)}
+#    pprint.pprint(user_data)
+    return user_data
+        
+
+def pickle_competitor_set_user_info(cursor, competitor_set):
+    active_user_ids = set([])
+    sql_cmd = "select host_id, surfer_id from "+competitor_set
+    cur.execute(sql_cmd)
+    all_results = list(cur.fetchall())
     for result in all_results:
-        for i in result:
-            id_set.add(i)
-    sampled_user_data = {}
-    not_found_ids = set([])
-    for user_id in id_set:
-        if user_id in user_data:
-            sampled_user_data[user_id] = user_data[user_id]
-        else:
-            not_found_ids.add(user_id)
-    print not_found_ids
-    #print sampled_user_data
-    print 'dumping...'
-    cPickle.dump(sampled_user_data, 
+        active_user_ids.add(result[0])
+        active_user_ids.add(result[1])
+    print 'pulling data for', len(active_user_ids), 'users...'
+    user_data_dct = {}
+    i = 0
+    for user_id in active_user_ids:
+        i += 1
+        user_data_dct[user_id] = pull_data_for_user(cursor, user_id)
+        if i%1000 == 0:
+            print "%s/%s" % (i, len(active_user_ids)), 'users finished'
+
+    cPickle.dump(user_data_dct, 
                  open(csrec_paths.get_features_dir()+'sampled_user_data.pkl', 'wb'))
 
-def pickle_user_info(cursor):
+if __name__ == "__main__":
+    con = None
+    username = os.environ['MYSQL_USER']
+    password = os.environ['MYSQL_PASS']
+
     try:
-        print 'loading data...'    
-        all_results = cPickle.load(open(csrec_paths.get_features_dir()+'db_query_results.pkl', 
-                                        'rb'))
-    except IOError:
-        print 'querying database 1...'
-        sql_cmd = "select u.* "+ \
-            "from couchrequest as r inner join (user as u) " + \
-            "on (r.surf_user_id=u.user_id) group by u.user_id;"
-        print sql_cmd
-        cur.execute(sql_cmd)
-        print 'finished query 1'
-        all_results = list(cur.fetchall())
-        print 'querying database 2...'
-        sql_cmd = "select u.* "+ \
-            "from couchrequest as r inner join (user as u) " + \
-            "on (r.host_user_id=u.user_id) group by u.user_id;"
-        print sql_cmd
-        cur.execute(sql_cmd)
-        print 'finished query 2'
-        all_results += list(cur.fetchall())
-        cPickle.dump(all_results, 
-                     open(csrec_paths.get_features_dir()+'db_query_results.pkl', 'wb'))
-    print len(all_results)
-
-    converter = feature_contractor.Converter()
-    user_data = {}
-    i = 0
-    for result in all_results:
-        i += 1
-        print 'stored %s/%s' % (i, len(all_results))
-        u1 = list(result)
-        if u1[0] not in user_data:
-            user_data[u1[0]] = converter.convert(u1)
-    del(all_results)
-    print len(user_data), 'users loaded'
-    print 'dumping user data...'
-    cPickle.dump(user_data, 
-                 open(csrec_paths.get_features_dir()+'user_data.pkl', 'wb'))
-
-con = None
-username = os.environ['MYSQL_USER']
-password = os.environ['MYSQL_PASS']
-
-try:
-
-    con = mdb.connect('localhost', username, 
-        password, 'csrec');
-
-    cur = con.cursor()
-    print len(sys.argv)
-    if len(sys.argv) == 1:
-        pickle_user_info(cur)
-    else:    
-        pickle_sample_user_info(cur)
-
-except mdb.Error, e:
-    print e
-    sys.exit(1)
-    
-finally:    
         
-    if con:    
-        con.close()
+        con = mdb.connect('localhost', username, 
+                          password, 'csrec');
+
+        cur = con.cursor()
+        pickle_competitor_set_user_info(cur, 'competitor_sets')
+
+    except mdb.Error, e:
+        print e
+        sys.exit(1)
+    
+    finally:    
+        
+        if con:    
+            con.close()

@@ -1,7 +1,6 @@
 from competitor_sets.competitor_sets import CompetitorSet, CompetitorSetCollection
 from math import sqrt
 from time import time
-from IPython import embed
 import numpy as np
 
 
@@ -143,10 +142,6 @@ if __name__=='__main__':
   print trainerrors            
   
   print "TESTerrormatrix"
-  print testerrors            
-  
-  
-  embed()       
-      
+  print testerrors
       
       

@@ -6,7 +6,7 @@ import os
 import csrec_paths
 
 class FeatureGetter():
-    """ Generates crossed features for ids
+    """ Generates crossed features given ids
 
     Requires:
     'user_data.pkl' and 'bucket_dividers.pkl' to be in the current directory'
@@ -51,6 +51,7 @@ class FeatureGetter():
         return self.bucketizer.get_dimension()
 
 def test():
+    np.set_printoptions(threshold='nan')
     import time
     fg = FeatureGetter()
     t0 = time.time()

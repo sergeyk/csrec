@@ -3,7 +3,6 @@
 
 import numpy as np
 from Sqler import *
-from IPython import embed
 from mpi.mpi_imports import *
 import random
 
@@ -17,7 +16,6 @@ class CompetitorSet:
 
     
   def get_hostID(self):
-    ''''''
     return int(self.dict[0][CompetitorSet.TRANS['host_id']])
   
   def get_surferlist(self):

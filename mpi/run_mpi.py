@@ -19,7 +19,6 @@ from competitor_sets.competitor_sets import CompetitorSetCollection
 from competitor_sets.Sqler import Sqler
 from features.user_features import FeatureGetter
 from math import sqrt
-from IPython import embed
 import random
 import os
 import os.path
@@ -73,7 +72,6 @@ def run():
   ######## Erase them for the real thing
   memory_for_personalized_parameters = 50.0 # memory in MB if using personalized SGD learning  
   percentage = 0.2 # Dependent on machines in future min:10%, 2nodes->80%
-
   outer_iterations = 1 #10
   nepoches = 1 #10
 
@@ -84,7 +82,13 @@ def run():
   verbose = True
   
   fg = FeatureGetter(testing)
+
+  #God mode features:
+  #featuredimension = 1
+
+  #Normal features:
   featuredimension = fg.get_dimension()
+
   get_feature_function = fg.get_features  
   
   sq = Sqler()

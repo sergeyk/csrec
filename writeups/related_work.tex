@@ -6,26 +6,20 @@
 \paragraph{Harvesting Social Network Profiles for Recommendations} \cite{Liu2005}
 Their research is so similar to what we're doing it's scary.
 I think if we combine their normalization techniques + Koren's collaborative filtering algorithms, we'll be in good shape.
+We use an interest graph like they do.
+
+\paragraph{Hashing trick} \cite{Attenberg2009,Weinberger2012}
+We use the hashing trick for personalized recommendation.
 
 \paragraph{Like like alike} \cite{Yang2011}
+considers joint information in friendships and interests,  predicting friendship
+to build connections among users (we predict stays), also use SGD learning + feature hashing, also interesting is the idea of homophily:  people with similar interests attract each other.
 In this paper the joint information in friendships and interests is used (although Couchsurfing friendships are probably presumably more sparse).
 A graphical model is used to do a joint propagation of interest.
 One idea might be be not only to take the host's and the surfer' interests from there profiles, but assume that they are incomplete and try to predict other interests similar to this paper. While they practically only have positives we will also have negative feedback (couch request rejects), but they have an interesting idea of using randomly sampled "weak negatives" to correct for a bias towards positive samples.
 Furthermore they use SGD learning and the feature hashing trick which is very relevant to our project.
 Their evaluation part describes standard ranking metrics that become interesting/necessary if we pool "all positives (i.e. all accepted couch requests)" instead of having a "1 positive, multiple negatives" problem.
 Also interesting is the idea of homophily: people with similar interests attract each other. This provides a general motivation of what we are doing in our project.
-
-\paragraph{CoFiRank} \cite{Weimer2009}
-This paper learns features/latent factors but does not allow for additional observations (apart from ratings).
-We, however, have more features we want to use (i.e. demographic and geographic papers).
-hey learn how to rank as opposed to how to score and also provide a definition of nDCG.
-It leads to a structured estimation SVM-like optimization problem and there seems to be C++ software available.
-Still, we should start with an easier (probably linear) model and we might use a classification instead of a ranking framework.
-
-\paragraph{Fair and Balanced} \cite{Ahmed2012}
-This paper is very tailored towards news articles and implicit click data (that we don't have) and therefore not very applicable.
-The notion of submodularity / diminishing returns is not applicable for us since or hosts can only accept one request at a time.
-Most interesting and applicable is the personalization idea leading to the hashing trick.
 
 \paragraph{Optimizing Search Engines through clickthrough data} \cite{Joachims2002}
 While the application is very different from ours (because we don't have implicit click feedback) the general idea of using an SVM type of optimization problem is very applicable.
@@ -34,5 +28,16 @@ The constraints will be all the order relations based on accepts/rejects of couc
 
 \paragraph{An Enhanced Semantic Layer for Hybrid Recommender Systems} \cite{Cantador2011}
 %Ontology: They use \url{http://ir.ii.uam.es/news-at-hand/iptc-ontology_v01.rdfs} which comes from the news codes ontology at \url{http://www.iptc.org/site/NewsCodes}.
+ maybe that was relevant for Ron to build the interest graph, I'm not sure?
 This paper deals with semantic annotation, which is essentially mapping a document to its ontology entities (almost like topic modeling). They extract terms, map the terms to ontology entities (by looking up the term's wikipedia article and construct a vector of applicable ontology entities based on what categories appear in the wikipedia article), and then measure the strength of those mappings using the tf-idf measure.
 They build a news recommender system that recommends based on activation propagation.
+
+
+
+\comment{\paragraph{CoFiRank} \cite{Weimer2009}
+This paper learns features/latent factors but does not allow for additional observations (apart from ratings).
+We, however, have more features we want to use (i.e. demographic and geographic papers).
+hey learn how to rank as opposed to how to score and also provide a definition of nDCG.
+It leads to a structured estimation SVM-like optimization problem and there seems to be C++ software available.
+Still, we should start with an easier (probably linear) model and we might use a classification instead of a ranking framework.}
+
