@@ -33,11 +33,12 @@ def run():
     testing = True
   else:
     testing = False
-  #testing = True
-  memory_for_personalized_parameters = 10.0 # memory in MB if using personalized SGD learning  
+
+  testing = True
+  memory_for_personalized_parameters = 50.0 # memory in MB if using personalized SGD learning  
   percentage = 0.2 # Dependent on machines in future min:10%, 2nodes->80%
   outer_iterations = 10
-  nepoches = 10
+  nepoches = 1.0 #10
   alpha = 100.0
   beta = 0.01
   lambda_winner = 0.01
@@ -56,21 +57,22 @@ def run():
   sgd = SGDLearningPersonalized(featuredimension, get_feature_function, memory_for_personalized_parameters) # featdim +1 iff cheating
   dataobject = CompetitorSetCollection(num_sets=num_sets, testing=testing,validation=False)
   N = dataobject.get_nsamples()
-  niter = N*nepoches
+  niter = int(N*nepoches)
   
   for outit in range(outer_iterations):
     # for each outer iteration we draw new samples iid per node  
-    for i in range(niter):
+    for innerit in range(niter):
+      i = outit*niter + innerit
       eta_t = 1/sqrt(alpha+i*beta)
       if not i%(niter/10):
-          print "Iterations \n  out: %d/%d \n  in: %d/%d - eta %f"%(outit+1,outer_iterations, i+1,niter,eta_t)
+          print "Iterations \n  out: %d/%d \n  in: %d/%d - eta %f"%(outit+1,outer_iterations, innerit+1,niter,eta_t)
 
       # draw random sample  
       sampleindex = random.randint(0,N-1)    
       competitorset = dataobject.get_sample(sampleindex)
       
       if verbose and not i%1000 and i>1:
-          print "Iterations \n\tout: %d/%d \n\tin: %d/%d - eta %f"%(outit+1,outer_iterations, i+1,niter,eta_t)
+          print "Iterations \n\tout: %d/%d \n\tin: %d/%d - eta %f"%(outit+1,outer_iterations, innerit+1,niter,eta_t)
           print "\ttheta", min(sgd.theta), max(sgd.theta)
           print "\tr", sgd.r
           print "\tr_hosts", sgd.r_hosts.get(competitorset.get_hostID(), -999) ,min(sgd.r_hosts.values()), max(sgd.r_hosts.values()) 
