@@ -23,9 +23,36 @@ from IPython import embed
 import random
 import os
 import numpy as np
-from learning.dolearning import test
 from mpi.mpi_imports import *
 
+def test(sgd, data): 
+  errors = 0
+  truenones = 0
+  prednones = 0
+  N = data.get_nsamples()
+  
+  for i in range(comm_rank, N, comm_size):
+    competitorset = data.get_sample(i)
+    pred = sgd.predict(competitorset)
+    true = competitorset.get_winner()
+    #if true:
+    #  print 'prediction', pred
+    #  print 'true val', true
+        
+    errors += (pred!=true)
+    truenones += (true==None)
+    prednones += (pred==None)
+    
+  safebarrier(comm)
+  
+  errors = comm.reduce(errors)
+  truenones = comm.reduce(truenones)
+  prednones = comm.reduce(prednones)
+  
+  errorrate = errors/float(N)  
+  truenonerate = truenones/float(N)  
+  prednonerate = prednones/float(N) 
+  return errorrate, truenonerate, prednonerate
 
 
 def run():
@@ -38,7 +65,7 @@ def run():
   memory_for_personalized_parameters = 50.0 # memory in MB if using personalized SGD learning  
   percentage = 0.2 # Dependent on machines in future min:10%, 2nodes->80%
   outer_iterations = 10
-  nepoches = 1.0 #10
+  nepoches = 1 #10
   alpha = 100.0
   beta = 0.01
   lambda_winner = 0.01
@@ -115,22 +142,25 @@ def run():
     sgd.r = r
     sgd.r_hosts = r_hosts
     
+    
   print 'done with training' 
   # Compute the errors
+  safebarrier(comm)
   
+  cs_train = CompetitorSetCollection(num_sets=overallnum_sets, testing=testing, validation=False)
+  
+  errorrate, truenonerate, prednonerate = test(sgd, cs_train)
   if comm_rank == 0:
-    cs_train = CompetitorSetCollection(num_sets=overallnum_sets, testing=testing, validation=False)
-    
-    errorrate, truenonerate, prednonerate = test(sgd, cs_train)
     if verbose:
       print "[TRAIN] Errorrate: %f"%(errorrate)
       print "TrueNone-Rate: %f -> error: %f"%(truenonerate, 1.0 - truenonerate)
       print "PredNone-Rate: %f"%(prednonerate)
-    
-    overallnum_testsets = sq.get_num_compsets(validation = True)
-    cs_test = CompetitorSetCollection(num_sets=overallnum_testsets, testing=testing, validation=True)
-          
-    errorrate, truenonerate, prednonerate = test(sgd, cs_test)
+  
+  overallnum_testsets = sq.get_num_compsets(validation = True)
+  cs_test = CompetitorSetCollection(num_sets=overallnum_testsets, testing=testing, validation=True)
+        
+  errorrate, truenonerate, prednonerate = test(sgd, cs_test)
+  if comm_rank == 0:
     if verbose:
       print "[TEST] Errorrate: %f"%(errorrate)
       print "TrueNone-Rate: %f -> error: %f"%(truenonerate, 1.0 - truenonerate)
