@@ -29,7 +29,7 @@ def language_converter(f):
     if len(f)==0:
         return 0
     f = sorted(f, key=lambda x: x[-1]) 
-    return float(f[0][0])
+    return float(f[0][2])
 
 DEFAULT_CONVERTERS = {type(None): nonetype_converter,
               float: float_converter,

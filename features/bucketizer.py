@@ -27,8 +27,12 @@ class Bucketizer():
         i = 0
         for field_name in user1_vec:
             num_buckets = self.num_expanded_buckets(self.dividers_lol[field_name])
-            bucket_i_1 = self.bucketize_feature(c.convert(field_name, user1_vec[field_name]), field_name)
-            bucket_i_2 = self.bucketize_feature(c.convert(field_name, user2_vec[field_name]), field_name)
+            bucket_i_1 = self.bucketize_feature(
+                c.convert(field_name, user1_vec[field_name]), 
+                field_name)
+            bucket_i_2 = self.bucketize_feature(
+                c.convert(field_name, user2_vec[field_name]), 
+                field_name)
             true_index = offset + self.crossed_index(len(self.dividers_lol[field_name]), bucket_i_1, bucket_i_2)
             output[true_index] = 1
             offset += num_buckets
@@ -97,9 +101,38 @@ class Bucketizer():
             print 'number of different values for', field_name, len(set(field_values))
         
         return all_values
-        
+    
+    @classmethod
+    def show_histogram(cls,
+                       user_data_pkl_name='sampled_user_data.pkl',
+                       divider_name='bucket_dividers.pkl',
+                       num_buckets=10):
+        rows_lst = []
+        print 'loading user data...'
+        user_data = cPickle.load(open(csrec_paths.get_features_dir()+user_data_pkl_name, 'rb'))
+        print 'data for %s users loaded' % (len(user_data))
+        all_values = cls.find_all_values_of_cols(user_data)
+        histograms = {}
+        for field_name, possible_values in all_values.iteritems():
+            histograms[field_name] = cls.get_histograms_from_values(user_data[1346062][field_name]['field_type'],
+                                                                    field_name, possible_values, num_buckets)
+#        pprint.pprint(histograms)
+        cPickle.dump(histograms, open(csrec_paths.get_features_dir()+divider_name, 'wb'))
+
+    @classmethod
+    def get_histograms_from_values(cls, field_type, field_name, possible_values, max_buckets):
+        import matplotlib.pyplot as plt
+        from numpy.random import normal
+        gaussian_numbers = possible_values
+        plt.hist(gaussian_numbers, bins=100)
+        plt.title('%s (%s)' % (field_name, field_type))
+        xlabel = "Value (%s unique)" % len(set(possible_values))
+        plt.xlabel(xlabel)
+        plt.ylabel("Frequency")
+        plt.show()
+
+
+
 if __name__ == "__main__":
-    Bucketizer.generate_bucket_dividers()
-    #b = Bucketizer()
-    #a = np.ones(b.base_dimensions)
-    #b.cross_bucketized_features(a, a, None)
+    #Bucketizer.generate_bucket_dividers()
+    Bucketizer.show_histogram()
