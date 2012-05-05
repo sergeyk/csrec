@@ -40,18 +40,29 @@ class FeatureGetter():
     def init_field_names(self):
         example_user = 1346062
         example_user_dct = self.user_data[example_user]
-        self.field_names = example_user_dct.keys()
-        print self.field_names
+        self.field_names = example_user_dct.keys() 
+        self.num_fields = len(self.field_names)
 
     def load_user_features_pkl(self):
         print 'loading user data...'
         self.user_data = cPickle.load(open(self.user_pklfile, 'rb'))
         print 'data for %s users loaded' % (len(self.user_data))
 
+    def repair(self, user_dct):
+        filler = {'field_type': int,
+                  'field_data': 0}
+        for field in self.field_names:
+            if field not in user_dct:
+                user_dct[field] = filler
+
     def get_features(self, user_id, host_id, req_id):
-        user_features = self.user_data[user_id]
-        host_features = self.user_data[host_id]
-        return bucketizer.cross_bucketized_features(user_features, host_features, req_id,
+        user1_dct = self.user_data[user_id]
+        user2_dct = self.user_data[host_id]
+        for user_dct in (user1_dct, user2_dct):
+            if len(user_dct) != self.num_fields:
+                print 'warning user', user_id, 'missing fields!!'
+                self.repair(user_dct)
+        return bucketizer.cross_bucketized_features(user1_dct, user2_dct, req_id,
                                                               self.dimension, self.field_names)
     
     def get_dimension(self):
