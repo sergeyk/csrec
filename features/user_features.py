@@ -31,11 +31,22 @@ class FeatureGetter():
         else:
           self.user_pklfile = csrec_paths.get_features_dir()+self.DATA_FILE
         self.load_user_features_pkl()
-        self.init_bucketizer()
-        
-         
-    def init_bucketizer(self):
-        self.bucketizer = bucketizer.Bucketizer()
+        self.init_bucket_dividers()
+        self.init_dimensions()
+        self.init_field_names()
+
+    def init_dimensions(self):
+        self.dimension = 0
+        self.base_dimensions = len(self.dividers)
+        for field_name, dividers_lst in self.dividers.iteritems():
+            self.dimension += self.num_expanded_buckets(dividers_lst)
+
+    def init_field_names(self):
+        example_user_dct = self.user_data[1346062]
+        self.field_names = example_user_dct.keys()
+
+    def init_bucket_dividers(self):
+        self.dividers = cPickle.load(open(csrec_paths.get_features_dir()+'bucket_dividers.pkl', 'rb'))
 
     def load_user_features_pkl(self):
         print 'loading user data...'
@@ -45,7 +56,8 @@ class FeatureGetter():
     def get_features(self, user_id, host_id, req_id):
         user_features = self.user_data[user_id]
         host_features = self.user_data[host_id]
-        return self.bucketizer.cross_bucketized_features(user_features, host_features, [])
+        return bucketizer_functions.cross_bucketized_features(user1_dct, user2_dct, request,
+                                                              self.dimension, self.field_names)
     
     def get_dimension(self):
         return self.bucketizer.get_dimension()
