@@ -49,9 +49,10 @@ def test(sgd, data):
     
   safebarrier(comm)
   
-  errors = comm.reduce(errors)
-  truenones = comm.reduce(truenones)
-  prednones = comm.reduce(prednones)
+  errors = comm.allreduce(errors)
+  truenones = comm.allreduce(truenones)
+  prednones = comm.allreduce(prednones)
+  
   
   errorrate = errors/float(N)  
   truenonerate = truenones/float(N)  
@@ -68,8 +69,8 @@ def run():
   testing = True
   memory_for_personalized_parameters = 50.0 # memory in MB if using personalized SGD learning  
   percentage = 0.2 # Dependent on machines in future min:10%, 2nodes->80%
-  outer_iterations = 1 #10
-  nepoches = 0.02 #10
+  outer_iterations = 10 #10
+  nepoches = .02 #10
   alpha = 100.0
   beta = 0.01
   lambda_winner = 0.01

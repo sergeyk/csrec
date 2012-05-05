@@ -4,6 +4,8 @@ import math
 import csrec_paths
 import feature_processor
 import pprint
+import optparse
+import bucketizer_functions
 
 class Bucketizer():
     def __init__(self):
@@ -12,47 +14,13 @@ class Bucketizer():
         
     def init_dimensions(self):
         self.dimension = 0
-        self.base_dimensions = len(self.dividers_lol)
-        for field_name, dividers_lst in self.dividers_lol.iteritems():
+        self.base_dimensions = len(self.dividers)
+        for field_name, dividers_lst in self.dividers.iteritems():
             self.dimension += self.num_expanded_buckets(dividers_lst)
 
     def init_bucket_dividers(self):
-        self.dividers_lol = cPickle.load(open(csrec_paths.get_features_dir()+'bucket_dividers.pkl', 'rb'))
+        self.dividers = cPickle.load(open(csrec_paths.get_features_dir()+'bucket_dividers.pkl', 'rb'))
 
-    def cross_bucketized_features(self, user1_vec, user2_vec, req_vec):
-        output = np.zeros(self.dimension, np.dtype(np.int32))
-        offset = 0
-        c = feature_processor.Converter
-        
-        i = 0
-        for field_name in user1_vec:
-            num_buckets = self.num_expanded_buckets(self.dividers_lol[field_name])
-            bucket_i_1 = self.bucketize_feature(
-                c.convert(field_name, user1_vec[field_name]), 
-                field_name)
-            bucket_i_2 = self.bucketize_feature(
-                c.convert(field_name, user2_vec[field_name]), 
-                field_name)
-            true_index = offset + self.crossed_index(len(self.dividers_lol[field_name]), bucket_i_1, bucket_i_2)
-            output[true_index] = 1
-            offset += num_buckets
-            i += 1
-        return output
-    
-    def num_expanded_buckets(self, dividers_lst):
-        return math.pow(len(dividers_lst)+1, 2)
-
-    def bucketize_feature(self, feature_value, field_name):
-        bucket_number = 0
-        divider_lst = self.dividers_lol[field_name]
-        for divider in divider_lst:
-            if feature_value < divider:
-                break;
-            bucket_number += 1
-        return bucket_number
-
-    def crossed_index(self, num_buckets, i1, i2):
-        return i1*num_buckets+i2
 
     def get_dimension(self):
         return self.dimension
@@ -60,7 +28,7 @@ class Bucketizer():
     @classmethod
     def generate_bucket_dividers(cls,
                                  user_data_pkl_name='sampled_user_data.pkl',
-                                 divider_name='bucket_dividers.pkl',
+                                 divider_output_filename='bucket_dividers.pkl',
                                  num_buckets=10):
         rows_lst = []
         print 'loading user data...'
@@ -71,7 +39,7 @@ class Bucketizer():
         for field_name, possible_values in all_values.iteritems():
             bucket_dividers[field_name] = cls.get_dividers_from_values(possible_values, num_buckets)
 #        pprint.pprint(bucket_dividers)
-        cPickle.dump(bucket_dividers, open(csrec_paths.get_features_dir()+divider_name, 'wb'))
+        cPickle.dump(bucket_dividers, open(csrec_paths.get_features_dir()+divider_output_filename, 'wb'))
 
     @classmethod
     def get_dividers_from_values(cls, possible_values, max_buckets):
@@ -104,8 +72,9 @@ class Bucketizer():
     
     @classmethod
     def show_histogram(cls,
+                       field_name = None,
                        user_data_pkl_name='sampled_user_data.pkl',
-                       divider_name='bucket_dividers.pkl',
+                       divider_output_filename='bucket_dividers.pkl',
                        num_buckets=10):
         rows_lst = []
         print 'loading user data...'
@@ -117,7 +86,7 @@ class Bucketizer():
             histograms[field_name] = cls.get_histograms_from_values(user_data[1346062][field_name]['field_type'],
                                                                     field_name, possible_values, num_buckets)
 #        pprint.pprint(histograms)
-        cPickle.dump(histograms, open(csrec_paths.get_features_dir()+divider_name, 'wb'))
+        cPickle.dump(histograms, open(csrec_paths.get_features_dir()+divider_output_filename, 'wb'))
 
     @classmethod
     def get_histograms_from_values(cls, field_type, field_name, possible_values, max_buckets):
@@ -134,5 +103,22 @@ class Bucketizer():
 
 
 if __name__ == "__main__":
-    Bucketizer.generate_bucket_dividers()
+    parser = optparse.OptionParser()
+    parser.add_option("-g", action="store", type="string", dest="field_name", 
+                      help="show histogram for FIELD_NAME. Use '-g all' for all histograms.")
+    parser.add_option("-d", action="store_true", dest="dividers", 
+                      help="generate bin dividers")
+
+    (options, args) = parser.parse_args()
+
+    print options, args
+
+
+    if options.dividers:
+        Bucketizer.generate_bucket_dividers()
+    elif options.field_name:
+        Bucketizer.show_histogram(options.field_name)
+    else:
+        parser.print_help()
+    #Bucketizer.generate_bucket_dividers()
     #Bucketizer.show_histogram()
