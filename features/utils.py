@@ -4,7 +4,10 @@ import math
 import csrec_paths
 import pprint
 import optparse
+import feature_processor
 
+DIVIDERS = cPickle.load(open(csrec_paths.get_features_dir()+'bucket_dividers.pkl', 'rb'))
+print DIVIDERS
 
 def generate_bucket_dividers(user_data_pkl_name='sampled_user_data.pkl',
                              divider_output_filename='bucket_dividers.pkl',
@@ -50,7 +53,7 @@ def find_all_values_of_cols(user_data_dct):
     return all_values
 
 
-def show_histogram(field_name = None,
+def show_histogram(target_field_name = None,
                    user_data_pkl_name='sampled_user_data.pkl',
                    divider_output_filename='bucket_dividers.pkl',
                    num_buckets=10):
@@ -60,10 +63,16 @@ def show_histogram(field_name = None,
     print 'data for %s users loaded' % (len(user_data))
     all_values = find_all_values_of_cols(user_data)
     histograms = {}
-    for field_name, possible_values in all_values.iteritems():
-        histograms[field_name] = get_histograms_from_values(
-            user_data[1346062][field_name]['field_type'],
-            field_name, possible_values, num_buckets)
+    if target_field_name.lower == 'all':
+        for field_name, possible_values in all_values.iteritems():
+            histograms[field_name] = get_histograms_from_values(
+                user_data[1346062][field_name]['field_type'],
+                field_name, possible_values, num_buckets)
+    else:
+        possible_values = all_values[target_field_name]
+        get_histograms_from_values(
+            user_data[1346062][target_field_name]['field_type'],
+            target_field_name, possible_values, num_buckets)
     #pprint.pprint(histograms)
     cPickle.dump(histograms, open(csrec_paths.get_features_dir()+divider_output_filename, 'wb'))
 
@@ -74,7 +83,7 @@ def get_histograms_from_values(field_type, field_name, possible_values, max_buck
     gaussian_numbers = possible_values
     plt.hist(gaussian_numbers, bins=100)
     plt.title('%s (%s)' % (field_name, field_type))
-    xlabel = "Value (%s unique)" % len(set(possible_values))
+    xlabel = "Value (%s unique) %s" % (len(set(possible_values)), DIVIDERS[field_name])
     plt.xlabel(xlabel)
     plt.ylabel("Frequency")
     plt.show()
