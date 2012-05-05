@@ -2,10 +2,8 @@ import cPickle
 import numpy as np
 import math
 import csrec_paths
-import feature_processor
 import pprint
 import optparse
-import bucketizer_functions
 
 
 def generate_bucket_dividers(user_data_pkl_name='sampled_user_data.pkl',

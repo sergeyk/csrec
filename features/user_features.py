@@ -2,8 +2,8 @@ import cPickle
 import numpy as np
 import bucketizer
 import os
-
 import csrec_paths
+import bucketizer
 
 class FeatureGetter():
     """ Generates crossed features given ids
@@ -31,22 +31,17 @@ class FeatureGetter():
         else:
           self.user_pklfile = csrec_paths.get_features_dir()+self.DATA_FILE
         self.load_user_features_pkl()
-        self.init_bucket_dividers()
-        self.init_dimensions()
         self.init_field_names()
+        self.init_dimensions()
 
     def init_dimensions(self):
-        self.dimension = 0
-        self.base_dimensions = len(self.dividers)
-        for field_name, dividers_lst in self.dividers.iteritems():
-            self.dimension += self.num_expanded_buckets(dividers_lst)
+        self.dimension = bucketizer.get_full_crossed_dimension(self.field_names)
 
     def init_field_names(self):
-        example_user_dct = self.user_data[1346062]
+        example_user = 1346062
+        example_user_dct = self.user_data[example_user]
         self.field_names = example_user_dct.keys()
-
-    def init_bucket_dividers(self):
-        self.dividers = cPickle.load(open(csrec_paths.get_features_dir()+'bucket_dividers.pkl', 'rb'))
+        print self.field_names
 
     def load_user_features_pkl(self):
         print 'loading user data...'
@@ -56,11 +51,11 @@ class FeatureGetter():
     def get_features(self, user_id, host_id, req_id):
         user_features = self.user_data[user_id]
         host_features = self.user_data[host_id]
-        return bucketizer_functions.cross_bucketized_features(user1_dct, user2_dct, request,
+        return bucketizer.cross_bucketized_features(user_features, host_features, req_id,
                                                               self.dimension, self.field_names)
     
     def get_dimension(self):
-        return self.bucketizer.get_dimension()
+        return self.dimension
 
 def test():
     np.set_printoptions(threshold='nan')
@@ -71,7 +66,7 @@ def test():
     run_time = time.time() - t0
     print arr
     print 'time to cross and expand feature:', (run_time)*1000, 'ms'
-    print 'feature dimension', fg.get_dimension()
+    print 'feature vec dimension', fg.get_dimension()
     print 'memory size of feature vector', arr.itemsize*fg.get_dimension(), 'bytes'
 
 if __name__ == "__main__":
