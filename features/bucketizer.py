@@ -58,7 +58,7 @@ class DefaultBucketizerFn(object):
         bucket_idx = 0
         dividers_lst = DEFAULT_DIVIDERS[field_name]
         for divider in dividers_lst:
-            if feature_value < divider:
+            if feature_value <= divider:
                 break;
             bucket_idx += 1
         return bucket_idx
