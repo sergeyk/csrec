@@ -31,6 +31,12 @@ def language_converter(f):
     f = sorted(f, key=lambda x: x[-1]) 
     return float(f[0][2])
 
+def dta_converter(f):
+    if f:
+        return 0
+    else:
+        return 1
+
 DEFAULT_CONVERTERS = {type(None): nonetype_converter,
               float: float_converter,
               long: long_converter,
@@ -39,7 +45,8 @@ DEFAULT_CONVERTERS = {type(None): nonetype_converter,
               str: str_converter, 
               decimal.Decimal: dec_converter}
 
-SPECIAL_CONVERTERS = {'languages': language_converter}
+SPECIAL_CONVERTERS = {'languages': language_converter,
+                      'directions_to_address': dta_converter}
 
 class Converter(object): 
 

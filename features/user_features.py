@@ -4,6 +4,7 @@ import bucketizer
 import os
 import csrec_paths
 import bucketizer
+import re
 
 class FeatureGetter():
     """ Generates crossed features given ids
@@ -37,10 +38,28 @@ class FeatureGetter():
     def init_dimensions(self):
         self.dimension = bucketizer.get_full_crossed_dimension(self.field_names)
 
-    def init_field_names(self):
+
+    def verify_field_name(self, field_name):
         example_user = 1346062
         example_user_dct = self.user_data[example_user]
-        self.field_names = example_user_dct.keys() 
+        if len(field_name)>1:
+            if field_name in example_user_dct:
+                return True
+        print 'not found: ',field_name
+        return False
+
+    def init_field_names(self):
+        f = open(csrec_paths.get_features_dir()+'relevant_features', 'rb')
+        self.field_names = []
+        if f:
+            for line in f:
+                line = re.sub(r'\s', '', line)
+                if self.verify_field_name(line):
+                    self.field_names.append(line)
+        print self.field_names
+        example_user = 1346062
+        example_user_dct = self.user_data[example_user]
+        self.total_num_fields = len(example_user_dct)
         self.num_fields = len(self.field_names)
 
     def load_user_features_pkl(self):
@@ -51,16 +70,18 @@ class FeatureGetter():
     def repair(self, user_dct):
         filler = {'field_type': int,
                   'field_data': 0}
+        user_id = user_dct['user_id']
         for field in self.field_names:
             if field not in user_dct:
+                print 'warning user', user_id, 'missing field:', field
                 user_dct[field] = filler
 
     def get_features(self, user_id, host_id, req_id):
         user1_dct = self.user_data[user_id]
         user2_dct = self.user_data[host_id]
         for user_dct in (user1_dct, user2_dct):
-            if len(user_dct) != self.num_fields:
-                print 'warning user', user_id, 'missing fields!!'
+            if len(user_dct) != self.total_num_fields:
+                print 'warning missing features:', user_id
                 self.repair(user_dct)
         return bucketizer.cross_bucketized_features(user1_dct, user2_dct, req_id,
                                                               self.dimension, self.field_names)

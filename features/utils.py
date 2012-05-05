@@ -5,13 +5,15 @@ import csrec_paths
 import pprint
 import optparse
 import feature_processor
+import re
 
+NUM_DIVIDERS = {'age': 5}
+DEFAULT_NUM_DIVIDERS = 10
 DIVIDERS = cPickle.load(open(csrec_paths.get_features_dir()+'bucket_dividers.pkl', 'rb'))
 print DIVIDERS
 
 def generate_bucket_dividers(user_data_pkl_name='sampled_user_data.pkl',
-                             divider_output_filename='bucket_dividers.pkl',
-                             num_buckets=10):
+                             divider_output_filename='bucket_dividers.pkl'):
     rows_lst = []
     print 'loading user data...'
     user_data = cPickle.load(open(csrec_paths.get_features_dir()+user_data_pkl_name, 'rb'))
@@ -19,6 +21,10 @@ def generate_bucket_dividers(user_data_pkl_name='sampled_user_data.pkl',
     all_values = find_all_values_of_cols(user_data)
     bucket_dividers = {}
     for field_name, possible_values in all_values.iteritems():
+        if field_name in NUM_DIVIDERS:
+            num_buckets = NUM_DIVIDERS[field_name]
+        else:
+            num_buckets= DEFAULT_NUM_DIVIDERS
         bucket_dividers[field_name] = get_dividers_from_values(possible_values, num_buckets)
     #pprint.pprint(bucket_dividers)
     cPickle.dump(bucket_dividers, open(csrec_paths.get_features_dir()+divider_output_filename, 'wb'))
@@ -73,8 +79,6 @@ def show_histogram(target_field_name = None,
         get_histograms_from_values(
             user_data[1346062][target_field_name]['field_type'],
             target_field_name, possible_values, num_buckets)
-    #pprint.pprint(histograms)
-    cPickle.dump(histograms, open(csrec_paths.get_features_dir()+divider_output_filename, 'wb'))
 
 
 def get_histograms_from_values(field_type, field_name, possible_values, max_buckets):
