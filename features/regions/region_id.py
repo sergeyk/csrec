@@ -8,6 +8,7 @@ try:
 except:
   print 'embed not available'
 
+import csrec_paths
 import numpy as np
 from numpy import *
 import cPickle
@@ -15,7 +16,7 @@ import os
 
 class ContinentMapper:
   def __init__(self):
-    self.map = cPickle.load(open('country_map_continent.pkl','r'))
+    self.map = cPickle.load(open(os.path.join(csrec_paths.ROOT,'features','regions','country_map_continent.pkl'),'r'))
     self.continents = ['', 'Africa', 'Antarctica', 'Asia', 'Europe', 'North America',
                        'Oceania', 'South America']
 
@@ -82,7 +83,8 @@ def create_continent_map():
 def run():
   #create_continent_map()
   cm = ContinentMapper()
-  print cm.get_continent('Germany')
+  print cm.get_continent_name('Germany')
+  print cm.get_continent_id('France')
   
 if __name__=='__main__':
   run()
