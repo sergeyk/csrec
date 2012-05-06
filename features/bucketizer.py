@@ -3,12 +3,13 @@ import csrec_paths
 import math
 import feature_processor
 import numpy as np
+from features.regions.region_id import *
 
 # field-specific globals
 BUCKETS_CONTINENT_ID = range(8)
 BUCKETS_COUNTRY_ID = [244, 94, 84, 40, 190, 118, 271, 13, 216, 175]
 BUCKETS_LANG = [163, 29, 35, 172, 39, 87, 162, 167, 155, 109]
-
+cm = ContinentMapper()
 CONVERTER  = feature_processor.Converter
 
 class DefaultBucketizerFn(object):
@@ -41,9 +42,12 @@ class PopularBucketizerFn(DefaultBucketizerFn):
         for i in range(len(BUCKETS_LANG)):
            self.mapping[BUCKETS_LANG[i]] = i + 1
         self.num_buckets = len(self.mapping) + 1
-        print self.mapping
 
     def get_popular_bucket_idx(self, value):
+        if value:
+            value = int(value)
+        else:
+            return 0
         if value in self.mapping:
             return self.mapping[value]
         else:
@@ -59,7 +63,8 @@ class PopularBucketizerFn(DefaultBucketizerFn):
 
 class LangBucketizerFn(PopularBucketizerFn):
 
-    def get_bucket_idx(self, field_name, languages):
+    def get_bucket_idx(self, field_name, feature_dct):
+        languages = feature_dct['field_data']
         activated_bins = set([])
         for lang in languages:
             if lang[3] >= 2:
@@ -69,10 +74,12 @@ class LangBucketizerFn(PopularBucketizerFn):
 class LocationsXBucketizerFn(PopularBucketizerFn):
 
     def get_bucket_idx(self, field_name, feature_dct):
-        continents = feature_dct
+        continents = feature_dct['field_data']
         activated_bins = set([])
+        if type(continents) == str:
+            continents = [continents]
         for c in continents:
-            activated_bins.add(self.get_popular_bucket_idx(c))
+            activated_bins.add(self.get_popular_bucket_idx(cm.get_continent_id(c)))
         return list(activated_bins)
 
 
@@ -222,7 +229,6 @@ def get_histograms_from_values(field_type, field_name, possible_values, max_buck
 
 
 if __name__ == "__main__":
-    raise
     import optparse
     parser = optparse.OptionParser()
     parser.add_option("-g", action="store", type="string", dest="field_name", 
