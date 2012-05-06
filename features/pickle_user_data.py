@@ -15,6 +15,12 @@ def get_languages(cursor, user_id):
     all_results = list(cursor.fetchall())
     return list(all_results)
 
+def get_profile(cursor, user_id):
+    sql_cmd = "select * from %s where user_id=%s" % ('user_profile', user_id)
+    cursor.execute(sql_cmd)
+    all_results = list(cursor.fetchall())[0]
+    return list(all_results)[3:]
+
 def pull_data_for_user(cursor, user_id):
     conv = converters.conversions
     user_data = {}
@@ -34,7 +40,11 @@ def pull_data_for_user(cursor, user_id):
                 user_data[col_name]['field_data'] = result[i]
     user_data['languages'] = {'field_type': 'language_set',
                               'field_data': get_languages(cursor, user_id)}
-#    pprint.pprint(user_data)
+    user_data['profile'] = {'field_type': 'profile',
+                            'field_data': get_profile(cursor, user_id)}
+
+    #pprint.pprint(user_data)
+    #raise
     return user_data
         
 

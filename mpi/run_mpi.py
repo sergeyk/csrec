@@ -95,8 +95,8 @@ def run():
   ######## Erase them for the real thing
   memory_for_personalized_parameters = 50.0 # memory in MB if using personalized SGD learning  
   percentage = 0.2 # Dependent on machines in future min:10%, 2nodes->80%
-  outer_iterations = 1 #5 #10
-  nepoches = 0.1 #10
+  outer_iterations = 5 #10
+  nepoches = 1 #10
   alpha = 100.0
   beta = 0.05 #0.01
   lambda_winner = 0.01

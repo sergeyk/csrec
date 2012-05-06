@@ -1,7 +1,7 @@
-import chunkers.ngram_chunker as nc
-import recognizers.freebase_interest_disambiguator as fd
-from util import chunk_cleanser
-import util.chunk_cleanser
+import nlp.chunkers.ngram_chunker as nc
+import nlp.recognizers.freebase_interest_disambiguator as fd
+from nlp.util import chunk_cleanser
+import nlp.util.chunk_cleanser
 
 class InterestExtractor(object):
     def __init__(self):
@@ -32,7 +32,7 @@ class InterestExtractor(object):
 def test():
     import sys
     import csv
-    import nlp_paths
+    import nlp.nlp_paths as nlp_paths
     f = nlp_paths.get_proj_root()+'/testing/test_interest_text'
     extractor = InterestExtractor()
     reader = csv.reader(open(f, 'rb'), delimiter='$')

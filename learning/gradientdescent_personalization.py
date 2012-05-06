@@ -16,7 +16,10 @@ TODO:
 """
 
 import numpy as np
-from IPython import embed
+try:
+    from IPython import embed
+except:
+    print 'no embed for ron =['
 
 
 # Set this to true if you would like to use "perfect" features. 
