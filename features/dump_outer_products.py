@@ -4,7 +4,10 @@ import MySQLdb
 import random
 from features.user_features import FeatureGetter
 from features.pickle_user_data import pull_data_for_user
-from IPython import embed
+try:
+  from IPython import embed
+except ImportError:
+  print 'ron'
 from mpi.mpi_imports import *
 
 class OuterProductDumper():
