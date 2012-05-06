@@ -1,5 +1,5 @@
-from testing.test_text import text
-from util import chunk_cleanser
+from nlp.testing.test_text import text
+from nlp.util import chunk_cleanser
 
 class NgramChunker(object):
     def chunk(self, text):

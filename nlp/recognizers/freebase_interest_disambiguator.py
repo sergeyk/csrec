@@ -3,10 +3,10 @@
 import time
 import sys
 import cPickle
-import nlp_paths as paths
+import nlp.nlp_paths as paths
 from nltk.stem.porter import PorterStemmer
 from nltk.stem.lancaster import LancasterStemmer
-from util import chunk_similarity
+from nlp.util import chunk_similarity
 from nltk.metrics import distance
 
 MOST_COMMON = paths.get_proj_root()+"/util/1000_most_common.pkl";
