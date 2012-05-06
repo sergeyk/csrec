@@ -68,7 +68,8 @@ def test_meannormalizedwinnerrank(sgd, data):
     cand, scores = sgd.rank(competitorset)
     true = competitorset.get_winner()
     nrank = cand.index(true) / float(len(cand)-1) # len-1 because we have rank 0..n-1
-    if len(cand)>1:
+    if len(cand)>2:
+      print "from meanNrank eval"
       print true, cand, cand.index(true), nrank, sumnrank
     sumnrank += nrank
     
@@ -115,6 +116,11 @@ def run():
   sq = Sqler()
   overallnum_sets = sq.get_num_compsets()
   num_sets = int(overallnum_sets*percentage)
+  overallnum_testsets = sq.get_num_compsets(validation = True)
+  just_winning_sets = False
+  NSETS = 1000
+  cs_train = CompetitorSetCollection(num_sets=NSETS, testing=False, validation=False, just_winning_sets=just_winning_sets)
+  cs_test = CompetitorSetCollection(num_sets=NSETS, testing=False, validation=True, just_winning_sets=just_winning_sets)
   
   
   # CV over lamba1, lambda2
@@ -131,8 +137,7 @@ def run():
       
       # Create sgd object   
       sgd = SGDLearningPersonalized(featuredimension, get_feature_function, memory_for_personalized_parameters) # featdim +1 iff cheating
-      dataobject = CompetitorSetCollection(num_sets=num_sets, testing=testing, validation=False)
-      N = dataobject.get_nsamples()
+      N = cs_train.get_nsamples()
       niter = int(N*nepoches)
       
       for outit in range(outer_iterations):
@@ -145,7 +150,7 @@ def run():
 
           # draw random sample  
           sampleindex = random.randint(0,N-1)    
-          competitorset = dataobject.get_sample(sampleindex)
+          competitorset = cs_train.get_sample(sampleindex)
           
           if verbose and not i%1000 and i>1:
               print "Iterations \n\tout: %d/%d \n\tin: %d/%d - eta %f"%(outit+1,outer_iterations, innerit+1,niter,eta_t)
@@ -197,8 +202,6 @@ def run():
       # Compute the errors
       safebarrier(comm)
       
-      cs_train = CompetitorSetCollection(num_sets=overallnum_sets, testing=testing, validation=False, just_winning_sets=just_winning_sets)
-      
       errorrate, truenonerate, prednonerate = test_predictionerror(sgd, cs_train)
       meannrank = test_meannormalizedwinnerrank(sgd, cs_train)
       trainerrors[lw,lr] = errorrate
@@ -210,8 +213,6 @@ def run():
           print "PredNone-Rate: %f"%(prednonerate)
           print "MEANNRANK: %f"%(meannrank)
       
-      overallnum_testsets = sq.get_num_compsets(validation = True)
-      cs_test = CompetitorSetCollection(num_sets=overallnum_testsets, testing=testing, validation=True, just_winning_sets=just_winning_sets)
             
       errorrate, truenonerate, prednonerate = test_predictionerror(sgd, cs_test)
       testerrors[lw,lr] = errorrate
