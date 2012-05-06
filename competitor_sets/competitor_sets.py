@@ -57,10 +57,9 @@ class CompetitorSetCollection:
         self.db = 'competitor_sets_test_train'
       
       if just_winning_sets:
-        
-        res = self.sq.rqst("select competitor_sets.* from competitor_sets join (select set_id from (select set_id, count(winner) as \
-          cnt, sum(winner) as sum from competitor_sets group by set_id)as t where \
-          cnt >1 and sum > 0) as TT on (competitor_sets.set_id = TT.set_id);")
+        res = self.sq.rqst("select "+self.db+".* from "+self.db+" join (select set_id from (select set_id, count(winner) as \
+          cnt, sum(winner) as sum from "+self.db+" group by set_id)as t where \
+          cnt >1 and sum > 0) as TT on ("+self.db+".set_id = TT.set_id);")
         
       else:    
         res = self.sq.rqst('select * from '+self.db+' group by set_id;')

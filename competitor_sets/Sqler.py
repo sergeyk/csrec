@@ -10,6 +10,7 @@ import os
 
 class Sqler:
   def __init__(self):
+    self.max_length_table = 11000000 # Hmm can this be done somehow nicer?
     if os.path.exists('/u/vis/'):
       self.db = sql.connect(db='csrec',user='sergeyk',unix_socket='/u/vis/x1/sergeyk/mysql/mysql.sock', host='orange4', port=8081)
     elif os.path.exists('/home/tobibaum/'):    
@@ -32,6 +33,9 @@ class Sqler:
 
   def get_row(self, style=1):
     return self.res.fetch_row(1,style)
+  
+  def get_all_rows(self, style=1):
+    return self.res.fetch_row(self.max_length_table, style)
     
   def get_requests(self, table, lower, upper):    
     res = self.rqst("select couchrequest.host_user_id, status, surf_user_id, id, \
