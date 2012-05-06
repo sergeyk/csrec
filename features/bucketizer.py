@@ -38,6 +38,7 @@ class PopularBucketizerFn(DefaultBucketizerFn):
     
     def __init__(self, BUCKETS_LANG):
         self.mapping = {}
+        print self.mapping
         for i in range(len(BUCKETS_LANG)):
            self.mapping[BUCKETS_LANG[i]] = i + 1
         self.num_buckets = len(self.mapping) + 1
@@ -145,21 +146,20 @@ DEFAULT_NUM_DIVIDERS = 10
 DIVIDERS = cPickle.load(open(csrec_paths.get_features_dir()+'bucket_dividers.pkl', 'rb'))
 USER_DATA = None
 ALL_VALUES = None
-print DIVIDERS
 
 
 def find_all_values_of_cols(user_data_dct):
     all_values = {}
     i = 0
-    bucketizer_fn = get_bucketizer_fn(field_name)
-    bucket_idx1_lst = bucketizer_fn.get_bucket_idx(field_name,
-                                                   user1_dct[field_name])
     for user_id, data_dct in user_data_dct.iteritems():
         i += 1
         for field_name, field_dct in data_dct.iteritems():
             if field_name not in all_values:
                 all_values[field_name] = []
-            all_values[field_name].append(c.convert(field_name, field_dct))
+            bucketizer_fn = get_bucketizer_fn(field_name)
+            bucket_idx1_lst = bucketizer_fn.get_bucket_idx(field_name,
+                                                           data_dct[field_name])
+            all_values[field_name] += bucket_idx1_lst
         if i%1000 == 0:
             print "%s/%s" % (i, len(user_data_dct)), 'users finished'
        
@@ -186,13 +186,22 @@ def show_histogram(target_field_name = None,
                    user_data_pkl_name='sampled_user_data.pkl',
                    divider_output_filename='bucket_dividers.pkl',
                    num_buckets=10):
+    import re
+    f = open(csrec_paths.get_features_dir()+'relevant_features', 'rb')
+    field_names = []
+    if f:
+        for line in f:
+            line = re.sub(r'\s', '', line)
+            if len(line)>1:
+                field_names.append(line)
     ensure_user_data_loaded()
     histograms = {}
-    if target_field_name.lower == 'all':
+    if target_field_name.lower() == 'all':
         for field_name, possible_values in ALL_VALUES.iteritems():
-            histograms[field_name] = get_histograms_from_values(
-                USER_DATA[1346062][field_name]['field_type'],
-                field_name, possible_values, num_buckets)
+            if field_name in field_names:
+                histograms[field_name] = get_histograms_from_values(
+                    USER_DATA[1346062][field_name]['field_type'],
+                    field_name, possible_values, num_buckets)
     else:
         possible_values = ALL_VALUES[target_field_name]
         get_histograms_from_values(
@@ -213,6 +222,7 @@ def get_histograms_from_values(field_type, field_name, possible_values, max_buck
 
 
 if __name__ == "__main__":
+    raise
     import optparse
     parser = optparse.OptionParser()
     parser.add_option("-g", action="store", type="string", dest="field_name", 
