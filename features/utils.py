@@ -21,10 +21,11 @@ def ensure_user_data_loaded():
     if not USER_DATA:
         print 'loading user data...'
         USER_DATA = cPickle.load(open(csrec_paths.get_features_dir()+user_data_pkl_name, 'rb'))
+        #pprint.pprint(USER_DATA[1346062]['languages'])
+        #raise
+
         print 'data for %s users loaded' % (len(USER_DATA))
         ALL_VALUES = find_all_values_of_cols(USER_DATA)
-    #pprint.pprint(USER_DATA[1346062]['languages'])
-    #raise
 
 def generate_bucket_dividers(user_data_pkl_name='sampled_user_data.pkl',
                              divider_output_filename='bucket_dividers.pkl'):
