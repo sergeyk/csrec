@@ -60,13 +60,15 @@ class LangBucketizerFn(PopularBucketizerFn):
 
     def get_bucket_idx(self, field_name, feature_dct):
         activated_bins = set([])
-        for cid in continents:
-            activated_bins.add(self.get_popular_bucket_idx(c_id))
+        for lang in languages:
+            if lang[3] >= 2:
+                activated_bins.add(self.get_popular_bucket_idx(lang[2]))
         return list(activated_bins)
 
 class LocationsXBucketizerFn(PopularBucketizerFn):
 
     def get_bucket_idx(self, field_name, feature_dct):
+        continents = feature_dct
         activated_bins = set([])
         for c in continents:
             activated_bins.add(self.get_popular_bucket_idx(c))
@@ -79,7 +81,7 @@ BUCKETIZER_FN_FOR_FIELD = {'languages': LangBucketizerFn(BUCKETS_LANG),
                            'locations_traveled': LocationsXBucketizerFn(BUCKETS_CONTINENT_ID),
                            'locations_going': LocationsXBucketizerFn(BUCKETS_CONTINENT_ID),
                            'locations_lived': LocationsXBucketizerFn(BUCKETS_CONTINENT_ID),
-                           'locations_desired': LocationsXBucketizerFn(BUCKETS_CONTINENT_ID)}}
+                           'locations_desired': LocationsXBucketizerFn(BUCKETS_CONTINENT_ID)}
 
 DEFAULT_BUCKETIZER_FN = DefaultBucketizerFn()
 

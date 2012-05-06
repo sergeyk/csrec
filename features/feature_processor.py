@@ -55,8 +55,7 @@ def continent_converter(f):
 
 def loc_x_converter(f):
     sp = f.split(',')
-    rmed = sp[0]
-    return cm.get_continent_id(rmed)
+    return [cm.get_continent_id(x) for x in sp]
     
 DEFAULT_CONVERTERS = {type(None): nonetype_converter,
               float: float_converter,
