@@ -100,7 +100,7 @@ def test():
     t0 = time.time()
     arr = fg.get_features(1346062, 2722310, 1)
     run_time = time.time() - t0
-    print arr
+    #print arr
     print 'time to cross and expand feature:', (run_time)*1000, 'ms'
     print 'feature vec dimension', fg.get_dimension()
     print 'memory size of feature vector', arr.itemsize*fg.get_dimension(), 'bytes'

@@ -101,6 +101,17 @@ def get_histograms_from_values(field_type, field_name, possible_values, max_buck
     plt.show()
 
 
+def get_histograms_from_values(values):
+    import matplotlib.pyplot as plt
+    from numpy.random import normal
+    gaussian_numbers = values
+    plt.hist(gaussian_numbers, bins=100)
+    plt.title('set sizes')
+    xlabel = "size"
+    plt.xlabel(xlabel)
+    plt.ylabel("Frequency")
+    plt.show()
+
 def find_top_x(field_name):
     ensure_user_data_loaded()
     possible_values = ALL_VALUES[field_name]
