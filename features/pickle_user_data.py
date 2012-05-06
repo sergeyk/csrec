@@ -40,8 +40,8 @@ def pull_data_for_user(cursor, user_id):
                 user_data[col_name]['field_data'] = result[i]
     user_data['languages'] = {'field_type': 'language_set',
                               'field_data': get_languages(cursor, user_id)}
-    user_data['profile'] = {'field_type': 'profile',
-                            'field_data': get_profile(cursor, user_id)}
+    #user_data['profile'] = {'field_type': 'profile',
+    #                        'field_data': get_profile(cursor, user_id)}
 
     #pprint.pprint(user_data)
     #raise

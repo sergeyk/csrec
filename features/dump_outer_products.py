@@ -45,7 +45,10 @@ class OuterProductDumper():
     try:
       self.cursor.execute(self.request, (req_id, thedata,))
     except:
-      print 'req_id %d is already present'%req_id    
+      pass
+#      import sys
+      #print "Unexpected error:", sys.exc_info()[0]
+ #     print 'req_id %d is already present'%req_id    
   
   def commit(self):
     self.sq.commit()

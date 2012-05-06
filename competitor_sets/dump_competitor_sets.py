@@ -2,7 +2,6 @@ import _mysql as sql
 import datetime
 import numpy as np
 import sklearn.cluster
-from IPython import embed
 import time
 import cPickle
 import os
@@ -27,8 +26,7 @@ def rename_clusters(cluster):
     index = cluster[idx]
     if not index == last_ind:
       if index < smallest_ind:
-        embed()
-        #raise RuntimeError("Well...What? they should be ordered!")
+          raise RuntimeError("Well...What? they should be ordered!")
       # swap vals
       swap_inds(cluster, smallest_ind, index)
       last_ind = smallest_ind
@@ -103,7 +101,7 @@ def get_sessions(lower, upper, force=False):
     hid = row[0]
     if not last_hid == hid and not last_hid == -1:
       # we have a new host
-      print 'at host %s'%last_hid
+      #print 'at host %s'%last_hid
       into_next = False
       if len(reqs) == 0:
         reqs.append(row)
@@ -133,7 +131,7 @@ def compile_sessions():
   first_lines = True  
   comp_set_id = 0
   too_much_count = 0
-  default_string = "INSERT INTO `competitor_sets2` (`id`, `req_id`, `set_id`, \
+  default_string = "INSERT INTO `competitor_sets2` (`req_id`, `set_id`, \
     `host_id`, `surfer_id`, `winner`, `date`) VALUES "
   index = 1
   write_string = default_string
@@ -141,6 +139,7 @@ def compile_sessions():
     read_cluss = cPickle.load(open('cluss_%d'%i,'r'))
     print 'opened file %d'%i
     ###################
+    processed = 1
     for cl in read_cluss:        
       for r in cl:
         if not first_lines:
@@ -151,19 +150,22 @@ def compile_sessions():
         winner = (r[1] == 'Y')
         # in-order: host_user_id, status, surf_user_id, id, rmd
         # out-order: req_id, set_id, host_id, surfer_id, winner, date
-        write_string += "( "+str(index)+','+str(r[3])+" , "+ str(comp_set_id)+" , "+str(r[0]) + \
-          " , "+ str(r[2])+" , "+str(int(winner))+ " , '"+str(r[4])+ "' )"
+        write_string += "( "+str(r[3])+" , "+ str(comp_set_id)+" , "+str(r[0]) + \
+            " , "+ str(r[2])+" , "+str(int(winner))+ " , '"+str(r[4])+ "' )"
         index+=1
-      
-      print '%d wrote comp set %d'%(comm_rank, comp_set_id)
+      #print '%d wrote comp set %d'%(comm_rank, comp_set_id)
       too_much_count += 1
-      if too_much_count > 8000:
+      max_batch_size = 8000
+      if too_much_count > max_batch_size:
         too_much_count = 0
         #print write_string
-        sq.rqst(write_string+';')       
+        sq.rqst(write_string+';', True)       
         del write_string
         write_string = default_string
         first_lines = True
+        processed += max_batch_size
+        if (processed % 10000) == 0:
+          print '%s processed %s/%s' % (comm_rank, processed, len(read_cluss))        
       comp_set_id += 1        
     ###################  
   

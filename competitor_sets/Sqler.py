@@ -6,30 +6,51 @@ import sklearn.cluster
 #from IPython import embed
 import time
 import cPickle
-import os
+import os, sys
+
+RON_MODE = (os.path.exists('/home/ron'))
 
 class Sqler:
   def __init__(self):
-    self.max_length_table = 11000000 # Hmm can this be done somehow nicer?
-    if os.path.exists('/u/vis/'):
-      self.db = MySQLdb.connect(db='csrec',user='sergeyk',unix_socket='/u/vis/x1/sergeyk/mysql/mysql.sock', host='orange4', port=8081)
-    elif os.path.exists('/home/tobibaum/'):    
-      self.db = MySQLdb.connect(db='CSRec')
-    else:
+    if RON_MODE:
+      import MySQLdb as mdb
       username = os.environ['MYSQL_USER']
       password = os.environ['MYSQL_PASS']
-      self.db = MySQLdb.connect(db='csrec', user=username, passwd=password)
+      try:
+        self.db = mdb.connect('localhost', username, 
+                          password, 'csrec');
+
+        self.cur = self.db.cursor()
+      except mdb.Error, e:
+        print e
+        sys.exit(1)
+    else:
+      self.max_length_table = 11000000 # Hmm can this be done somehow nicer?
+      if os.path.exists('/u/vis/'):
+        self.db = MySQLdb.connect(db='csrec',user='sergeyk',unix_socket='/u/vis/x1/sergeyk/mysql/mysql.sock', host='orange4', port=8081)
+      elif os.path.exists('/home/tobibaum/'):    
+        self.db = MySQLdb.connect(db='CSRec')
 
   def rqst(self, request, verbose=False):
-    t = time.time()
-    self.db.query(request)    
-    t -=time.time()
+    if RON_MODE:
+      try:
+        self.cur.execute(request)
+        self.db.commit()
+        results = self.cur.fetchall() 
+        return results
+      except MySQLdb.IntegrityError as e:
+        #print 'supressing integrity error'
+        return ()
+    else:
+      t = time.time()
+      self.db.query(request)    
+      t -=time.time()
     
-    if verbose:
-      print 'db request took %f seconds'%(-t)
-    res = self.db.use_result()
-    self.res = res
-    return res
+      if verbose:
+        print 'db request took %f seconds'%(-t)
+      res = self.db.use_result()
+      self.res = res
+      return res
 
   def get_row(self, style=1):
     return self.res.fetch_row(1,style)
@@ -76,7 +97,8 @@ class Sqler:
     return np.max([self.convert_datetime(x['rcd']) for x in reqs])
     
   def convert_datetime(self, timestring):
-    return datetime.datetime.strptime(timestring, '%Y-%m-%d %H:%M:%S')
-
+    #Ron: it seems like timestring is already a datetime on my computer.
+    #return datetime.datetime.strptime(timestring, '%Y-%m-%d %H:%M:%S')
+    return timestring
  
   
