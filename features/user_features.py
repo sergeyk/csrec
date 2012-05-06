@@ -5,6 +5,9 @@ import os
 import csrec_paths
 import bucketizer
 import re
+from competitor_sets.Sqler import Sqler
+
+DUMP_TABLE = 'outer_products'
 
 class FeatureGetter():
     """ Generates crossed features given ids
@@ -34,19 +37,33 @@ class FeatureGetter():
         self.load_user_features_pkl()
         self.init_field_names()
         self.init_dimensions()
+        self.init_outer_products()
+        self.num_users_not_found = 0
+        self.num_users_total = 0
+
+    def init_outer_products(self):
+        sqler = Sqler()
+        self.sq = sqler.db
+        self.cursor = self.sq.cursor()
+
+    def get_cached_feature(self, req_id):
+        sql_cmd = "select data from "+DUMP_TABLE+" where req_id = "+str(req_id)
+        self.cursor.execute(sql_cmd)
+        res = np.zeros(self.get_dimension())
+        results = self.cursor.fetchall()
+        if len(results)>0:
+            pkl_dump = results[0][0]
+            result = cPickle.loads(pkl_dump)
+            res[result]=1
+        else:
+            print req_id
+            self.num_users_not_found += 1
+            #print self.num_users_not_found,'/',self.num_users_total
+        self.num_users_total += 1
+        return res
 
     def init_dimensions(self):
         self.dimension = bucketizer.get_full_crossed_dimension(self.field_names)
-
-
-    def verify_field_name(self, field_name):
-        example_user = 1346062
-        example_user_dct = self.user_data[example_user]
-        if len(field_name)>1:
-            if field_name in example_user_dct:
-                return True
-        print 'not found: ',field_name
-        return False
 
     def init_field_names(self):
         f = open(csrec_paths.get_features_dir()+'relevant_features', 'rb')
@@ -54,18 +71,14 @@ class FeatureGetter():
         if f:
             for line in f:
                 line = re.sub(r'\s', '', line)
-                if self.verify_field_name(line):
+                if line:
                     self.field_names.append(line)
-        #print self.field_names
-        example_user = 1346062
-        example_user_dct = self.user_data[example_user]
-        self.total_num_fields = len(example_user_dct)
+        #self.total_num_fields = len(example_user_dct)
         self.num_fields = len(self.field_names)
-        #print self.num_fields
 
     def load_user_features_pkl(self):
         print 'loading user data...'
-        self.user_data = cPickle.load(open(self.user_pklfile, 'rb'))
+        self.user_data = {}
         print 'data for %s users loaded' % (len(self.user_data))
 
     def repair(self, user_dct):
@@ -74,21 +87,21 @@ class FeatureGetter():
         user_id = user_dct['user_id']
         for field in self.field_names:
             if field not in user_dct:
-                #print 'warning user', user_id, 'missing field:', field
                 user_dct[field] = filler
 
     def get_features_from_dct(self, user1_dct, user2_dct, req_id):
         for user_dct in (user1_dct, user2_dct):
-            if len(user_dct) != self.total_num_fields:
-                #print 'warning missing features:', user_id
-                self.repair(user_dct)
+            self.repair(user_dct)
         return bucketizer.cross_bucketized_features(user1_dct, user2_dct, req_id,
-                                                              self.dimension, self.field_names)
+                                                    self.dimension, self.field_names)
 
-    def get_features(self, user_id, host_id, req_id):
+    def get_features_from_id(self, user_id, host_id, req_id):
         user1_dct = self.user_data[user_id]
         user2_dct = self.user_data[host_id]
         return self.get_features_from_dct(user1_dct, user2_dct, req_id)
+    
+    def get_features(self, user_id, host_id, req_id):
+        return self.get_cached_feature(req_id)
     
     def get_dimension(self):
         return self.dimension
