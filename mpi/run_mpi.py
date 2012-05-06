@@ -71,7 +71,7 @@ def run():
   ######## Erase them for the real thing
   memory_for_personalized_parameters = 50.0 # memory in MB if using personalized SGD learning  
   percentage = 0.2 # Dependent on machines in future min:10%, 2nodes->80%
-  outer_iterations = 1 #10
+  outer_iterations = 3 #10
   nepoches = 1 #10db
   alpha = 100.0
   beta = 0.01
@@ -94,9 +94,9 @@ def run():
   num_sets = int(overallnum_sets*percentage)
   
   
-  # CV over lamba1, lambda2
-  lambdas = [10**-4, 10**-3, 10**-2, 10**-1, 10**0, 10**+1, 10**+2]
-  #lambdas = [10**-3]
+  # cross validation over lamba1, lambda2
+  #lambdas = [10**-4, 10**-3, 10**-2, 10**-1, 10**0, 10**+1, 10**+2]
+  lambdas = [10**-3]
   trainerrors = np.zeros((len(lambdas),len(lambdas)))
   testerrors = np.zeros((len(lambdas),len(lambdas)))
   

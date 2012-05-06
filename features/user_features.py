@@ -77,15 +77,18 @@ class FeatureGetter():
                 #print 'warning user', user_id, 'missing field:', field
                 user_dct[field] = filler
 
-    def get_features(self, user_id, host_id, req_id):
-        user1_dct = self.user_data[user_id]
-        user2_dct = self.user_data[host_id]
+    def get_features_from_dct(self, user1_dct, user2_dct, req_id):
         for user_dct in (user1_dct, user2_dct):
             if len(user_dct) != self.total_num_fields:
                 #print 'warning missing features:', user_id
                 self.repair(user_dct)
         return bucketizer.cross_bucketized_features(user1_dct, user2_dct, req_id,
                                                               self.dimension, self.field_names)
+
+    def get_features(self, user_id, host_id, req_id):
+        user1_dct = self.user_data[user_id]
+        user2_dct = self.user_data[host_id]
+        return self.get_features_from_dct(user1_dct, user2_dct, req_id)
     
     def get_dimension(self):
         return self.dimension
