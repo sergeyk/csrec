@@ -29,7 +29,8 @@ try:
 except:
     import pickle
 
-def test(sgd, data): 
+def test_predictionerror(sgd, data):
+# computes predictionacc or error (getting it exactly right or not) 
   errors = 0
   truenones = 0
   prednones = 0
@@ -59,6 +60,28 @@ def test(sgd, data):
   return errorrate, truenonerate, prednonerate
 
 
+def test_meannormalizedwinnerrank(sgd, data): 
+  sumnrank = 0.0
+  N = data.get_nsamples()
+  for i in range(comm_rank, N, comm_size):
+    competitorset = data.get_sample(i)
+    cand, scores = sgd.rank(competitorset)
+    true = competitorset.get_winner()
+    nrank = cand.index(true) / float(len(cand)-1) # len-1 because we have rank 0..n-1
+    if len(cand)>1:
+      print true, cand, cand.index(true), nrank, sumnrank
+    sumnrank += nrank
+    
+  safebarrier(comm)
+  sumnrank = comm.allreduce(sumnrank)
+  meannrank= sumnrank/float(N)  
+  return meannrank
+
+
+
+
+
+
 def run():
   if os.path.exists('/home/tobibaum/'):
     testing = True
@@ -71,10 +94,10 @@ def run():
   ######## Erase them for the real thing
   memory_for_personalized_parameters = 50.0 # memory in MB if using personalized SGD learning  
   percentage = 0.2 # Dependent on machines in future min:10%, 2nodes->80%
-  outer_iterations = 3 #10
-  nepoches = 1 #10db
+  outer_iterations = 1 #5 #10
+  nepoches = 0.1 #10
   alpha = 100.0
-  beta = 0.01
+  beta = 0.05 #0.01
   lambda_winner = 0.01
   lambda_reject = 0.01
   verbose = True
@@ -94,12 +117,14 @@ def run():
   num_sets = int(overallnum_sets*percentage)
   
   
-  # cross validation over lamba1, lambda2
+  # CV over lamba1, lambda2
   #lambdas = [10**-4, 10**-3, 10**-2, 10**-1, 10**0, 10**+1, 10**+2]
-  lambdas = [10**-3]
+  lambdas = [10**-1]
+
   trainerrors = np.zeros((len(lambdas),len(lambdas)))
   testerrors = np.zeros((len(lambdas),len(lambdas)))
-  
+  trainmeannrank = np.zeros((len(lambdas),len(lambdas)))
+  testmeannrank = np.zeros((len(lambdas),len(lambdas)))
   
   for lw,lambda_winner in enumerate(lambdas):
     for lr,lambda_reject in enumerate(lambdas):
@@ -115,7 +140,7 @@ def run():
         for innerit in range(niter):
           i = outit*niter + innerit
           eta_t = 1/sqrt(alpha+i*beta)
-          if not i%(niter/10):
+          if not i%(niter/2):
               print "Iterations \n  out: %d/%d \n  in: %d/%d - eta %f"%(outit+1,outer_iterations, innerit+1,niter,eta_t)
 
           # draw random sample  
@@ -129,7 +154,8 @@ def run():
               print "\tr_hosts", sgd.r_hosts.get(competitorset.get_hostID(), -999) ,min(sgd.r_hosts.values()), max(sgd.r_hosts.values()) 
               print "\ttrue", competitorset.get_winner()
               print "\tpredicted", sgd.predict(competitorset)
-              
+              print "\tranking", sgd.rank(competitorset)
+        
           sgd.update(competitorset, eta=eta_t, lambda_winner=lambda_winner, lambda_reject=lambda_reject)
 
         # Now we aggregate theta(_host), r(_host)
@@ -173,24 +199,31 @@ def run():
       
       cs_train = CompetitorSetCollection(num_sets=overallnum_sets, testing=testing, validation=False, just_winning_sets=just_winning_sets)
       
-      errorrate, truenonerate, prednonerate = test(sgd, cs_train)
+      errorrate, truenonerate, prednonerate = test_predictionerror(sgd, cs_train)
+      meannrank = test_meannormalizedwinnerrank(sgd, cs_train)
       trainerrors[lw,lr] = errorrate
+      trainmeannrank[lw,lr] = meannrank
       if comm_rank == 0:
         if verbose:
           print "[TRAIN] Errorrate: %f"%(errorrate)
           print "TrueNone-Rate: %f -> error: %f"%(truenonerate, 1.0 - truenonerate)
           print "PredNone-Rate: %f"%(prednonerate)
+          print "MEANNRANK: %f"%(meannrank)
       
       overallnum_testsets = sq.get_num_compsets(validation = True)
       cs_test = CompetitorSetCollection(num_sets=overallnum_testsets, testing=testing, validation=True, just_winning_sets=just_winning_sets)
             
-      errorrate, truenonerate, prednonerate = test(sgd, cs_test)
+      errorrate, truenonerate, prednonerate = test_predictionerror(sgd, cs_test)
       testerrors[lw,lr] = errorrate
+      meannrank = test_meannormalizedwinnerrank(sgd, cs_test)
+      testerrors[lw,lr] = errorrate
+      testmeannrank[lw,lr] = meannrank
       if comm_rank == 0:
         if verbose:
           print "[TEST] Errorrate: %f"%(errorrate)
           print "TrueNone-Rate: %f -> error: %f"%(truenonerate, 1.0 - truenonerate)
           print "PredNone-Rate: %f"%(prednonerate)
+          print "MEANNRANK: %f"%(meannrank)
 
 
       # Store the parameters to /tscratch/tmp/csrec
@@ -212,15 +245,22 @@ def run():
     print "TRAINerrormatrix"
     print trainerrors            
 
-
     print "TESTerrormatrix"
     print testerrors            
 
+
+    print "TRAINmeannrankMatrix"
+    print trainmeannrank        
+
+    print "TESTmeannrankMatrix"
+    print testmeannrank 
+    
+    
     # store errorrates somewhere
     filename = 'errors_testing_%d.pkl'%(testing)
     
     if os.path.exists('/tscratch'):
-      pickle.dump( (trainerrors, testerrors), open( dirname+filename, "wb" ) )
+      pickle.dump( (trainerrors, testerrors, trainmeannrank, testmeannrank), open( dirname+filename, "wb" ) )
      
      
      
