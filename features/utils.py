@@ -6,21 +6,31 @@ import pprint
 import optparse
 import feature_processor
 import re
+from collections import Counter
 
 NUM_DIVIDERS = {'age': 5}
 DEFAULT_NUM_DIVIDERS = 10
 DIVIDERS = cPickle.load(open(csrec_paths.get_features_dir()+'bucket_dividers.pkl', 'rb'))
+USER_DATA = None
+ALL_VALUES = None
 print DIVIDERS
+
+def ensure_user_data_loaded():
+    user_data_pkl_name='sampled_user_data.pkl'
+    global USER_DATA, ALL_VALUES
+    if not USER_DATA:
+        print 'loading user data...'
+        USER_DATA = cPickle.load(open(csrec_paths.get_features_dir()+user_data_pkl_name, 'rb'))
+        print 'data for %s users loaded' % (len(USER_DATA))
+        ALL_VALUES = find_all_values_of_cols(USER_DATA)
+    #pprint.pprint(USER_DATA[1346062]['languages'])
+    #raise
 
 def generate_bucket_dividers(user_data_pkl_name='sampled_user_data.pkl',
                              divider_output_filename='bucket_dividers.pkl'):
-    rows_lst = []
-    print 'loading user data...'
-    user_data = cPickle.load(open(csrec_paths.get_features_dir()+user_data_pkl_name, 'rb'))
-    print 'data for %s users loaded' % (len(user_data))
-    all_values = find_all_values_of_cols(user_data)
+    ensure_user_data_loaded()
     bucket_dividers = {}
-    for field_name, possible_values in all_values.iteritems():
+    for field_name, possible_values in ALL_VALUES.iteritems():
         if field_name in NUM_DIVIDERS:
             num_buckets = NUM_DIVIDERS[field_name]
         else:
@@ -28,6 +38,8 @@ def generate_bucket_dividers(user_data_pkl_name='sampled_user_data.pkl',
         bucket_dividers[field_name] = get_dividers_from_values(possible_values, num_buckets)
     #pprint.pprint(bucket_dividers)
     cPickle.dump(bucket_dividers, open(csrec_paths.get_features_dir()+divider_output_filename, 'wb'))
+    global DIVIDERS
+    DIVIDERS = bucket_dividers
 
 
 def get_dividers_from_values(possible_values, max_buckets):
@@ -63,21 +75,17 @@ def show_histogram(target_field_name = None,
                    user_data_pkl_name='sampled_user_data.pkl',
                    divider_output_filename='bucket_dividers.pkl',
                    num_buckets=10):
-    rows_lst = []
-    print 'loading user data...'
-    user_data = cPickle.load(open(csrec_paths.get_features_dir()+user_data_pkl_name, 'rb'))
-    print 'data for %s users loaded' % (len(user_data))
-    all_values = find_all_values_of_cols(user_data)
+    ensure_user_data_loaded()
     histograms = {}
     if target_field_name.lower == 'all':
-        for field_name, possible_values in all_values.iteritems():
+        for field_name, possible_values in ALL_VALUES.iteritems():
             histograms[field_name] = get_histograms_from_values(
-                user_data[1346062][field_name]['field_type'],
+                USER_DATA[1346062][field_name]['field_type'],
                 field_name, possible_values, num_buckets)
     else:
-        possible_values = all_values[target_field_name]
+        possible_values = ALL_VALUES[target_field_name]
         get_histograms_from_values(
-            user_data[1346062][target_field_name]['field_type'],
+            USER_DATA[1346062][target_field_name]['field_type'],
             target_field_name, possible_values, num_buckets)
 
 
@@ -93,6 +101,17 @@ def get_histograms_from_values(field_type, field_name, possible_values, max_buck
     plt.show()
 
 
+def find_top_x(field_name):
+    ensure_user_data_loaded()
+    possible_values = ALL_VALUES[field_name]
+    c = Counter()
+    for v in possible_values:
+        c[v] += 1
+    print c.most_common(10)
+    ids = []
+    for (c_id, cnt) in c.most_common(10):
+        ids.append(int(c_id))
+    print ids
 
 if __name__ == "__main__":
     parser = optparse.OptionParser()
@@ -100,7 +119,8 @@ if __name__ == "__main__":
                       help="show histogram for FIELD_NAME. Use '-g all' for all histograms.")
     parser.add_option("-d", action="store_true", dest="dividers", 
                       help="generate bin dividers")
-
+    parser.add_option("-p", action="store", type="string", dest="field_name_p", 
+                      help="show histogram for FIELD_NAME. Use '-g all' for all histograms.")
     (options, args) = parser.parse_args()
 
     print options, args
@@ -109,8 +129,12 @@ if __name__ == "__main__":
     if options.dividers:
         generate_bucket_dividers()
     elif options.field_name:
+        generate_bucket_dividers()
         show_histogram(options.field_name)
+    elif options.field_name_p:
+        find_top_x(options.field_name_p)
     else:
         parser.print_help()
+    
     #generate_bucket_dividers()
     #show_histogram()
