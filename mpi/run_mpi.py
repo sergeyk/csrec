@@ -120,6 +120,7 @@ def run():
   # CV over lamba1, lambda2
   #lambdas = [10**-4, 10**-3, 10**-2, 10**-1, 10**0, 10**+1, 10**+2]
   lambdas = [10**-1]
+
   trainerrors = np.zeros((len(lambdas),len(lambdas)))
   testerrors = np.zeros((len(lambdas),len(lambdas)))
   trainmeannrank = np.zeros((len(lambdas),len(lambdas)))
