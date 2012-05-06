@@ -76,6 +76,8 @@ class LocationsXBucketizerFn(PopularBucketizerFn):
     def get_bucket_idx(self, field_name, feature_dct):
         continents = feature_dct['field_data']
         activated_bins = set([])
+        if not continents:
+            return [0]
         if type(continents) == str:
             continents = [continents]
         for c in continents:
