@@ -2,7 +2,11 @@ import cPickle
 import datetime
 import numpy as np
 import decimal
+from features.regions.region_id import *
+import re
 
+cm = ContinentMapper()
+    
 def nonetype_converter(f):
     return 0
 
@@ -31,12 +35,29 @@ def language_converter(f):
     f = sorted(f, key=lambda x: x[-1]) 
     return float(f[0][2])
 
-def dta_converter(f):
+def binary_converter(f):
     if f:
-        return 0
-    else:
         return 1
+    else:
+        return 0
 
+def anon_str_len_converter(f):
+    if not f:
+        return 0
+    sp = f.split('_')
+    return int(sp[-1])
+ 
+def strlen_converter(f):
+    return len(f)
+
+def continent_converter(f):
+    return cm.get_continent_id(f)
+
+def loc_x_converter(f):
+    sp = f.split(',')
+    rmed = sp[0]
+    return cm.get_continent_id(rmed)
+    
 DEFAULT_CONVERTERS = {type(None): nonetype_converter,
               float: float_converter,
               long: long_converter,
@@ -46,7 +67,20 @@ DEFAULT_CONVERTERS = {type(None): nonetype_converter,
               decimal.Decimal: dec_converter}
 
 SPECIAL_CONVERTERS = {'languages': language_converter,
-                      'directions_to_address': dta_converter}
+                      'directions_to_address': binary_converter,
+                      'couch_image_height': binary_converter,
+                      'thumbnail_height': binary_converter,
+                      'website': binary_converter,
+                      'phone': binary_converter,
+                      'emergency_contact': binary_converter,
+                      'current_mission': strlen_converter,
+                      'couch_description': anon_str_len_converter,
+                      'couch_clarification': anon_str_len_converter,
+                      'country': continent_converter,
+                      'locations_traveled':loc_x_converter,
+                      'locations_going':loc_x_converter,
+                      'locations_lived':loc_x_converter,
+                      'locations_desired':loc_x_converter}
 
 class Converter(object): 
 

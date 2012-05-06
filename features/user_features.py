@@ -61,6 +61,7 @@ class FeatureGetter():
         example_user_dct = self.user_data[example_user]
         self.total_num_fields = len(example_user_dct)
         self.num_fields = len(self.field_names)
+        print self.num_fields
 
     def load_user_features_pkl(self):
         print 'loading user data...'
