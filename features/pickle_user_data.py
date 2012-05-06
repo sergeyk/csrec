@@ -43,8 +43,8 @@ def pull_data_for_user(cursor, user_id):
     user_data['profile'] = {'field_type': 'profile',
                             'field_data': get_profile(cursor, user_id)}
 
-    pprint.pprint(user_data)
-    raise
+    #pprint.pprint(user_data)
+    #raise
     return user_data
         
 
