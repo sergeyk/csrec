@@ -3,10 +3,6 @@ There is a 12-valued Region-ID in the 'user' table
 '''
 from competitor_sets.Sqler import Sqler
 from countries import countries
-#try:
-#  #from IPython import embed
-#except:
-#  print 'embed not available'
 
 import csrec_paths
 import numpy as np
@@ -25,7 +21,7 @@ class ContinentMapper:
 
   def get_continent_name(self, country):
     if not self.map.has_key(country):
-      raise RuntimeError('The country %s has no mapping to a continent'%country)
+      return ''
     else:
       return self.map[country]
   
@@ -37,7 +33,8 @@ def print_continentmap(cont_map):
   print '\n'
 
 def create_continent_map():
-  if not os.path.exists('cs_counts'):
+  cm = ContinentMapper()
+  if not os.path.exists('locations_list'):#cs_counts'):
     sq = Sqler()
     res = sq.rqst("SELECT country, region_id from `user`")
     full_map = sq.get_all_rows(0)
@@ -45,24 +42,26 @@ def create_continent_map():
     cs_counts = np.unique(arr[:,0])
     cPickle.dump(cs_counts, open('cs_counts', 'w'))
   else:
-    cs_counts = cPickle.load(open('cs_counts', 'r'))
-  their_map = cPickle.load(open('their_map', 'r'))
-  
+    cs_counts = cPickle.load(open('locations_list'))#'cs_counts', 'r'))
+  #their_map = {x['name']:x['continent'] for x in countries}
+  their_map = cPickle.load(open('their_map', 'r'))    
   map = {}
   
-  for count in their_map:
-    country = count['country']
-    if country in cs_counts:
-      map[country] = count['continent']
+#  for count in their_map:
+#    country = count['country']
+#    if country in cs_counts:
+#      map[country] = count['continent']
     #  for each country find a match in
   their_countrys = map.keys()
   cPickle.dump(map, open('map', 'w'))
+  our_countries = cPickle.load(open('country_map_continent.pkl','r'))
+  our_countries = our_countries.keys() 
   
   not_mapped=[]
   for c in cs_counts: 
-    if not c in  their_countrys:
+    if not c in our_countries:
       not_mapped.append(str(c))
-  cont_map = np.unique(map.values() + ['', 'Antarctica']).tolist()
+  cont_map = cm.continents
   print_continentmap(cont_map)
   
   counter = 0
@@ -80,7 +79,7 @@ def create_continent_map():
   cPickle.dump(map, open('full_map','w'))  
   
 def run():
-  #create_continent_map()
+  create_continent_map()
   cm = ContinentMapper()
   print cm.get_continent_name('Germany')
   print cm.get_continent_id('France')

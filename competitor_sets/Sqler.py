@@ -34,8 +34,14 @@ class Sqler:
   def get_row(self, style=1):
     return self.res.fetch_row(1,style)
   
-  def get_all_rows(self, style=1):
-    return self.res.fetch_row(self.max_length_table, style)
+  def get_all_rows(self, style=1, verbose=False):
+    print '\tfetching all rows...'
+    t = time.time()
+    res = self.res.fetch_row(self.max_length_table, style)
+    t -=time.time()
+    if verbose:
+      print '\tfetching took %f seconds'%(-t)
+    return res 
     
   def get_requests(self, table, lower, upper):    
     res = self.rqst("select couchrequest.host_user_id, status, surf_user_id, id, \
