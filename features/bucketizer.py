@@ -38,10 +38,10 @@ class PopularBucketizerFn(DefaultBucketizerFn):
     
     def __init__(self, BUCKETS_LANG):
         self.mapping = {}
-        print self.mapping
         for i in range(len(BUCKETS_LANG)):
            self.mapping[BUCKETS_LANG[i]] = i + 1
         self.num_buckets = len(self.mapping) + 1
+        print self.mapping
 
     def get_popular_bucket_idx(self, value):
         if value in self.mapping:
