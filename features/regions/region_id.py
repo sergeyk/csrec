@@ -3,10 +3,10 @@ There is a 12-valued Region-ID in the 'user' table
 '''
 from competitor_sets.Sqler import Sqler
 from countries import countries
-try:
-  from IPython import embed
-except:
-  print 'embed not available'
+#try:
+#  #from IPython import embed
+#except:
+#  print 'embed not available'
 
 import csrec_paths
 import numpy as np
@@ -77,8 +77,7 @@ def create_continent_map():
     new_mapped[nm] = str(cont_map[int(selection)])
     
   map.update(new_mapped)
-  cPickle.dump(map, open('full_map','w'))
-  embed()  
+  cPickle.dump(map, open('full_map','w'))  
   
 def run():
   #create_continent_map()
