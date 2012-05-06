@@ -48,15 +48,17 @@ def anon_str_len_converter(f):
     return int(sp[-1])
  
 def strlen_converter(f):
-    return len(f)
+    if f:
+        return len(f)
+    else:
+        return 0
 
 def continent_converter(f):
     return cm.get_continent_id(f)
 
 def loc_x_converter(f):
     sp = f.split(',')
-    rmed = sp[0]
-    return cm.get_continent_id(rmed)
+    return [cm.get_continent_id(x) for x in sp]
     
 DEFAULT_CONVERTERS = {type(None): nonetype_converter,
               float: float_converter,
