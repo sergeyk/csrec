@@ -72,7 +72,6 @@ class LocationsXBucketizerFn(PopularBucketizerFn):
         activated_bins = set([])
         for c in continents:
             activated_bins.add(self.get_popular_bucket_idx(c))
-        print activated_bins
         return list(activated_bins)
 
 

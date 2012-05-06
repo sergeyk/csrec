@@ -48,7 +48,10 @@ def anon_str_len_converter(f):
     return int(sp[-1])
  
 def strlen_converter(f):
-    return len(f)
+    if f:
+        return len(f)
+    else:
+        return 0
 
 def continent_converter(f):
     return cm.get_continent_id(f)

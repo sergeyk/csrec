@@ -56,12 +56,12 @@ class FeatureGetter():
                 line = re.sub(r'\s', '', line)
                 if self.verify_field_name(line):
                     self.field_names.append(line)
-        print self.field_names
+        #print self.field_names
         example_user = 1346062
         example_user_dct = self.user_data[example_user]
         self.total_num_fields = len(example_user_dct)
         self.num_fields = len(self.field_names)
-        print self.num_fields
+        #print self.num_fields
 
     def load_user_features_pkl(self):
         print 'loading user data...'
@@ -74,7 +74,7 @@ class FeatureGetter():
         user_id = user_dct['user_id']
         for field in self.field_names:
             if field not in user_dct:
-                print 'warning user', user_id, 'missing field:', field
+                #print 'warning user', user_id, 'missing field:', field
                 user_dct[field] = filler
 
     def get_features(self, user_id, host_id, req_id):
@@ -82,7 +82,7 @@ class FeatureGetter():
         user2_dct = self.user_data[host_id]
         for user_dct in (user1_dct, user2_dct):
             if len(user_dct) != self.total_num_fields:
-                print 'warning missing features:', user_id
+                #print 'warning missing features:', user_id
                 self.repair(user_dct)
         return bucketizer.cross_bucketized_features(user1_dct, user2_dct, req_id,
                                                               self.dimension, self.field_names)
