@@ -268,4 +268,7 @@ def run():
      
      
 if __name__=='__main__':
-  run()
+  #run()
+  cs_train = CompetitorSetCollection(num_sets=1000, testing=False, validation=False, just_winning_sets=False)
+  print cs_train.get_nsamples()
+  print cs_train.get_sample(7)

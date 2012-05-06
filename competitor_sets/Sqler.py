@@ -8,7 +8,7 @@ import time
 import cPickle
 import os, sys
 
-RON_MODE = (os.path.exists('/home/ron'))
+RON_MODE = False#(os.path.exists('/home/ron'))
 
 class Sqler:
   def __init__(self):
@@ -30,6 +30,11 @@ class Sqler:
         self.db = MySQLdb.connect(db='csrec',user='sergeyk',unix_socket='/u/vis/x1/sergeyk/mysql/mysql.sock', host='orange4', port=8081)
       elif os.path.exists('/home/tobibaum/'):    
         self.db = MySQLdb.connect(db='CSRec')
+      else:
+        username = os.environ['MYSQL_USER']
+        password = os.environ['MYSQL_PASS']
+        self.db = MySQLdb.connect(db='csrec', 
+                                  user=username, passwd=password)
 
   def rqst(self, request, verbose=False):
     if RON_MODE:
