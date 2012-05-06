@@ -11,7 +11,7 @@ See \autoref{fig:requests_distribution}.
 \begin{figure}[ht]
 \centering
 \includegraphics[width=1\linewidth]{figures/req_received_dist2.png}
-\caption{Distribution of requests received by a host.}
+\caption{Distribution of requests received by a host. \todo{Tobi: these numbers must be incorrect}}
 \label{fig:requests_distribution}
 \end{figure}
 
@@ -94,12 +94,4 @@ In section~\ref{sec:implicitNeg} we assumed that all requests in the \textit{imp
 $$p(reject(h, r_i)) = \int p(reject(h, r_i)|seen(h, r_i))\cdot p(seen(h, s_i))$$
 To do so we need a way to estimate $p(seen(h,s_i))$. This probability is both dependent on the manner of $h$ as well as on the order of how the requests are shown to $h$, which is dependent on the time $h$ looks at the requests. We do not have log-files of the website, so we cannot determine which requests $h$ has acutally seen, but we can again try to infer this information from the behavior of the host. Assuming that $h$ acts during each visit of her request-list at least once with a click onto accept/reject/maybe (\textit{active visit}), we can interpolate for each of these events the request-list she saw and assume that $h$ looked at the first $l$ of these requests. We can now for each \textit{active visit} sum up the number of requests $h$ actually saw and reacted upon and the discounted number of the first $l$ request in the list, discounted by $\lambda_i$ for their position $i$ in the list as well as with another host-specific factor $\lambda$.
 
-\subsection{User interests}
-Interest graph: the compatibility strength between surfer and host is determined by $num_overlapping_interest(host, surfer)$ through some type of decaying activation propagation.  This will be based on the "Taste Fabric" paper and the "Semantic Recommendation" paper.  This method assumes homophily and that interests are the strongest attractors between people (doesn't take into account demographics etc.).  This method is reversible.
 
-\begin{figure}[ht]
-\centering
-\includegraphics[width=1\linewidth]{figures/interest_graph.png}
-\caption{Interest graph.}
-\label{fig:interest_graph}
-\end{figure}

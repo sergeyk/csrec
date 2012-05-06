@@ -41,14 +41,17 @@ When traveling, a viable new option is to be hosted by a friendly resident of th
 When arranging such accomodation through a web interface, travelers face a daunting list of potential hosts, while hosts in popular destinations are inundated with requests for lodging.
 We postulate that some connections are more likely to happen than others, based on general desired compatibility between host and visitor and on personal host preferences.
 We present a system for predicting successful host-visitor matches, trained and evaluated on data from the most popular website for this purpose: \url{couchsurfing.com}.
-A re-ranking of visitor requests based on our system would be beneficial to the user experience on the website, as hosts would have to look through fewer requests and visitors would be more likely to be matched to a host that is likely to accept them.
+A re-ranking of visitor requests based on our system would be beneficial to the user experience on the website, as hosts would have to look through fewer requests to find a couchsurfer they like.
+Furthermore, re-ranking the different hosts shown to the surfer can be done according to the likelihood that a couchrequest to these hosts would be successful and thus decreasing the number of requests the surfer has to write in order to get accepted.
 \end{abstract}
 
 \input{introduction}
 \input{related_work}
 \input{data_exploration}
 \input{model}
+\input{features}
 \input{evaluation}
+\input{conclusion}
 
 \bibliographystyle{ieeetr}
 \small
