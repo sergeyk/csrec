@@ -52,12 +52,10 @@ def test(sgd, data):
   errors = comm.allreduce(errors)
   truenones = comm.allreduce(truenones)
   prednones = comm.allreduce(prednones)
-  
-  
-  if comm_rank == 0:
-    errorrate = errors/float(N)  
-    truenonerate = truenones/float(N)  
-    prednonerate = prednones/float(N) 
+    
+  errorrate = errors/float(N)  
+  truenonerate = truenones/float(N)  
+  prednonerate = prednones/float(N) 
   return errorrate, truenonerate, prednonerate
 
 
