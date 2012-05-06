@@ -4,6 +4,7 @@ import MySQLdb
 import random
 from features.user_features import FeatureGetter
 from features.pickle_user_data import pull_data_for_user
+
 try:
   from IPython import embed
 except ImportError:
@@ -44,7 +45,7 @@ class OuterProductDumper():
     thedata = cPickle.dumps(data)        
     try:
       self.cursor.execute(self.request, (req_id, thedata,))
-    except:
+    except MySQLdb.IntegrityError:
       pass
 #      import sys
       #print "Unexpected error:", sys.exc_info()[0]
