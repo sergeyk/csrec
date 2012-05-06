@@ -5,6 +5,7 @@ import random
 from features.user_features import FeatureGetter
 from features.pickle_user_data import pull_data_for_user
 from IPython import embed
+from mpi.mpi_imports import *
 
 class OuterProductDumper():
   
@@ -13,13 +14,15 @@ class OuterProductDumper():
   def __init__(self):
     self.sq = MySQLdb.connect(db='CSRec')
     self.cursor = self.sq.cursor()
-    self.request = "INSERT INTO outer_products (req_id, data) VALUES (%s, %s)"
     self.fg = FeatureGetter()
-    self.table = 'couchrequest_tiny' 
-    lower = 0
-    upper = self.NUM_COUCHREQUESTS
+    self.req_table = 'couchrequest_tiny' 
+    self.dump_table = 'outer_products'
+    self.request = "INSERT INTO "+self.dump_table+" (req_id, data) VALUES (%s, %s)"
+    req_per_node = self.NUM_COUCHREQUESTS/comm_size 
+    lower = comm_rank*req_per_node
+    upper = (comm_rank+1)*req_per_node
     # Get the req_ids for this node
-    request = "SELECT id, host_user_id, surf_user_id FROM "+self.table+" limit "\
+    request = "SELECT id, host_user_id, surf_user_id FROM "+self.req_table+" limit "\
       + str(lower) + ", " + str(upper)
     self.cursor.execute(request)
     rows = self.cursor.fetchall()
@@ -64,12 +67,17 @@ class OuterProductDumper():
     t -= time.time()
     print 'commit took %f sec'%(-t)
   
-  def get_outer_product(self, req_id):
-    self.cursor.execute("select data from "+self.table+" where req_id = "+str(req_id))
+  def get_outer_product(self, req_id, vector_length):
+    self.cursor.execute("select data from "+self.dump_table+" where req_id = "+str(req_id))
+    result = cPickle.loads(self.cursor.fetchall()[0][0])
+    res = np.zeros(vector_length)
+    res[result]=1
+    return res
   
 def run():
   opd = OuterProductDumper()
-  opd.execute()  
+  #opd.execute()
+  opd.get_outer_product(1)  
   
 if __name__=='__main__':
   run()
