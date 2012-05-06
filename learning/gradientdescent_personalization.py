@@ -16,7 +16,7 @@ TODO:
 """
 
 import numpy as np
-#from IPython import embed
+from IPython import embed
 
 
 # Set this to true if you would like to use "perfect" features. 
@@ -49,6 +49,10 @@ def inthash(x,y,N): # take this one
 #    a = 2*a - 1
 #    return a      
     
+def argsort(seq):
+    # http://stackoverflow.com/questions/3071415/efficient-method-to-calculate-the-rank-vector-of-a-list-in-python
+    return sorted(range(len(seq)), key=seq.__getitem__, reverse=True)
+
 
 class SGDLearningPersonalized:
 
@@ -88,8 +92,12 @@ class SGDLearningPersonalized:
         theta_h = self.theta_hosts[indizes]
         theta_h = theta_h * rademacherflips
         return theta_h
-   
+
     def predict(self, competitorset):
+        cand, scores = self.rank(competitorset)
+        return cand[0]
+   
+    def rank(self, competitorset):
         # used for inference later and to evaluate error on testset
         hostID = competitorset.get_hostID()        
         
@@ -122,16 +130,15 @@ class SGDLearningPersonalized:
         
         scores = [self.get_score(f, theta_h) for f in features]
         rejectscore = self.get_rejectscore(hostID)
-        
-        maxsurfer = np.argmax(scores)
-		# TODO comment out	
-        #print "rejectscore", rejectscore
-        #print "maxsurferscore", scores[maxsurfer]
-        #print ""
-        if rejectscore>scores[maxsurfer]:
-            return None
-        else: # return surferID of winner
-            return competitorset.get_surferlist()[maxsurfer][0]
+        scores.append(rejectscore)
+        candidates = list(zip(*competitorset.get_surferlist())[0])
+        candidates.append(None)
+        idx = argsort(scores)
+        sortedscores = [scores[i] for i in idx]
+        sortedcandidates = [candidates[i] for i in idx]
+        #print "SORTEDSCORES", sortedscores
+        #print "SORTEDCANDIDATES", sortedcandidates
+        return sortedcandidates, sortedscores
         
     
     def update(self, competitorset, eta=0.01, lambda_winner=0.1, lambda_reject=1.0):
@@ -258,7 +265,7 @@ if __name__=='__main__':
     sgd = SGDLearningPersonalized(featuredimension, get_feature_function, memsize) # the +1 is if were cheating, inside the object definition is another +1 which is for the bias term
     #sgd = SGDLearningPersonalized(featuredimension+1, get_feature_function, memsize, theta=theta, r=r, r_hosts=r_hosts, theta_hosts=theta_hosts)    
     
-    niter = 1000
+    niter = 100
     
     # do a couple update steps
     for i in range(niter):
@@ -275,6 +282,7 @@ if __name__=='__main__':
         print "\tr_hosts", sgd.r_hosts
         print "\ttrue", cs.get_winner()
         print "\tpredicted", sgd.predict(cs)
+        print "\tranking", sgd.rank(cs)
         
         sgd.update(cs, eta=0.1, lambda_winner=0.1, lambda_reject=0.1)
         
