@@ -11,8 +11,8 @@ import pprint
 
 def get_languages(cursor, user_id):
     sql_cmd = "select * from %s where user_id=%s" % ('user_language', user_id)
-    cur.execute(sql_cmd)
-    all_results = list(cur.fetchall())
+    cursor.execute(sql_cmd)
+    all_results = list(cursor.fetchall())
     return list(all_results)
 
 def pull_data_for_user(cursor, user_id):
@@ -21,8 +21,8 @@ def pull_data_for_user(cursor, user_id):
     tables = ['user', 'user_info']
     for table in tables:
         sql_cmd = "select * from %s where user_id=%s" % (table, user_id)
-        cur.execute(sql_cmd)
-        all_results = list(cur.fetchall())
+        cursor.execute(sql_cmd)
+        all_results = list(cursor.fetchall())
         description = cursor.description
         for result in all_results:
             for i in range(len(result)):
