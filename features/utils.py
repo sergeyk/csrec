@@ -13,7 +13,6 @@ DEFAULT_NUM_DIVIDERS = 10
 DIVIDERS = cPickle.load(open(csrec_paths.get_features_dir()+'bucket_dividers.pkl', 'rb'))
 USER_DATA = None
 ALL_VALUES = None
-print DIVIDERS
 
 def ensure_user_data_loaded():
     user_data_pkl_name='sampled_user_data.pkl'
@@ -78,7 +77,7 @@ def show_histogram(target_field_name = None,
                    num_buckets=10):
     ensure_user_data_loaded()
     histograms = {}
-    if target_field_name.lower == 'all':
+    if target_field_name.lower() == 'all':
         for field_name, possible_values in ALL_VALUES.iteritems():
             histograms[field_name] = get_histograms_from_values(
                 USER_DATA[1346062][field_name]['field_type'],

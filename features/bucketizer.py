@@ -3,12 +3,13 @@ import csrec_paths
 import math
 import feature_processor
 import numpy as np
+from features.regions.region_id import *
 
 # field-specific globals
 BUCKETS_CONTINENT_ID = range(8)
 BUCKETS_COUNTRY_ID = [244, 94, 84, 40, 190, 118, 271, 13, 216, 175]
 BUCKETS_LANG = [163, 29, 35, 172, 39, 87, 162, 167, 155, 109]
-
+cm = ContinentMapper()
 CONVERTER  = feature_processor.Converter
 
 class DefaultBucketizerFn(object):
@@ -43,6 +44,10 @@ class PopularBucketizerFn(DefaultBucketizerFn):
         self.num_buckets = len(self.mapping) + 1
 
     def get_popular_bucket_idx(self, value):
+        if value:
+            value = int(value)
+        else:
+            return 0
         if value in self.mapping:
             return self.mapping[value]
         else:
@@ -58,7 +63,8 @@ class PopularBucketizerFn(DefaultBucketizerFn):
 
 class LangBucketizerFn(PopularBucketizerFn):
 
-    def get_bucket_idx(self, field_name, languages):
+    def get_bucket_idx(self, field_name, feature_dct):
+        languages = feature_dct['field_data']
         activated_bins = set([])
         for lang in languages:
             if lang[3] >= 2:
@@ -68,10 +74,12 @@ class LangBucketizerFn(PopularBucketizerFn):
 class LocationsXBucketizerFn(PopularBucketizerFn):
 
     def get_bucket_idx(self, field_name, feature_dct):
-        continents = feature_dct
+        continents = feature_dct['field_data']
         activated_bins = set([])
+        if type(continents) == str:
+            continents = [continents]
         for c in continents:
-            activated_bins.add(self.get_popular_bucket_idx(c))
+            activated_bins.add(self.get_popular_bucket_idx(cm.get_continent_id(c)))
         return list(activated_bins)
 
 
@@ -145,21 +153,20 @@ DEFAULT_NUM_DIVIDERS = 10
 DIVIDERS = cPickle.load(open(csrec_paths.get_features_dir()+'bucket_dividers.pkl', 'rb'))
 USER_DATA = None
 ALL_VALUES = None
-print DIVIDERS
 
 
 def find_all_values_of_cols(user_data_dct):
     all_values = {}
     i = 0
-    bucketizer_fn = get_bucketizer_fn(field_name)
-    bucket_idx1_lst = bucketizer_fn.get_bucket_idx(field_name,
-                                                   user1_dct[field_name])
     for user_id, data_dct in user_data_dct.iteritems():
         i += 1
         for field_name, field_dct in data_dct.iteritems():
             if field_name not in all_values:
                 all_values[field_name] = []
-            all_values[field_name].append(c.convert(field_name, field_dct))
+            bucketizer_fn = get_bucketizer_fn(field_name)
+            bucket_idx1_lst = bucketizer_fn.get_bucket_idx(field_name,
+                                                           data_dct[field_name])
+            all_values[field_name] += bucket_idx1_lst
         if i%1000 == 0:
             print "%s/%s" % (i, len(user_data_dct)), 'users finished'
        
@@ -186,13 +193,22 @@ def show_histogram(target_field_name = None,
                    user_data_pkl_name='sampled_user_data.pkl',
                    divider_output_filename='bucket_dividers.pkl',
                    num_buckets=10):
+    import re
+    f = open(csrec_paths.get_features_dir()+'relevant_features', 'rb')
+    field_names = []
+    if f:
+        for line in f:
+            line = re.sub(r'\s', '', line)
+            if len(line)>1:
+                field_names.append(line)
     ensure_user_data_loaded()
     histograms = {}
-    if target_field_name.lower == 'all':
+    if target_field_name.lower() == 'all':
         for field_name, possible_values in ALL_VALUES.iteritems():
-            histograms[field_name] = get_histograms_from_values(
-                USER_DATA[1346062][field_name]['field_type'],
-                field_name, possible_values, num_buckets)
+            if field_name in field_names:
+                histograms[field_name] = get_histograms_from_values(
+                    USER_DATA[1346062][field_name]['field_type'],
+                    field_name, possible_values, num_buckets)
     else:
         possible_values = ALL_VALUES[target_field_name]
         get_histograms_from_values(
