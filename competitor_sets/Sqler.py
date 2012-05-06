@@ -1,4 +1,4 @@
-import _mysql as sql
+import MySQLdb
 import datetime
 import Image, ImageDraw
 import numpy as np
@@ -12,13 +12,13 @@ class Sqler:
   def __init__(self):
     self.max_length_table = 11000000 # Hmm can this be done somehow nicer?
     if os.path.exists('/u/vis/'):
-      self.db = sql.connect(db='csrec',user='sergeyk',unix_socket='/u/vis/x1/sergeyk/mysql/mysql.sock', host='orange4', port=8081)
+      self.db = MySQLdb.connect(db='csrec',user='sergeyk',unix_socket='/u/vis/x1/sergeyk/mysql/mysql.sock', host='orange4', port=8081)
     elif os.path.exists('/home/tobibaum/'):    
-      self.db = sql.connect(db='CSRec')
+      self.db = MySQLdb.connect(db='CSRec')
     else:
       username = os.environ['MYSQL_USER']
       password = os.environ['MYSQL_PASS']
-      self.db = sql.connect(db='csrec', user=username, passwd=password)
+      self.db = MySQLdb.connect(db='csrec', user=username, passwd=password)
 
   def rqst(self, request, verbose=False):
     t = time.time()

@@ -15,15 +15,23 @@ class OuterProductDumper():
   NUM_COUCHREQUESTS = 10928173
   
   def __init__(self):
-    self.sq = MySQLdb.connect(db='CSRec')
+    sqler = Sqler()
+    self.sq = sqler.db
     self.cursor = self.sq.cursor()
     self.fg = FeatureGetter()
-    self.req_table = 'couchrequest_tiny' 
+    if os.path.exists('/home/tobibaum/'):
+      self.req_table = 'couchrequest_tiny'
+    else:
+      self.req_table = 'couchrequest'
     self.dump_table = 'outer_products'
     self.request = "INSERT INTO "+self.dump_table+" (req_id, data) VALUES (%s, %s)"
     req_per_node = self.NUM_COUCHREQUESTS/comm_size 
     lower = comm_rank*req_per_node
-    upper = (comm_rank+1)*req_per_node
+    upper = req_per_node
+    print 'node %d computes %d to %d'%(comm_rank, lower, upper)
+    if comm_rank == comm_size-1:
+      # The last guy just takes the rest
+      upper *= 2
     # Get the req_ids for this node
     request = "SELECT id, host_user_id, surf_user_id FROM "+self.req_table+" limit "\
       + str(lower) + ", " + str(upper)
@@ -34,7 +42,10 @@ class OuterProductDumper():
     
   def dump_outer_product(self, req_id, data):    
     thedata = cPickle.dumps(data)        
-    self.cursor.execute(self.request, (req_id, thedata,))  
+    try:
+      self.cursor.execute(self.request, (req_id, thedata,))
+    except:
+      print 'req_id %d is already present'%req_id    
   
   def commit(self):
     self.sq.commit()
@@ -54,19 +65,29 @@ class OuterProductDumper():
   def execute(self):
     total_time = 0
     counter = 0
+    commit_count = 0
     for req_id in self.req_user_map.keys():
-      print 'compute id %d'%req_id
+      print_it = False
+      if commit_count == 100:
+        self.commit()
+        commit_count = 0
+        print_it = True
+      if print_it:
+        print '%d computes id %d'%(comm_rank, req_id)
       t = time.time()
       data = self.get_features(req_id)
       
       self.dump_outer_product(req_id, data)
       t -= time.time()
-      print 'took %f sec'%(-t)
+      if print_it:
+        print 'took %f sec'%(-t)
       total_time -= t
       counter += 1
+      commit_count = 0
+
     print 'mean time: %f sec'%(total_time/float(counter))
     t = time.time()
-    self.commit()
+    
     t -= time.time()
     print 'commit took %f sec'%(-t)
   
@@ -79,8 +100,8 @@ class OuterProductDumper():
   
 def run():
   opd = OuterProductDumper()
-  #opd.execute()
-  opd.get_outer_product(1)  
+  opd.execute()
+  #opd.get_outer_product(1)  
   
 if __name__=='__main__':
   run()
