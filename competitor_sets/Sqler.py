@@ -69,11 +69,15 @@ class Sqler:
       print '\tfetching took %f seconds'%(-t)
     return res 
     
-  def get_requests(self, table, lower, upper):    
-    res = self.rqst("select couchrequest.host_user_id, status, surf_user_id, id, \
-      rmd from (select host_user_id from couchrequest group by host_user_id limit " \
-      +str(lower)+","+str(upper)+") as T inner join couchrequest on \
-      (couchrequest.host_user_id = T.host_user_id) order by host_user_id, rmd")
+  def get_requests(self, table, lower, upper):
+    req = "select host_user_id, status, surf_user_id, id, rmd from " + table + \
+      " where host_user_id > " + str(lower) + " and host_user_id < " + str(upper) + \
+      " order by host_user_id, rmd"    
+#    req = "select " + table + ".host_user_id, status, surf_user_id, id, \
+#      rmd from (select host_user_id from " + table + " group by host_user_id limit " \
+#      +str(lower)+","+str(upper)+") as T inner join " + table + " on \
+#      (" + table + ".host_user_id = T.host_user_id) order by host_user_id, rmd"
+    res = self.rqst(req)
     # instead of all at a time fetch  the rows one after the other.
     return res 
   
