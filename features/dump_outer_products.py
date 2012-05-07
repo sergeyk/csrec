@@ -74,8 +74,7 @@ class OuterProductDumper():
     
     for req_id in self.req_user_map.keys():
       print_it = False
-      if commit_count == 100:
-        self.commit()
+      if commit_count == 100:        
         commit_count = 0
         print_it = True
       if print_it:
@@ -92,7 +91,8 @@ class OuterProductDumper():
       total_time -= t
       counter += 1
       commit_count = 0
-
+      
+    self.commit()
     print 'mean time: %f sec'%(total_time/float(counter))
     t = time.time()
     
