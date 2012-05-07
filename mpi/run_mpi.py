@@ -91,7 +91,7 @@ def run():
   else:
     testing = False
     
-  memory_for_personalized_parameters = 100.0 # memory in MB if using personalized SGD learning  
+  memory_for_personalized_parameters = 512.0 # memory in MB if using personalized SGD learning  
   percentage = 0.2 # Dependent on machines in future min:10%, 2nodes->80%
   outer_iterations = 2 #10
   nepoches = 0.5 #10
@@ -121,6 +121,7 @@ def run():
   
   print "Start loading the competitorsets for TRAIN and TEST"
   t0 = time.time()
+  num_sets = 1000 #100000 # TODO remove
   print num_sets
   cs_train = CompetitorSetCollection(num_sets=num_sets, testing=testing, validation=False, just_winning_sets=just_winning_sets)
   cs_test = CompetitorSetCollection(num_sets=num_sets, testing=testing, validation=True, just_winning_sets=just_winning_sets)
@@ -130,8 +131,8 @@ def run():
   
   
   # CV over lamba1, lambda2
-#  lambdas = [10**-3, 10**-2, 10**-1, 10**0, 10**+1]
-  lambdas = [10**-2]
+  #lambdas = [10**-3, 10**-2, 10**-1, 10**0, 10**+1]
+  lambdas = [10**-1]
 
   trainerrors = np.zeros((len(lambdas),len(lambdas)))
   testerrors = np.zeros((len(lambdas),len(lambdas)))
@@ -241,6 +242,9 @@ def run():
           if os.path.exists('/tscratch'):
             if not os.path.exists(dirname):
               os.makedirs(dirname)
+          # 777 permission on directory
+          os.system('chmod -R 777 '+dirname)
+              
           filename = 'parameters_lwin_%f_lrej_%f_testing_%d.pkl'%(lambda_winner, lambda_reject, testing)
           if os.path.exists('/tscratch'):
             pickle.dump( (sgd.theta, sgd.theta_hosts, sgd.r, sgd.r_hosts), open( dirname+filename, "wb" ) )
@@ -270,6 +274,7 @@ def run():
     
     if os.path.exists('/tscratch'):
       pickle.dump( (trainerrors, testerrors, trainmeannrank, testmeannrank), open( dirname+filename, "wb" ) )
+      os.system('chmod -R 777 '+dirname)
      
      
      
