@@ -8,11 +8,11 @@ import time
 import cPickle
 import os, sys
 
-RON_MODE = False#(os.path.exists('/home/ron'))
+RON_MODE = (os.path.exists('/home/ron'))
 
 class Sqler:
   def __init__(self):
-    if RON_MODE:
+    if False:
       import MySQLdb as mdb
       username = os.environ['MYSQL_USER']
       password = os.environ['MYSQL_PASS']
@@ -37,25 +37,16 @@ class Sqler:
                                   user=username, passwd=password)
 
   def rqst(self, request, verbose=False):
+    t = time.time()
+    self.db.query(request)    
+    t -=time.time()
     if RON_MODE:
-      try:
-        self.cur.execute(request)
-        self.db.commit()
-        results = self.cur.fetchall() 
-        return results
-      except MySQLdb.IntegrityError as e:
-        #print 'supressing integrity error'
-        return ()
-    else:
-      t = time.time()
-      self.db.query(request)    
-      t -=time.time()
-    
-      if verbose:
-        print 'db request took %f seconds'%(-t)
-      res = self.db.use_result()
-      self.res = res
-      return res
+      self.db.commit()
+    if verbose:
+      print 'db request took %f seconds'%(-t)
+    res = self.db.use_result()
+    self.res = res
+    return res
 
   def get_row(self, style=1):
     return self.res.fetch_row(1,style)

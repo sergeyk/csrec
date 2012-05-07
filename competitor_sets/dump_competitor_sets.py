@@ -9,7 +9,10 @@ from Sqler import *
 from mpi4py import MPI
 import shutil
 import csrec_paths
-from IPython import embed
+try:
+  from IPython import embed
+except:
+  'failed to import embed'
 
 comm = MPI.COMM_WORLD
 comm_rank = comm.Get_rank()
@@ -52,7 +55,7 @@ def split_requests(reqs, cluster):
   
 def clusterize(sq, reqs):
   # 3 Days is the magical number. We expect a mean compset-size of 2.4
-  MINUTES_BANDWIDTH = 60*24*3 
+  MINUTES_BANDWIDTH = 60*24*7
   # ========= Cluster Responses =============
   rsps_raw = [x[4] for x in reqs]
   
@@ -89,7 +92,7 @@ def get_sessions(lower, upper, force=False):
   t = time.time() 
   res = sq.get_requests(table, lower,upper)
   t -= time.time()
-  print 'db query took %f sec'%(-t)  
+  #print 'db query took %f sec'%(-t)  
       
   last_hid = -1
   reqs = [] 
@@ -104,7 +107,7 @@ def get_sessions(lower, upper, force=False):
   running_sum = 0
   running_count = 0
   while go_on:
-    print 'read %d more rows'%rows_at_a_time
+    #print 'read %d more rows'%rows_at_a_time
     rows = res.fetch_row(rows_at_a_time,0)
     num_rows = len(rows)
     if num_rows == 0:
@@ -130,7 +133,7 @@ def get_sessions(lower, upper, force=False):
 #        running_count += len(clus)
 #        running_sum += np.sum([len(x) for x in clus])
 #        print 'the mean is %f'%(running_sum/float(running_count))
-        print '%d saw %d clusters for user %d'%(comm_rank, len(clus), last_hid)      
+        #print '%d saw %d clusters for user %d'%(comm_rank, len(clus), last_hid)      
         cluss += clus                              
         reqs = [row]      
       else:
@@ -159,7 +162,8 @@ def compile_sessions():
   first_lines = True  
   comp_set_id = comm_rank*500000
   too_much_count = 0
-  default_string = "INSERT INTO `competitor_sets2` (`req_id`, `set_id`, \
+  # IS THIS SUPPOSE TO BE COMPETITOR SETS OR COMPETITOR SETS 2?
+  default_string = "INSERT INTO `competitor_sets` (`req_id`, `set_id`, \
     `host_id`, `surfer_id`, `winner`, `date`) VALUES "
   index = 1
   write_string = default_string
@@ -187,7 +191,7 @@ def compile_sessions():
       if too_much_count > max_batch_size:
         too_much_count = 0
         #print write_string
-        sq.rqst(write_string+';', True)       
+        sq.rqst(write_string+';', False)       
         del write_string
         write_string = default_string
         first_lines = True
@@ -199,5 +203,5 @@ def compile_sessions():
   
 if __name__=='__main__':
   None
-#  create_sessions()  
-#  compile_sessions()
+  create_sessions()  
+  compile_sessions()
