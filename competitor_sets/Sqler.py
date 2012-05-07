@@ -104,6 +104,9 @@ class Sqler:
   def convert_datetime(self, timestring):
     #Ron: it seems like timestring is already a datetime on my computer.
     #return datetime.datetime.strptime(timestring, '%Y-%m-%d %H:%M:%S')
-    return timestring
- 
+    if RON_MODE:
+      return timestring
+    else:
+      return datetime.datetime.strptime(timestring, '%Y-%m-%d %H:%M:%S')
+
   
