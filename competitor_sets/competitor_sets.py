@@ -97,7 +97,6 @@ class CompetitorSetCollection:
         self.set_ids_table + ") as T on (competitor_sets.set_id = T.set_id) \
         order by set_id"
       
-      print request
       print 'start loading competitor'
       res = self.sq.rqst(request, True)       
     
@@ -116,8 +115,10 @@ class CompetitorSetCollection:
         
       last_set_id = curr_set_id
     self.all_sets.append(curr_set)
-    assert(len(sets) == sum([len(s) for s in self.all_sets]))        
-    self.num_sets = len(self.all_sets)
+    assert(len(sets) == sum([len(s) for s in self.all_sets]))
+    print len(self.all_sets)
+    print self.num_sets  
+    assert(len(self.all_sets) <= self.num_sets)      
          
   def get_nsamples(self):
     ''' Get the overall number of samples (= competitor sets) in our data'''

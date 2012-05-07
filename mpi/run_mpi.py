@@ -100,7 +100,7 @@ def run():
   outer_iterations = 10 #10
   nepoches = 0.5 #10
   alpha = 100.0
-  beta = 0.01 #0.01
+  beta = 0.001 #0.01
   #lambda_winner = 0.01
   #lambda_reject = 0.01
   verbose = True
@@ -121,6 +121,7 @@ def run():
   overallnum_testsets = sq.get_num_compsets(validation = True)
   just_winning_sets = False
   testing = False # should be false to get the full data set
+  #testing = True # should be false to get the full data set
   NSETS = 100
   
   print "Start loading the competitorsets for TRAIN and TEST"
