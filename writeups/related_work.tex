@@ -3,6 +3,12 @@
 
 \todo{smooth this out}
 
+
+CouchSurfing data has been used in research in the field of trust and reputation systems \cite{lauterbach2009surfing}. Trust and reputation are critical factors for users to decide whom to interact with. Reputation systems allow users to judge other user's trustworthiness and provides incentives for users to be honest. For this purpose, CouchSurfing.org employs a vouching system (declaring friends as trustworthy), a verification system (paying a small fee to get your name and address verified), and references (ratings and feedback) from other users. 
+
+Recommender systems rely heavily on ratings contributed by users in order to predict other users preferences. Follow-up work has shown that public, identified ratings tend to be disproportionally positive if the ratee is another user who can reciprocate \cite{teng2010rate} (like on CouchSurfing). 
+To the best of our knowledge this paper represents the first effort in using recommender systems and machine learning for social travel on platforms like CouchSurfing.
+
 Personalizing classifiers does usually lead to a very large number of parameters that often is infeasible to keep in memory. To still enable for personalization in a large-scale setting, the hashing trick has been proposed where either features or parameters are hashed into an array of predefined size \cite{Attenberg2009,Weinberger2012}. This allows for features or parameters to collide but it has been successfully applied in personalized spam classification \cite{Attenberg2009} and investigated theoretically \cite{Weinberger2012}. We use the hashing trick to store parameters for each CouchSurfing host that capture their personal preferences in what surfers they like to host.
 
 For learning, we use a parallel Stochastic Gradient Descent (SGD) algorithm that distributes random subsets of the data onto multiple machines and uses fast lock-free updates on a local copy of the parameters \cite{Zinkevich2010}. After a certain number of iterations we average and broadcast these parameters to be more robust.
