@@ -109,8 +109,8 @@ def run():
   #Normal features:
   featuredimension = fg.get_dimension()
 
-  get_feature_function = fg.get_features  
-  
+  get_feature_function = fg.get_features
+    
   sq = Sqler()
   overallnum_sets = sq.get_num_compsets()
   num_sets = int(overallnum_sets*percentage)
@@ -123,8 +123,12 @@ def run():
   t0 = time.time()
   num_sets = 1000 #100000 # TODO remove
   print num_sets
+  # TODO: CAREFULL - num_sets shouldn't be bigger than 500000
+  if num_sets > 500000:
+    raise RuntimeError('num_sets should not be larger than 500000. That takes \
+      already 2.3G mem and we dont wanna run into mem errors')
   cs_train = CompetitorSetCollection(num_sets=num_sets, testing=testing, validation=False, just_winning_sets=just_winning_sets)
-  cs_test = CompetitorSetCollection(num_sets=num_sets, testing=testing, validation=True, just_winning_sets=just_winning_sets)
+  fg.init_out_prod_get(cs_train.get_all_req_ids())  
   t1 = time.time()
   print "Finished loading the competitorsets for TRAIN and TEST"
   print "Loading competitorsets took %s."%(t1-t0)
@@ -222,7 +226,10 @@ def run():
           print "PredNone-Rate: %f"%(prednonerate)
           print "MEANNRANK: %f"%(meannrank)
       
-            
+      cs_test = CompetitorSetCollection(num_sets=num_sets, testing=testing, validation=True, just_winning_sets=just_winning_sets)
+      req_ids = cs_test.get_all_req_ids()
+      fg.reinit_out_prod_get(req_ids)
+                  
       errorrate, truenonerate, prednonerate = test_predictionerror(sgd, cs_test)
       testerrors[lw,lr] = errorrate
       meannrank = test_meannormalizedwinnerrank(sgd, cs_test)

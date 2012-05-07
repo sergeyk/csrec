@@ -127,6 +127,10 @@ class CompetitorSetCollection:
     ''' Get an CompetitorSet object of the sample with index n'''
     row = self.all_sets[n]
     return CompetitorSet(row)   
+  
+  def get_all_req_ids(self):
+    req_ids = [row[CompetitorSet.TRANS['req_id']] for row in self.all_sets]
+    return req_ids
 
 if __name__=='__main__':
   cs_coll_train = CompetitorSetCollection(num_sets=10000)

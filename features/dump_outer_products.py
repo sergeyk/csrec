@@ -105,14 +105,7 @@ class OuterProductDumper():
     
     t -= time.time()
     print 'commit took %f sec'%(-t)
-  
-  def get_outer_product(self, req_id, vector_length):
-    self.cursor.execute("select data from "+self.dump_table+" where req_id = "+str(req_id))
-    result = cPickle.loads(self.cursor.fetchall()[0][0])
-    res = np.zeros(vector_length)
-    res[result]=1
-    return res
-  
+    
 def run():
   opd = OuterProductDumper()
   opd.execute()
