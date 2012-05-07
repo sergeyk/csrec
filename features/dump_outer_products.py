@@ -70,6 +70,7 @@ class OuterProductDumper():
     total_time = 0
     counter = 0
     commit_count = 0
+    
     for req_id in self.req_user_map.keys():
       print_it = False
       if commit_count == 100:
@@ -80,7 +81,9 @@ class OuterProductDumper():
         print '%d computes id %d'%(comm_rank, req_id)
       t = time.time()
       data = self.get_features(req_id)
-      
+      if counter % 100000 == 0:
+        print '%s finished %s/%s' % (comm_rank, counter, 
+                                     len(self.req_user_map.keys()))
       self.dump_outer_product(req_id, data)
       t -= time.time()
       if print_it:
@@ -109,4 +112,5 @@ def run():
   
 if __name__=='__main__':
   run()
+  
   
