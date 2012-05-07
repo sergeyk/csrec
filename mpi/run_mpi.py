@@ -118,20 +118,20 @@ def run():
   just_winning_sets = False
   testing = False # should be false to get the full data set
   #testing = True # should be false to get the full data set
-  NSETS = 100
   
   print "Start loading the competitorsets for TRAIN and TEST"
   t0 = time.time()
-  cs_train = CompetitorSetCollection(num_sets=NSETS, testing=testing, validation=False, just_winning_sets=just_winning_sets)
-  cs_test = CompetitorSetCollection(num_sets=NSETS, testing=testing, validation=True, just_winning_sets=just_winning_sets)
+  print num_sets
+  cs_train = CompetitorSetCollection(num_sets=num_sets, testing=testing, validation=False, just_winning_sets=just_winning_sets)
+  cs_test = CompetitorSetCollection(num_sets=num_sets, testing=testing, validation=True, just_winning_sets=just_winning_sets)
   t1 = time.time()
   print "Finished loading the competitorsets for TRAIN and TEST"
   print "Loading competitorsets took %s."%(t1-t0)
   
   
   # CV over lamba1, lambda2
-  #lambdas = [10**-3, 10**-2, 10**-1, 10**0, 10**+1]
-  lambdas = [10**-2]
+  lambdas = [10**-3, 10**-2, 10**-1, 10**0, 10**+1]
+#  lambdas = [10**-2]
 
   trainerrors = np.zeros((len(lambdas),len(lambdas)))
   testerrors = np.zeros((len(lambdas),len(lambdas)))
