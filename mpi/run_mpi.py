@@ -24,6 +24,8 @@ import os
 import os.path
 import numpy as np
 from mpi.mpi_imports import *
+import time 
+
 try:
     import cPickle as pickle
 except:
@@ -93,14 +95,14 @@ def run():
   testing = True
   just_winning_sets = False
   ######## Erase them for the real thing
-  memory_for_personalized_parameters = 50.0 # memory in MB if using personalized SGD learning  
+  memory_for_personalized_parameters = 100.0 # memory in MB if using personalized SGD learning  
   percentage = 0.2 # Dependent on machines in future min:10%, 2nodes->80%
-  outer_iterations = 5 #10
-  nepoches = 1 #10
+  outer_iterations = 10 #10
+  nepoches = 0.5 #10
   alpha = 100.0
-  beta = 0.05 #0.01
-  lambda_winner = 0.01
-  lambda_reject = 0.01
+  beta = 0.01 #0.01
+  #lambda_winner = 0.01
+  #lambda_reject = 0.01
   verbose = True
   
   fg = FeatureGetter(testing)
@@ -118,14 +120,21 @@ def run():
   num_sets = int(overallnum_sets*percentage)
   overallnum_testsets = sq.get_num_compsets(validation = True)
   just_winning_sets = False
-  NSETS = 1000
-  cs_train = CompetitorSetCollection(num_sets=NSETS, testing=False, validation=False, just_winning_sets=just_winning_sets)
-  cs_test = CompetitorSetCollection(num_sets=NSETS, testing=False, validation=True, just_winning_sets=just_winning_sets)
+  testing = True # should be false to get the full data set
+  NSETS = 100
+  
+  print "Start loading the competitorsets for TRAIN and TEST"
+  t0 = time.time()
+  cs_train = CompetitorSetCollection(num_sets=NSETS, testing=testing, validation=False, just_winning_sets=just_winning_sets)
+  cs_test = CompetitorSetCollection(num_sets=NSETS, testing=testing, validation=True, just_winning_sets=just_winning_sets)
+  t1 = time.time()
+  print "Finished loading the competitorsets for TRAIN and TEST"
+  print "Loading competitorsets took %s."%(t1-t0)
   
   
   # CV over lamba1, lambda2
-  #lambdas = [10**-4, 10**-3, 10**-2, 10**-1, 10**0, 10**+1, 10**+2]
-  lambdas = [10**-1]
+  #lambdas = [10**-3, 10**-2, 10**-1, 10**0, 10**+1]
+  lambdas = [10**-2]
 
   trainerrors = np.zeros((len(lambdas),len(lambdas)))
   testerrors = np.zeros((len(lambdas),len(lambdas)))
@@ -133,8 +142,10 @@ def run():
   testmeannrank = np.zeros((len(lambdas),len(lambdas)))
   
   for lw,lambda_winner in enumerate(lambdas):
-    for lr,lambda_reject in enumerate(lambdas):
-      
+    #for lr,lambda_reject in enumerate(lambdas):
+      lr = lw # we can't afford the full CV
+      lambda_reject = lambda_winner
+        
       # Create sgd object   
       sgd = SGDLearningPersonalized(featuredimension, get_feature_function, memory_for_personalized_parameters) # featdim +1 iff cheating
       N = cs_train.get_nsamples()
