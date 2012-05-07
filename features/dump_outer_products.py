@@ -21,15 +21,7 @@ class OuterProductDumper():
     self.sq = sqler.db
     self.cursor = self.sq.cursor()
     self.fg = FeatureGetter()
-    if os.path.exists('/home/tobibaum/'):
-      self.req_table = 'couchrequest_tiny'
-    else:
-      #self.req_table = 'couchrequest'
-      # only compute it for missing indices
-      self.req_table = "(SELECT * FROM couchrequest join (SELECT id from couchrequest\
-        where not exists (SELECT req_id FROM outer_products WHERE req_id = \
-        couchrequest.id))as TT on (couchrequest.id = TT.id)) as T"
-      
+              
     self.dump_table = 'outer_products'
     self.request = "INSERT INTO "+self.dump_table+" (req_id, data) VALUES (%s, %s)"
     req_per_node = self.NUM_COUCHREQUESTS/comm_size 
@@ -40,22 +32,33 @@ class OuterProductDumper():
       # The last guy just takes the rest
       upper *= 2
     # Get the req_ids for this node
-    request = "SELECT id, host_user_id, surf_user_id FROM "+self.req_table+" limit "\
+    req = "SELECT req_id from " + self.dump_table
+    self.cursor.execute(req)
+    ids = self.cursor.fetchall()
+    self.existent_req_ids = [int(x[0]) for x in ids]
+    
+    request = "SELECT id, host_user_id, surf_user_id FROM couchrequest limit "\
       + str(lower) + ", " + str(upper)
+    print 'get the req_user_map database...'
+    t = time.time()
     self.cursor.execute(request)
+    t -= time.time()
+    print 'took %f secs'%(-t)
     rows = self.cursor.fetchall()
     self.req_user_map = {int(row[0]):(int(row[1]),int(row[2])) for row in rows}
+    print 'len user_map: %d'%len(self.req_user_map)
+    for r in self.existent_req_ids:
+      if self.req_user_map.has_key(r):
+        self.req_user_map.pop(r)
+    print 'reduced len user_map: %d'%len(self.req_user_map)
     #embed()
     
-  def dump_outer_product(self, req_id, data):    
-    thedata = cPickle.dumps(data)        
-    try:
-      self.cursor.execute(self.request, (req_id, thedata,))
+  def dump_outer_product(self, req_id, data):
+    thedata = cPickle.dumps(data)    
+    try:        
+      self.cursor.execute(self.request, (req_id, thedata, ))
     except MySQLdb.IntegrityError:
       pass
-#      import sys
-      #print "Unexpected error:", sys.exc_info()[0]
- #     print 'req_id %d is already present'%req_id    
   
   def commit(self):
     self.sq.commit()
@@ -78,26 +81,25 @@ class OuterProductDumper():
     commit_count = 0
     
     for req_id in self.req_user_map.keys():
-      print_it = False
-      if commit_count == 100:        
-        commit_count = 0
-        print_it = True
-      if print_it:
-        print '%d computes id %d'%(comm_rank, req_id)
       t = time.time()
+      
       data = self.get_features(req_id)
-      if counter % 100000 == 0:
-        print '%s finished %s/%s' % (comm_rank, counter, 
-                                     len(self.req_user_map.keys()))
+      
+      #print 'took %f sec'%(-t)
+      counter += 1
+      
+      #print '%d dumps 100 rows'%comm_rank
       self.dump_outer_product(req_id, data)
       t -= time.time()
-      if print_it:
-        print 'took %f sec'%(-t)
+      if counter % 1000 == 0:
+        print '%s finished %s/%s' % (comm_rank, counter, 
+                                     len(self.req_user_map.keys()))
+           
+            
       total_time -= t
-      counter += 1
-      commit_count = 0
+      counter = 0
       
-    self.commit()
+      self.commit()
     print 'mean time: %f sec'%(total_time/float(counter))
     t = time.time()
     
