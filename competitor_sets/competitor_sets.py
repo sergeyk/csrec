@@ -129,7 +129,10 @@ class CompetitorSetCollection:
     return CompetitorSet(row)   
   
   def get_all_req_ids(self):
-    req_ids = [row[CompetitorSet.TRANS['req_id']] for row in self.all_sets]
+    req_ids = []
+    for row in self.all_sets:
+      for r in row:
+        req_ids.append(r[CompetitorSet.TRANS['req_id']])
     return req_ids
 
 if __name__=='__main__':

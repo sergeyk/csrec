@@ -38,6 +38,7 @@ class FeatureGetter():
         return self.outer_product_getter.get_product(req_id)
     
     def init_out_prod_get(self, req_ids):
+        print 'initialize outer prods'
         self.outer_product_getter = OuterProducGetter(self.dimension)
         self.outer_product_getter.create_outer_prods_from_req_ids(req_ids)
         
