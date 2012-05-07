@@ -1,55 +1,44 @@
 % !TEX root=report.tex
-\section{Related Work}
+\section{Related Work and Problem Exposition}
 
-\todo{smooth this out}
-
-
-CouchSurfing data has been used in research in the field of trust and reputation systems \cite{lauterbach2009surfing}. Trust and reputation are critical factors for users to decide whom to interact with. Reputation systems allow users to judge other user's trustworthiness and provides incentives for users to be honest. For this purpose, CouchSurfing.org employs a vouching system (declaring friends as trustworthy), a verification system (paying a small fee to get your name and address verified), and references (ratings and feedback) from other users. 
+CouchSurfing data has been used in research in the field of trust and reputation systems \cite{lauterbach2009surfing}. Trust and reputation are critical factors for users to decide whom to interact with. Reputation systems allow users to judge other user's trustworthiness and provides incentives for users to be honest. For this purpose, CouchSurfing.org employs a vouching system (declaring friends as trustworthy), a verification system (paying a small fee to get your name and address verified), and references (ratings and feedback) from other users.
+In fact, a for-fee optional verification feature is the only way in which CouchSurfing obtains revenue.
+In this work, we do not focus on reputation and trust, but rather on other features of surfers and hosts that may signal likelihood of an accepted request.
 
 Recommender systems rely heavily on ratings contributed by users in order to predict other users preferences. Follow-up work has shown that public, identified ratings tend to be disproportionally positive if the ratee is another user who can reciprocate \cite{teng2010rate} (like on CouchSurfing). 
 To the best of our knowledge this paper represents the first effort in using recommender systems and machine learning for social travel on platforms like CouchSurfing.
+While we make use of ratings as a source of features for our prediction task, predicting the ratings themselves is not our goal---rather, we aim to predict which couch request, among a group of competing ones, will be accepted by the host.
 
-Personalizing classifiers does usually lead to a very large number of parameters that often is infeasible to keep in memory. To still enable for personalization in a large-scale setting, the hashing trick has been proposed where either features or parameters are hashed into an array of predefined size \cite{Attenberg2009,Weinberger2012}. This allows for features or parameters to collide but it has been successfully applied in personalized spam classification \cite{Attenberg2009} and investigated theoretically \cite{Weinberger2012}. We use the hashing trick to store parameters for each CouchSurfing host that capture their personal preferences in what surfers they like to host.
+A similar problem arises in search engine optimization in a seminal paper on ranking SVMs \cite{Joachims2002}.
+Clickthrough data from users presented with a ranked list of results was used to improve the ranking function in a max-margin formulation.
+In our situation, hosts are indeed presented with a ranked list of surfers (and surfers with a list of hosts), but the time of presentation is unknown to us, as well as the clickthrough data.
+We can, however, infer rough presentation times from the request and decision times, and we have the resulting accept or reject decision of the host.
+In this way, our problem is of classification: given a set of couch requests, we predict, for each one, whether it was accepted or rejected, with the constraint that only one request could have been accepted.
+
+There are two parts to this prediction: a global ``attraction'' model that explains in general why some hosts prefer some users to others; and a host-specific personal model that allows additional flexibility.
+Personalizing classifiers in this way leads to a very large number of parameters that often is infeasible to keep in memory.
+To enable for personalization in a large-scale setting, the hashing trick has been proposed where either features or parameters are hashed into an array of predefined size.
+This potentially allows features or parameters to collide, but it has been successfully applied in personalized spam classification \cite{Attenberg2009} and investigated theoretically \cite{Weinberger2012}.
+We use the hashing trick to store personalized host parameters.
+
+Another related strand of research is in predicting friendship connections, which is considered in \cite{Yang2011} using joint information in existing friendships and common interests based on the hypothesis of homophily.
+The hypothesis is that people with similar interests attract each other: a premise that our model has sufficient power to express, but is not biased toward.
+Similarly, we use the interests of hosts and surfers expressed in free form text on their personal profiles to estimate the likelihood of an accepted request.
+Some evaluation schemes in \cite{Yang2011} are relevant to our problem formulation.
 
 For learning, we use a parallel Stochastic Gradient Descent (SGD) algorithm that distributes random subsets of the data onto multiple machines and uses fast lock-free updates on a local copy of the parameters \cite{Zinkevich2010}. After a certain number of iterations we average and broadcast these parameters to be more robust.
 
-Predicting friendship connections is considered in \cite{Yang2011} using joint information in existing friendships and common interests based on the hypothesis of homophily that people with similar interests attract each other. Similarly, we use the interests of hosts and surfers expressed in free form text on their personal profiles to estimate the likelihood of an accepted couchrequest. Furthermore, we learn which attributes are important to which hosts.
+As part of our featurization function, we extract ``interests'' from free-form text of the user profiles.
+In this challenging task we are guided by \cite{Liu2005}, which uses a graph structure assembled from overlapping user interests, and \cite{Cantador2011} which deals with semantic annotation: essentially mapping a document to its ontology entities (almost like topic modeling).
+We learn the graph based on a novel normalization scheme, and use clusters found in the structure as features in our model.
+\todo{To Ron: update this part of related work as you see fit.}
 
+\comment{They \cite{Cantador2011} extract terms, map the terms to ontology entities (by looking up the term's wikipedia article and construct a vector of applicable ontology entities based on what categories appear in the wikipedia article), and then measure the strength of those mappings using the tf-idf measure.
+They build a news recommender system that recommends based on activation propagation.}
 
-\todo{Ron: update related work for the interest graph stuff (probably the following two papers)}
-
-\paragraph{Harvesting Social Network Profiles for Recommendations} \cite{Liu2005}
-Their research is so similar to what we're doing it's scary.
-I think if we combine their normalization techniques + Koren's collaborative filtering algorithms, we'll be in good shape.
-We use an interest graph like they do. 
-
-\paragraph{An Enhanced Semantic Layer for Hybrid Recommender Systems} \cite{Cantador2011}
-%Ontology: They use \url{http://ir.ii.uam.es/news-at-hand/iptc-ontology_v01.rdfs} which comes from the news codes ontology at \url{http://www.iptc.org/site/NewsCodes}.
- maybe that was relevant for Ron to build the interest graph, I'm not sure?
-This paper deals with semantic annotation, which is essentially mapping a document to its ontology entities (almost like topic modeling). They extract terms, map the terms to ontology entities (by looking up the term's wikipedia article and construct a vector of applicable ontology entities based on what categories appear in the wikipedia article), and then measure the strength of those mappings using the tf-idf measure.
-They build a news recommender system that recommends based on activation propagation.
-
-
------------------TO BE REMOVED--------------------------------
 \comment{\paragraph{CoFiRank} \cite{Weimer2009}
 This paper learns features/latent factors but does not allow for additional observations (apart from ratings).
 We, however, have more features we want to use (i.e. demographic and geographic papers).
 hey learn how to rank as opposed to how to score and also provide a definition of nDCG.
 It leads to a structured estimation SVM-like optimization problem and there seems to be C++ software available.
 Still, we should start with an easier (probably linear) model and we might use a classification instead of a ranking framework.}
-
-\paragraph{Optimizing Search Engines through clickthrough data} \cite{Joachims2002}
-While the application is very different from ours (because we don't have implicit click feedback) the general idea of using an SVM type of optimization problem is very applicable.
-If we modeled our general problem as a ranking instead of a classification problem we could use the formulation of Problem 2 in Section 4.2.
-The constraints will be all the order relations based on accepts/rejects of couch requests.
-
-\paragraph{Like like alike} \cite{Yang2011}
-considers joint information in friendships and interests,  predicting friendship
-to build connections among users (we predict stays), also use SGD learning + feature hashing, also interesting is the idea of homophily:  people with similar interests attract each other.
-In this paper the joint information in friendships and interests is used (although Couchsurfing friendships are probably presumably more sparse).
-A graphical model is used to do a joint propagation of interest.
-One idea might be be not only to take the host's and the surfer' interests from there profiles, but assume that they are incomplete and try to predict other interests similar to this paper. While they practically only have positives we will also have negative feedback (couch request rejects), but they have an interesting idea of using randomly sampled "weak negatives" to correct for a bias towards positive samples.
-Furthermore they use SGD learning and the feature hashing trick which is very relevant to our project.
-Their evaluation part describes standard ranking metrics that become interesting/necessary if we pool "all positives (i.e. all accepted couch requests)" instead of having a "1 positive, multiple negatives" problem.
-Also interesting is the idea of homophily: people with similar interests attract each other. This provides a general motivation of what we are doing in our project.
-
