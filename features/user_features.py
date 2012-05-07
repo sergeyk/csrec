@@ -8,6 +8,7 @@ import re
 from competitor_sets.Sqler import Sqler
 
 DUMP_TABLE = 'outer_products'
+NUM_FEATURES = 138
 
 class FeatureGetter():
     """ Generates crossed features given ids
@@ -23,23 +24,16 @@ class FeatureGetter():
 
     def __init__(self, testing=True):
         if testing:
-          self.DATA_FILE = 'sampled_user_data.pkl' #'user_data.pkl'
-        else:
-          self.DATA_FILE = 'user_data.pkl'
-          
-        if os.path.exists('/u/vis/'):
-          if testing:
-            self.user_pklfile = csrec_paths.get_features_dir()+'sampled_user_data.pkl'
-          else:
-            self.user_pklfile = '/u/vis/x1/tobibaum/user_data.pkl'
-        else:
-          self.user_pklfile = csrec_paths.get_features_dir()+self.DATA_FILE
-        self.load_user_features_pkl()
+            DATA_FILE = 'sampled_user_data.pkl'
+            self.user_pklfile = csrec_paths.get_features_dir() +DATA_FILE
+            self.load_user_features_pkl()
         self.init_field_names()
         self.init_dimensions()
         self.init_outer_products()
         self.num_users_not_found = 0
         self.num_users_total = 0
+        self.total_num_fields = 0
+        self.testing = testing
 
     def init_outer_products(self):
         sqler = Sqler()
@@ -64,7 +58,7 @@ class FeatureGetter():
 
     def init_dimensions(self):
         self.dimension = bucketizer.get_full_crossed_dimension(self.field_names)
-
+        
     def init_field_names(self):
         f = open(csrec_paths.get_features_dir()+'relevant_features', 'rb')
         self.field_names = []
@@ -73,35 +67,56 @@ class FeatureGetter():
                 line = re.sub(r'\s', '', line)
                 if line:
                     self.field_names.append(line)
-        #self.total_num_fields = len(example_user_dct)
         self.num_fields = len(self.field_names)
 
+    def is_correct_num_fields(self, dct):
+        if self.total_num_fields == 0:
+            return False
+        else:
+            if len(dct) == self.total_num_fields:
+                return True
+            else:
+                return False
+
+    def init_total_num_fields(self, num):
+        print 'total_fields =',num
+        if NUM_FEATURES != num:
+            raise Exception("Ron: Error %s features expected, %s seen in the example user" % (NUM_FEATURES, num))
+        self.total_num_fields = num
+
     def load_user_features_pkl(self):
-        print 'loading user data...'
-        self.user_data = {}
-        print 'data for %s users loaded' % (len(self.user_data))
+        self.user_data = cPickle.load(open(self.user_pklfile, 'rb'))
+        print 'FG RUNNING IN TEST MODE: data for %s users loaded' % (len(self.user_data))
 
     def repair(self, user_dct):
         filler = {'field_type': int,
                   'field_data': 0}
-        user_id = user_dct['user_id']
+        # Lol there are users without user ids...
+        if 'user_id' not in user_dct: 
+            user_dct['user_id'] = filler
         for field in self.field_names:
             if field not in user_dct:
                 user_dct[field] = filler
+        if self.total_num_fields == 0:
+            self.init_total_num_fields(len(user_dct))
 
     def get_features_from_dct(self, user1_dct, user2_dct, req_id):
         for user_dct in (user1_dct, user2_dct):
-            self.repair(user_dct)
+            if not self.is_correct_num_fields(user_dct):
+                self.repair(user_dct)
         return bucketizer.cross_bucketized_features(user1_dct, user2_dct, req_id,
                                                     self.dimension, self.field_names)
 
-    def get_features_from_id(self, user_id, host_id, req_id):
+    def get_features_from_ids(self, user_id, host_id, req_id):
         user1_dct = self.user_data[user_id]
         user2_dct = self.user_data[host_id]
         return self.get_features_from_dct(user1_dct, user2_dct, req_id)
     
     def get_features(self, user_id, host_id, req_id):
-        return self.get_cached_feature(req_id)
+        if self.testing:
+            return self.get_features_from_ids(user_id, host_id, req_id)
+        else:
+            return self.get_cached_feature(req_id)
     
     def get_dimension(self):
         return self.dimension

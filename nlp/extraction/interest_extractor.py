@@ -25,7 +25,8 @@ class InterestExtractor(object):
                     if r in chunks:
                         chunks.remove(r)
             
-        output = sorted(list(output))
+        output = list(output)
+#sorted(list(output)) why was sorted there?
         return output
 
 

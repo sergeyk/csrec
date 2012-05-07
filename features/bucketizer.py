@@ -7,6 +7,7 @@ from features.regions.region_id import *
 import bucketizer_test
 
 # field-specific globals
+INTEREST_BUCKETS = range(21)
 BUCKETS_CONTINENT_ID = range(8)
 BUCKETS_COUNTRY_ID = [244, 94, 84, 40, 190, 118, 271, 13, 216, 175]
 BUCKETS_LANG = [163, 29, 35, 172, 39, 87, 162, 167, 155, 109]
@@ -85,14 +86,20 @@ class LocationsXBucketizerFn(PopularBucketizerFn):
             activated_bins.add(self.get_popular_bucket_idx(cm.get_continent_id(c)))
         return list(activated_bins)
 
-
+class InterestBucketizerFn(PopularBucketizerFn):
+    
+    def get_bucket_idx(self, field_name, feature_dct):
+        bucketed = CONVERTER.convert(field_name, feature_dct)
+        return bucketed
 # globals
-BUCKETIZER_FN_FOR_FIELD = {'languages': LangBucketizerFn(BUCKETS_LANG),
-                           'country_id': PopularBucketizerFn(BUCKETS_COUNTRY_ID),
-                           'locations_traveled': LocationsXBucketizerFn(BUCKETS_CONTINENT_ID),
-                           'locations_going': LocationsXBucketizerFn(BUCKETS_CONTINENT_ID),
-                           'locations_lived': LocationsXBucketizerFn(BUCKETS_CONTINENT_ID),
-                           'locations_desired': LocationsXBucketizerFn(BUCKETS_CONTINENT_ID)}
+BUCKETIZER_FN_FOR_FIELD = {
+    'profile': InterestBucketizerFn(INTEREST_BUCKETS),
+    'languages': LangBucketizerFn(BUCKETS_LANG),
+    'country_id': PopularBucketizerFn(BUCKETS_COUNTRY_ID),
+    'locations_traveled': LocationsXBucketizerFn(BUCKETS_CONTINENT_ID),
+    'locations_going': LocationsXBucketizerFn(BUCKETS_CONTINENT_ID),
+    'locations_lived': LocationsXBucketizerFn(BUCKETS_CONTINENT_ID),
+    'locations_desired': LocationsXBucketizerFn(BUCKETS_CONTINENT_ID)}
 
 DEFAULT_BUCKETIZER_FN = DefaultBucketizerFn()
 

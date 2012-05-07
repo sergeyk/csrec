@@ -14,7 +14,8 @@ from mpi.mpi_imports import *
 class OuterProductDumper():
   
   NUM_COUCHREQUESTS = 10928173
-  
+  START_OFFSET = 0
+
   def __init__(self):
     sqler = Sqler()
     self.sq = sqler.db
@@ -23,13 +24,18 @@ class OuterProductDumper():
     if os.path.exists('/home/tobibaum/'):
       self.req_table = 'couchrequest_tiny'
     else:
-      self.req_table = 'couchrequest'
+      #self.req_table = 'couchrequest'
+      # only compute it for missing indices
+      self.req_table = "(SELECT * FROM couchrequest join (SELECT id from couchrequest\
+        where not exists (SELECT req_id FROM outer_products WHERE req_id = \
+        couchrequest.id))as TT on (couchrequest.id = TT.id)) as T"
+      
     self.dump_table = 'outer_products'
     self.request = "INSERT INTO "+self.dump_table+" (req_id, data) VALUES (%s, %s)"
     req_per_node = self.NUM_COUCHREQUESTS/comm_size 
-    lower = comm_rank*req_per_node
+    lower = comm_rank*req_per_node + self.START_OFFSET
     upper = req_per_node
-    print 'node %d computes %d to %d'%(comm_rank, lower, upper)
+    print 'node %d computes %d to %d'%(comm_rank, lower, lower+upper)
     if comm_rank == comm_size-1:
       # The last guy just takes the rest
       upper *= 2
@@ -73,8 +79,7 @@ class OuterProductDumper():
     
     for req_id in self.req_user_map.keys():
       print_it = False
-      if commit_count == 100:
-        self.commit()
+      if commit_count == 100:        
         commit_count = 0
         print_it = True
       if print_it:
@@ -91,7 +96,8 @@ class OuterProductDumper():
       total_time -= t
       counter += 1
       commit_count = 0
-
+      
+    self.commit()
     print 'mean time: %f sec'%(total_time/float(counter))
     t = time.time()
     

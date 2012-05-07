@@ -4,9 +4,13 @@ import numpy as np
 import decimal
 from features.regions.region_id import *
 import re
+from nlp.extraction import interest_extractor
+from clusters import interest_cluster_mapping
 
 cm = ContinentMapper()
-    
+ix = interest_extractor.InterestExtractor()
+ic = interest_cluster_mapping.InterestClusterMap()
+
 def nonetype_converter(f):
     return 0
 
@@ -60,6 +64,20 @@ def loc_x_converter(f):
     sp = f.split(',')
     return [cm.get_continent_id(x) for x in sp]
     
+def interest_converter(f):
+    extracted = []
+    if not f:
+        return []
+    if type(f) == list:
+        extracted = f
+    else:
+        return []
+        extracted = ix.extract(f['interests'])
+    activated_interest_clusters = list(set([ic.get_cluster_id(x) for x in extracted]))
+    #print activated_interest_clusters
+    return activated_interest_clusters
+    
+
 DEFAULT_CONVERTERS = {type(None): nonetype_converter,
               float: float_converter,
               long: long_converter,
@@ -82,7 +100,8 @@ SPECIAL_CONVERTERS = {'languages': language_converter,
                       'locations_traveled':loc_x_converter,
                       'locations_going':loc_x_converter,
                       'locations_lived':loc_x_converter,
-                      'locations_desired':loc_x_converter}
+                      'locations_desired':loc_x_converter,
+                      'profile':interest_converter}
 
 class Converter(object): 
 

@@ -5,6 +5,7 @@ import feature_processor
 import numpy as np
 from features.regions.region_id import *
 from bucketizer import *
+import sys
 
 NUM_DIVIDERS = {'age': 5}
 DEFAULT_NUM_DIVIDERS = 10
@@ -46,6 +47,8 @@ def ensure_user_data_loaded():
         print 'data for %s users loaded' % (len(USER_DATA))
         ALL_VALUES = find_all_values_of_cols(USER_DATA)
 
+def dry_run():
+    ensure_user_data_loaded()
 
 def show_histogram(target_field_name = None,
                    user_data_pkl_name='sampled_user_data.pkl',
@@ -80,7 +83,7 @@ def get_histograms_from_values(field_type, field_name, possible_values, max_buck
     gaussian_numbers = possible_values
     plt.hist(gaussian_numbers, bins=100)
     plt.title('%s (%s)' % (field_name, field_type))
-    xlabel = "Value (%s unique) %s" % (len(set(possible_values)), DIVIDERS[field_name])
+    xlabel = "Value"
     plt.xlabel(xlabel)
     plt.ylabel("Frequency")
     plt.show()
@@ -101,7 +104,8 @@ if __name__ == "__main__":
 
 
     if options.dividers:
-        pass
+        print 'dry_run'
+        dry_run()
     elif options.field_name:
         show_histogram(options.field_name)
     elif options.field_name_p:
