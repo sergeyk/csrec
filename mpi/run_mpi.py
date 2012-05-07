@@ -120,7 +120,7 @@ def run():
   num_sets = int(overallnum_sets*percentage)
   overallnum_testsets = sq.get_num_compsets(validation = True)
   just_winning_sets = False
-  testing = True # should be false to get the full data set
+  testing = False # should be false to get the full data set
   NSETS = 100
   
   print "Start loading the competitorsets for TRAIN and TEST"
