@@ -8,8 +8,8 @@ import re
 from clusters import interest_cluster_mapping
 
 cm = ContinentMapper()
-ix = interest_extractor.InterestExtractor()
-ic = interest_cluster_mapping.InterestClusterMap()
+#ix = interest_extractor.InterestExtractor()
+#ic = interest_cluster_mapping.InterestClusterMap()
 
 def nonetype_converter(f):
     return 0
