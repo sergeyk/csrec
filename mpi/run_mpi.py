@@ -91,10 +91,6 @@ def run():
   else:
     testing = False
     
-  ######## TODO: These are testing flags
-  testing = True
-  just_winning_sets = False
-  ######## Erase them for the real thing
   memory_for_personalized_parameters = 100.0 # memory in MB if using personalized SGD learning  
   percentage = 0.2 # Dependent on machines in future min:10%, 2nodes->80%
   outer_iterations = 10 #10
