@@ -114,6 +114,7 @@ class FeatureGetter():
     
     def get_features(self, user_id, host_id, req_id):
         if self.testing:
+	    raise
             return self.get_features_from_ids(user_id, host_id, req_id)
         else:
             return self.get_cached_feature(req_id)

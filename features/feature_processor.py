@@ -4,12 +4,12 @@ import numpy as np
 import decimal
 from features.regions.region_id import *
 import re
-from nlp.extraction import interest_extractor
+#from nlp.extraction import interest_extractor
 from clusters import interest_cluster_mapping
 
 cm = ContinentMapper()
-ix = interest_extractor.InterestExtractor()
-ic = interest_cluster_mapping.InterestClusterMap()
+#ix = interest_extractor.InterestExtractor()
+#ic = interest_cluster_mapping.InterestClusterMap()
 
 def nonetype_converter(f):
     return 0
