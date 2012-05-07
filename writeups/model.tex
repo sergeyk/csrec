@@ -1,5 +1,6 @@
 % !TEX root=report.tex
-\section{Prediction Model Derivation}
+\section{Prediction Model}
+\label{sec:model}
 
 \begin{figure}[ht]
 \centering
@@ -16,7 +17,8 @@ We predict the probability that a host $h$ chooses the surfers $s_{k^*}$ among a
 p(s_k | h, S) &=& \frac{\exp(\theta^T \Phi(s_k,h))}{\sum_{s_j \in S} \exp(\theta^T \Phi(s_j,h)) + \exp(r)} \\
 p(\text{reject} | h, S) &=& \frac{\exp(r)}{\sum_{s_j \in S} \exp(\theta^T \Phi(s_j,h)) + \exp(r)}
 \end{eqnarray}
-In this formulation, each surfer $s_k$ receives a score $\exp(\theta^T \Phi(s_k,h))$ modeling the natural competition between multiple surfers that requested to stay with the host. In the end, we predict that the surfer with the highest score wins, or that everybody gets rejected if the rejectscore $\exp{(r)}$ is largest.
+In this formulation, each surfer $s_k$ receives a score $\exp(\theta^T \Phi(s_k,h))$ modeling the natural competition between multiple surfers that requested to stay with the host. In the end, we predict that the surfer with the highest score wins, or that everybody gets rejected if the rejectscore $\exp{(r)}$ is largest. 
+Further, we implicitly learn a bias term by appending a one to the feature representation $\Phi(s_k,h)$.
 Note, however, that this is not exactly the standard multinomial logistic regression model since in our case we have the same parameters but we have different features for the different ``classes'' (i.e. surfers).
 
 Even though we essentially just rank the candidates for the host that sent a couchrequest it is still important to model the possibility of rejection. It enables us to model actual probabilities that are very important from the perspective of the surfers. For them, we rank the different host in order of the likelihood that their couchrequest to these hosts would be successful. Because we compare different hosts to each other here their pickiness actually matters to the surfer. See Figure \ref{fig:reject_vs_no_reject} for an example where modeling 

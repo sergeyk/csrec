@@ -24,7 +24,12 @@ class OuterProductDumper():
     if os.path.exists('/home/tobibaum/'):
       self.req_table = 'couchrequest_tiny'
     else:
-      self.req_table = 'couchrequest'
+      #self.req_table = 'couchrequest'
+      # only compute it for missing indices
+      self.req_table = "(SELECT * FROM couchrequest join (SELECT id from couchrequest\
+        where not exists (SELECT req_id FROM outer_products WHERE req_id = \
+        couchrequest.id))as TT on (couchrequest.id = TT.id)) as T"
+      
     self.dump_table = 'outer_products'
     self.request = "INSERT INTO "+self.dump_table+" (req_id, data) VALUES (%s, %s)"
     req_per_node = self.NUM_COUCHREQUESTS/comm_size 
@@ -74,8 +79,7 @@ class OuterProductDumper():
     
     for req_id in self.req_user_map.keys():
       print_it = False
-      if commit_count == 100:
-        self.commit()
+      if commit_count == 100:        
         commit_count = 0
         print_it = True
       if print_it:
@@ -92,7 +96,8 @@ class OuterProductDumper():
       total_time -= t
       counter += 1
       commit_count = 0
-
+      
+    self.commit()
     print 'mean time: %f sec'%(total_time/float(counter))
     t = time.time()
     
