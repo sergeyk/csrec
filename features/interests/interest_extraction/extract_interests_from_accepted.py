@@ -6,6 +6,7 @@ from nlp.extraction import interest_extractor
 import MySQLdb as mdb
 import sys, os
 import cPickle
+from mpi.mpi_imports import *
 
 extractor = interest_extractor.InterestExtractor()
 
@@ -14,8 +15,6 @@ def extract_interests(interests_text):
     return interests
 
 def print_accepted_interests(cursor):
-    quantile = int(sys.argv[1])
-    print quantile
     list_of_tups = []
     id_dct = {}
         #"ps.description, ps.interests, ps.music_movies_books, ps.people_i_enjoy, " + \
@@ -25,18 +24,13 @@ def print_accepted_interests(cursor):
         "ph.user_id, ph.interests " + \
         "from couchrequest as r inner join (user_profile as ps, user_profile as ph) " + \
         "on (r.surf_user_id=ps.user_id and r.host_user_id=ph.user_id) " + \
-        "where r.status='Y' " + \
-        "group by ph.user_idgo
-;"
+        "group by ph.user_id;"
     print sql_cmd
     cur.execute(sql_cmd)
     results = (cur.fetchall())
     total = len(results)
-    all_quantiles = [0, int(round(.25*total)), int(round(.5*total)), int(round(.75*total)), total]
-    completed = 0
-    results = results[all_quantiles[quantile-1]:all_quantiles[quantile]]
-    total = all_quantiles[quantile] - all_quantiles[quantile-1]
-    for result in results:
+    for i in range(comm_rank, total, comm_size):
+        result = results[i]
         s_id = result[0]
         if s_id not in id_dct:
             s_interests = extract_interests(result[1])
@@ -47,11 +41,9 @@ def print_accepted_interests(cursor):
             id_dct[h_id] = h_interests
         list_of_tups.append((s_id, h_id))
         completed += 1
-        print 'completed %s/%s' % (completed, total)
-    print list_of_tups
-    print id_dct
-    cPickle.dump(list_of_tups, open('accepted_pairs.pkl.%s' % (quantile), 'wb'))
-    cPickle.dump(id_dct, open('id_interest_dct.pkl.%s' % (quantile), 'wb'))
+        print 'completed %s/%s' % (completed, total/comm_size)
+    cPickle.dump(list_of_tups, open('accepted_pairs.pkl.%s' % (comm_rank), 'wb'))
+    cPickle.dump(id_dct, open('id_interest_dct.pkl.%s' % (comm_rank), 'wb'))
 
 con = None
 username = os.environ['MYSQL_USER']
