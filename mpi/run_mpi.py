@@ -70,9 +70,9 @@ def test_meannormalizedwinnerrank(sgd, data):
     cand, scores = sgd.rank(competitorset)
     true = competitorset.get_winner()
     nrank = cand.index(true) / float(len(cand)-1) # len-1 because we have rank 0..n-1
-    if len(cand)>2:
-      print "from meanNrank eval"
-      print true, cand, cand.index(true), nrank, sumnrank
+    #if len(cand)>2:
+    #  print "from meanNrank eval"
+    #  print true, cand, cand.index(true), nrank, sumnrank
     sumnrank += nrank
     
   safebarrier(comm)
