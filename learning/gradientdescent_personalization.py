@@ -22,6 +22,7 @@ except:
     print 'no embed for ron =['
 
 
+
 # Set this to true if you would like to use "perfect" features. 
 # Also: turn on God mode in run_mpi
 SANITY_CHECK = False
@@ -154,6 +155,7 @@ class SGDLearningPersonalized:
         #features = [self.get_feature(surferID,hostID,requestID) for (surferID, requestID) in competitorset.get_surferlist()] # before without bias
         features = [np.append(self.get_feature(surferID,hostID,requestID),np.ones(1)) for (surferID, requestID) in competitorset.get_surferlist()] # with appended 1 feature for bias term
         #features = [np.hstack((self.get_feature(surferID,hostID,requestID),np.ones(1)*(surferID==competitorset.get_winner()), np.ones(1))) for (surferID, requestID) in competitorset.get_surferlist()] # CHEAT TODO REMOVE
+
         if SANITY_CHECK:
             features = [np.append(2*(np.ones(1)*(surferID==competitorset.get_winner()))-1, np.ones(1)) for (surferID, requestID) in competitorset.get_surferlist()] # w Bias CHEAT TODO REMOVE
 
@@ -195,7 +197,7 @@ class SGDLearningPersonalized:
 
             # update of personalized host parameters
             self.theta_hosts[indizes] = rademacherflips * ((1 - eta * lambda_winner) * theta_h - eta * (np.sum(temp, axis=0) - features[winneridx]))
-    
+        
 
 
 if __name__=='__main__':

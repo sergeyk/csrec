@@ -15,6 +15,7 @@ Roadmap:
 # return params
 '''
 from learning.gradientdescent_personalization import SGDLearningPersonalized
+from learning.gradientdescent import SGDLearning
 from competitor_sets.competitor_sets import CompetitorSetCollection
 from competitor_sets.Sqler import Sqler
 from features.user_features import FeatureGetter
@@ -91,15 +92,16 @@ def run():
   else:
     testing = False
     
-  memory_for_personalized_parameters = 512.0 # memory in MB if using personalized SGD learning  
+  memory_for_personalized_parameters = 20 #512.0 # memory in MB if using personalized SGD learning  
   percentage = 0.2 # Dependent on machines in future min:10%, 2nodes->80%
   outer_iterations = 2 #10
-  nepoches = 0.5 #10
+  nepoches = 2.0 #10
   alpha = 100.0
   beta = 0.001 #0.01
   #lambda_winner = 0.01
   #lambda_reject = 0.01
   verbose = True
+  personalization = False # no hashing -> faster
   
   fg = FeatureGetter(testing)
 
@@ -149,7 +151,10 @@ def run():
       lambda_reject = lambda_winner
         
       # Create sgd object   
-      sgd = SGDLearningPersonalized(featuredimension, get_feature_function, memory_for_personalized_parameters) # featdim +1 iff cheating
+      if personalization:
+        sgd = SGDLearningPersonalized(featuredimension, get_feature_function, memory_for_personalized_parameters) # featdim +1 iff cheating
+      else:
+        sgd = SGDLearning(featuredimension, get_feature_function) # without personalization/hashing, faster
       N = cs_train.get_nsamples()
       niter = int(N*nepoches)
       
@@ -181,7 +186,8 @@ def run():
         safebarrier(comm)
         
         theta = comm.allreduce(sgd.theta)/float(comm_size)
-        theta_hosts = comm.allreduce(sgd.theta_hosts)/float(comm_size)
+        if personalization:
+          theta_hosts = comm.allreduce(sgd.theta_hosts)/float(comm_size)
         r = comm.allreduce(sgd.r)/float(comm_size)
               
         # For the r_hosts we need to juggle a little bit to get it going
@@ -206,7 +212,7 @@ def run():
       
         print 'spreading mean of parameters done!'
         sgd.theta = theta
-        sgd.theta_hosts = theta_hosts
+        if personalization: sgd.theta_hosts = theta_hosts
         sgd.r = r
         sgd.r_hosts = r_hosts
         
@@ -254,7 +260,10 @@ def run():
               
           filename = 'parameters_lwin_%f_lrej_%f_testing_%d.pkl'%(lambda_winner, lambda_reject, testing)
           if os.path.exists('/tscratch'):
-            pickle.dump( (sgd.theta, sgd.theta_hosts, sgd.r, sgd.r_hosts), open( dirname+filename, "wb" ) )
+            if personalization:
+              pickle.dump( (sgd.theta, sgd.theta_hosts, sgd.r, sgd.r_hosts), open( dirname+filename, "wb" ) )
+            else:
+              pickle.dump( (sgd.theta, sgd.r, sgd.r_hosts), open( dirname+filename, "wb" ) )
 
   # end of CV for loops
 

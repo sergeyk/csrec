@@ -14,6 +14,11 @@ TODO:
 
 import numpy as np
 
+
+def argsort(seq):
+    # http://stackoverflow.com/questions/3071415/efficient-method-to-calculate-the-rank-vector-of-a-list-in-python
+    return sorted(range(len(seq)), key=seq.__getitem__, reverse=True)
+
 class SGDLearning:
 
     def __init__(self, featuredimension, get_feature_function, theta=None, r=None, r_hosts=None):
@@ -33,8 +38,12 @@ class SGDLearning:
             self.r_hosts[hostID] = 0.0
             
         return np.exp(self.r + self.r_hosts[hostID])
-    
+ 
     def predict(self, competitorset):
+        cand, scores = self.rank(competitorset)
+        return cand[0]
+    
+    def rank(self, competitorset):
         # used for inference later and to evaluate error on testset
         hostID = competitorset.get_hostID()        
         
@@ -43,21 +52,21 @@ class SGDLearning:
             self.r_hosts[competitorset.get_hostID()] = 0.0
         
         #features = [self.get_feature(surferID,hostID,requestID) for (surferID, requestID) in competitorset.get_surferlist()] # before without bias
-        #features = [np.append(self.get_feature(surferID,hostID,requestID),np.ones(1)) for (surferID, requestID) in competitorset.get_surferlist()] # with appended 1 feature for bias term
-        features = [np.hstack((self.get_feature(surferID,hostID,requestID),np.ones(1)*(surferID==competitorset.get_winner()), np.ones(1))) for (surferID, requestID) in competitorset.get_surferlist()] # CHEAT TODO REMOVE
+        features = [np.append(self.get_feature(surferID,hostID,requestID),np.ones(1)) for (surferID, requestID) in competitorset.get_surferlist()] # with appended 1 feature for bias term
+        #features = [np.hstack((self.get_feature(surferID,hostID,requestID),np.ones(1)*(surferID==competitorset.get_winner()), np.ones(1))) for (surferID, requestID) in competitorset.get_surferlist()] # CHEAT TODO REMOVE
         #features = [np.append(2*(np.ones(1)*(surferID==competitorset.get_winner()))-1, np.ones(1)) for (surferID, requestID) in competitorset.get_surferlist()] # w Bias CHEAT TODO REMOVE
         scores = [self.get_score(f) for f in features]
         rejectscore = self.get_rejectscore(hostID)
         
-        maxsurfer = np.argmax(scores)
-        # TODO comment out
-        #print "rejectscore", rejectscore
-        #print "maxsurferscore", scores[maxsurfer]
-        #print ""
-        if rejectscore>scores[maxsurfer]:
-            return None
-        else: # return surferID of winner
-            return competitorset.get_surferlist()[maxsurfer][0]
+        scores.append(rejectscore)
+        candidates = list(zip(*competitorset.get_surferlist())[0])
+        candidates.append(None)
+        idx = argsort(scores)
+        sortedscores = [scores[i] for i in idx]
+        sortedcandidates = [candidates[i] for i in idx]
+        #print "SORTEDSCORES", sortedscores
+        #print "SORTEDCANDIDATES", sortedcandidates
+        return sortedcandidates, sortedscores
         
     
     def update(self, competitorset, eta=0.01, lambda_winner=0.1, lambda_reject=1.0):
@@ -68,8 +77,8 @@ class SGDLearning:
         
         # get features, scores, and probabilities
         #features = [self.get_feature(surferID,hostID,requestID) for (surferID, requestID) in competitorset.get_surferlist()] # before without bias
-        #features = [np.append(self.get_feature(surferID,hostID,requestID),np.ones(1)) for (surferID, requestID) in competitorset.get_surferlist()] # with appended 1 feature for bias term
-        features = [np.hstack((self.get_feature(surferID,hostID,requestID),np.ones(1)*(surferID==competitorset.get_winner()), np.ones(1))) for (surferID, requestID) in competitorset.get_surferlist()] # CHEAT TODO REMOVE
+        features = [np.append(self.get_feature(surferID,hostID,requestID),np.ones(1)) for (surferID, requestID) in competitorset.get_surferlist()] # with appended 1 feature for bias term
+        #features = [np.hstack((self.get_feature(surferID,hostID,requestID),np.ones(1)*(surferID==competitorset.get_winner()), np.ones(1))) for (surferID, requestID) in competitorset.get_surferlist()] # CHEAT TODO REMOVE
         #features = [np.append(2*(np.ones(1)*(surferID==competitorset.get_winner()))-1, np.ones(1)) for (surferID, requestID) in competitorset.get_surferlist()] # w Bias CHEAT TODO REMOVE
         scores = [self.get_score(f) for f in features]
         rejectscore = self.get_rejectscore(hostID)
@@ -142,6 +151,6 @@ if __name__=='__main__':
         print "\ttrue", competitorset.get_winner()
         print "\tpredicted", sgd.predict(competitorset)
         
-        sgd.update(competitorset, eta=0.1, regularization_lambda=0.1)
+        sgd.update(competitorset, eta=0.1, lambda_winner=0.1, lambda_reject=0.1)
         
     

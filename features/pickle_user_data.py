@@ -8,9 +8,9 @@ import feature_processor
 import csrec_paths
 from MySQLdb import converters
 import pprint
+
 from cached_interests import cached_profiles
-t = 0
-c = 0
+
 def get_languages(cursor, user_id):
     sql_cmd = "select * from %s where user_id=%s" % ('user_language', user_id)
     cursor.execute(sql_cmd)
@@ -21,16 +21,11 @@ def get_cached_profile(user_id):
     return cached_profiles[user_id]
 
 def get_profile(cursor, user_id):
-    global t,c
-    t+=1
     if user_id in cached_profiles:
-        c+=1
-        print c,'/', t
         p_type = 'cached'
         data = get_cached_profile(user_id)
     else:
-        p_type = 'db'
-        data = get_db_profile(cursor, user_id)
+        raise Exception('REQUIRES ALL USER INTERESTS TO BE CACHED')
     return {'field_type': p_type, 'field_data': data}
 
 def get_db_profile(cursor, user_id):

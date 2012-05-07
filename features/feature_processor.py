@@ -4,34 +4,40 @@ import numpy as np
 import decimal
 from features.regions.region_id import *
 import re
-#from nlp.extraction import interest_extractor
 from clusters import interest_cluster_mapping
 
+ic = interest_cluster_mapping.InterestClusterMap()
 cm = ContinentMapper()
-#ix = interest_extractor.InterestExtractor()
-#ic = interest_cluster_mapping.InterestClusterMap()
+
 
 def nonetype_converter(f):
     return 0
 
+
 def float_converter(f):
     return f
+
 
 def long_converter(f):
     return float(f)
 
+
 def int_converter(f):
     return float(f)
 
+
 def str_converter(f):
     return float(hash(f))
+
 
 def dt_converter(f):
     dt_ord = float(f.toordinal())
     return dt_ord
 
+
 def dec_converter(f):
     return float(f)
+
 
 def language_converter(f):
     if len(f)==0:
@@ -39,11 +45,13 @@ def language_converter(f):
     f = sorted(f, key=lambda x: x[-1]) 
     return float(f[0][2])
 
+
 def binary_converter(f):
     if f:
         return 1
     else:
         return 0
+
 
 def anon_str_len_converter(f):
     if not f:
@@ -51,30 +59,27 @@ def anon_str_len_converter(f):
     sp = f.split('_')
     return int(sp[-1])
  
+
 def strlen_converter(f):
     if f:
         return len(f)
     else:
         return 0
 
+
 def continent_converter(f):
     return cm.get_continent_id(f)
+
 
 def loc_x_converter(f):
     sp = f.split(',')
     return [cm.get_continent_id(x) for x in sp]
     
+
 def interest_converter(f):
-    extracted = []
-    if not f:
-        return []
-    if type(f) == list:
-        extracted = f
-    else:
-        return []
-        extracted = ix.extract(f['interests'])
-    activated_interest_clusters = list(set([ic.get_cluster_id(x) for x in extracted]))
-    #print activated_interest_clusters
+    # This currently returns an empty list for users 
+    # that are not cached.
+    activated_interest_clusters = list(set([ic.get_cluster_id(x) for x in f]))
     return activated_interest_clusters
     
 
