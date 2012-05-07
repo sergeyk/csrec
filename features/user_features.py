@@ -6,8 +6,8 @@ import csrec_paths
 import bucketizer
 import re
 from competitor_sets.Sqler import Sqler
+from features.read_outer_products import OuterProducGetter
 
-DUMP_TABLE = 'outer_products'
 NUM_FEATURES = 138
 
 class FeatureGetter():
@@ -29,30 +29,22 @@ class FeatureGetter():
             self.load_user_features_pkl()
         self.init_field_names()
         self.init_dimensions()
-        self.init_outer_products()
         self.num_users_not_found = 0
         self.num_users_total = 0
         self.total_num_fields = 0
         self.testing = testing
 
-    def init_outer_products(self):
-        sqler = Sqler()
-        self.sq = sqler.db
-        self.cursor = self.sq.cursor()
-
     def get_cached_feature(self, req_id):
-        sql_cmd = "select data from "+DUMP_TABLE+" where req_id = "+str(req_id)
-        self.cursor.execute(sql_cmd)
-        res = np.zeros(self.get_dimension())
-        results = self.cursor.fetchall()
-        if len(results)>0:
-            pkl_dump = results[0][0]
-            result = cPickle.loads(pkl_dump)
-            res[result]=1
-        else:
-            raise Exception("req_id %s not found in outer_products" % (req_id))
-        return res
-
+        return self.outer_product_getter.get_product(req_id)
+    
+    def init_out_prod_get(self, req_ids):
+        print 'initialize outer prods'
+        self.outer_product_getter = OuterProducGetter(self.dimension)
+        self.outer_product_getter.create_outer_prods_from_req_ids(req_ids)
+        
+    def reinit_out_prod_get(self, req_ids):
+        self.outer_product_getter.recreate_outer_prods_from_req_ids(req_ids)
+        
     def init_dimensions(self):
         self.dimension = bucketizer.get_full_crossed_dimension(self.field_names)
         

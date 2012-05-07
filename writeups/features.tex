@@ -1,6 +1,5 @@
 % !TEX root=report.tex
-\section{Features}
-\label{sec:features}
+\section{Features} \label{sec:features}
 
 Couchsurfing.org provided us with an anonymized copy of their databases giving us access to a variety of interesting properties of their users (surfers/hosts). 
 Broadly speaking we use features describing personal information like age, gender, languages spoken, countries lived in, countries traveled to, etc., their interests (extracted from the free form text on their profiles, for more information see Section \ref{subsec:user_interests}), and their status and activity on Couchsurfing.org which includes e.g. the number of references, the number of friends, or the response rate in the internal messaging system.
@@ -12,8 +11,7 @@ We developed a general approach how we deal with a wide variety of features. For
 %sometimes additional manually designed features (e.g. how many languages sb speaks or how many languages they have in common) WE DONT DO THAT ATM
 
 
-\subsection{User interests}
-\label{subsec:user_interests}
+\subsection{User interests} \label{subsec:user_interests}
 
 \todo{add some more information about interest extraction + interest graph + clustering + interest feature here}
 Interest graph: the compatibility strength between surfer and host is determined by $num_overlapping_interest(host, surfer)$ through some type of decaying activation propagation.  This will be based on the "Taste Fabric" paper and the "Semantic Recommendation" paper.  This method assumes homophily and that interests are the strongest attractors between people (doesn't take into account demographics etc.).  This method is reversible.
