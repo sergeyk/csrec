@@ -40,6 +40,7 @@ class FeatureGetter():
         self.init_outer_products()
         self.num_users_not_found = 0
         self.num_users_total = 0
+        self.total_num_fields = 0
 
     def init_outer_products(self):
         sqler = Sqler()
@@ -64,7 +65,7 @@ class FeatureGetter():
 
     def init_dimensions(self):
         self.dimension = bucketizer.get_full_crossed_dimension(self.field_names)
-
+        
     def init_field_names(self):
         f = open(csrec_paths.get_features_dir()+'relevant_features', 'rb')
         self.field_names = []
@@ -73,8 +74,20 @@ class FeatureGetter():
                 line = re.sub(r'\s', '', line)
                 if line:
                     self.field_names.append(line)
-        #self.total_num_fields = len(example_user_dct)
         self.num_fields = len(self.field_names)
+
+    def is_correct_num_fields(self, dct):
+        if self.total_num_fields == 0:
+            return False
+        else:
+            if len(dct) == self.total_num_fields:
+                return True
+            else:
+                return False
+
+    def init_total_num_fields(self, num):
+        print 'total_fields =',num
+        self.total_num_fields = num
 
     def load_user_features_pkl(self):
         print 'loading user data...'
@@ -84,14 +97,19 @@ class FeatureGetter():
     def repair(self, user_dct):
         filler = {'field_type': int,
                   'field_data': 0}
-        user_id = user_dct['user_id']
+        # This is pretty bad if user_id is not in the dct...
+        if 'user_id' not in user_dct: 
+            user_dct['user_id'] = filler
         for field in self.field_names:
             if field not in user_dct:
                 user_dct[field] = filler
+        if self.total_num_fields == 0:
+            self.init_total_num_fields(len(user_dct))
 
     def get_features_from_dct(self, user1_dct, user2_dct, req_id):
         for user_dct in (user1_dct, user2_dct):
-            self.repair(user_dct)
+            if not self.is_correct_num_fields(user_dct):
+                self.repair(user_dct)
         return bucketizer.cross_bucketized_features(user1_dct, user2_dct, req_id,
                                                     self.dimension, self.field_names)
 

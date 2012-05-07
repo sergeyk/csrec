@@ -14,7 +14,8 @@ from mpi.mpi_imports import *
 class OuterProductDumper():
   
   NUM_COUCHREQUESTS = 10928173
-  
+  START_OFFSET = 0
+
   def __init__(self):
     sqler = Sqler()
     self.sq = sqler.db
@@ -27,9 +28,9 @@ class OuterProductDumper():
     self.dump_table = 'outer_products'
     self.request = "INSERT INTO "+self.dump_table+" (req_id, data) VALUES (%s, %s)"
     req_per_node = self.NUM_COUCHREQUESTS/comm_size 
-    lower = comm_rank*req_per_node
+    lower = comm_rank*req_per_node + self.START_OFFSET
     upper = req_per_node
-    print 'node %d computes %d to %d'%(comm_rank, lower, upper)
+    print 'node %d computes %d to %d'%(comm_rank, lower, lower+upper)
     if comm_rank == comm_size-1:
       # The last guy just takes the rest
       upper *= 2
