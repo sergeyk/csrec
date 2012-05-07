@@ -1,5 +1,5 @@
 % !TEX root=report.tex
-\section{Introduction}
+\section{Introduction} \label{sec:introduction}
 
 \begin{quotation}
 Among those to whom I did not write “couch requests” were “a travelling magician and professional fool” from New Mexico; a sixty-three-year-old gay semi-retired handyman in Pahoa, Hawaii, whose mission is “looking for more nudists” (there are plenty of “clothing optional” possibilities on CouchSurfing); another Hawaiian, this one describing himself as “just a guy who has three acres of land, living in a shipping container house”; a woman in Bozeman, Montana, who declared that her “home is oppression-free. Yay!” and also contains high-speed Wi-Fi; a thirty-one-year-old female “daydreamer” from Berkeley who loves pajamas; a Tarot-card reader in Marfa, Texas; a housewife in Charleston, South Carolina, who owns a pole-dancing studio called Dolphin Dance; a kite-surfing physician (again, Charleston) whose ambition is to start a flavored-envelope company; a freelance photographer in San Francisco who claims she’s had hiccups every day for the past five years; a Savannah, Georgia, scientist who is also a “free man,” doing “whatever I want, whenever I want”; a male in Antarctica who wishes to live as a female; a “lovetarian” who grew up in Doylestown, Pennsylvania; ... and eighty-four people in Brunei Darussalam.
@@ -41,4 +41,7 @@ In private discussion with the CEO and CTO of CouchSurfing, we established that 
 In this work, we develop a system to automatically evaluate the couch requests that hosts get with respect to the likelihood of a successful and pleasant visit, and so make the CouchSurfing experience as convenient as possible.
 While we train and evaluate our approach from the perspective of the hosts, our solution to the problem---predicting the probability of a host accepting a surfer request---benefits surfers just as much, as their search results can be ranked according to the likelihood of acceptance to save them message-writing effort.
 
-\todo{outline/structure of the paper}
+We detail our problem formulation further while evaluating related work in \autoref{sec:related_work}.
+Next, we look at the structure of CouchSurfing data and user experience in \autoref{sec:data}.
+In \autoref{sec:model}, we formalize the problem and present our model, and our approach to extracting features from user data is presented in \autoref{sec:features}.
+Evaluation results are then presented, and conclusions drawn.
