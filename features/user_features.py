@@ -50,10 +50,7 @@ class FeatureGetter():
             result = cPickle.loads(pkl_dump)
             res[result]=1
         else:
-            print req_id
-            self.num_users_not_found += 1
-            #print self.num_users_not_found,'/',self.num_users_total
-        self.num_users_total += 1
+            raise Exception("req_id %s not found in outer_products" % (req_id))
         return res
 
     def init_dimensions(self):
@@ -114,7 +111,6 @@ class FeatureGetter():
     
     def get_features(self, user_id, host_id, req_id):
         if self.testing:
-	    raise
             return self.get_features_from_ids(user_id, host_id, req_id)
         else:
             return self.get_cached_feature(req_id)
