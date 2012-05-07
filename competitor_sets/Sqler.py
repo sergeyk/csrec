@@ -8,7 +8,7 @@ import time
 import cPickle
 import os, sys
 
-RON_MODE = (os.path.exists('/home/ron'))
+RON_MODE = False#(os.path.exists('/home/ron'))
 
 class Sqler:
   def __init__(self):
