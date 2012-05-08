@@ -132,7 +132,7 @@ class CompetitorSetCollection:
 
 if __name__=='__main__':
   cs_coll_train = CompetitorSetCollection(num_sets=10000)
-  cs_coll_test = CompetitorSetCollection(num_sets=10000, validation=True)
+  cs_coll_test = CompetitorSetCollection(num_sets=10000, mode='val')
   #cs_coll.get_user_dict("examplar_user_table")
   N = cs_coll_train.get_nsamples()
   N2 = cs_coll_test.get_nsamples()
