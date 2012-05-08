@@ -11,9 +11,12 @@ All notation is also presented in \autoref{tab:notation} for reference.
 \begin{tabular}{lp{7cm}}
 Symbol & Meaning\\
 \hline
-$h \in \mathcal{H}$   & Host, from a set of all users who have received at least $K$ couch requests\\ 
-$\mathcal{S}_h$       & Set of competitor sets $S$ for host $h$\\
-$S \in \mathcal{S}_h$ & Competitor set for host $h$, composed of surfers who have made a couch request to $h$ at roughly the same time \\
+$h \in \mathcal{H}$   & Host, from a set of all users who have received at least $K$ couch requests. \\ 
+$\mathcal{S}_h$       & Set of all competitor sets $S$ for host $h$. \\
+$S \in \mathcal{S}_h$ & Competitor set for host $h$, composed of surfers who have made a couch request to $h$ at roughly the same time. \\
+$\Phi(s,h,c)$         & Featurization function mapping a couch request from a surfer to a host to $\mathbb{R}^D.$\\
+$\theta$,$r$          & Global parameters: weights for the couch request features, and a ``reject-all'' parameter.\\
+$\theta_h$,$r_h$      & Corresponding host-specific parameters.\\
 \hline
 \end{tabular}\end{table}
 
@@ -41,12 +44,13 @@ When modeling the reject option, however, the probabilities change and $h_1$ is 
 \label{fig:reject_vs_no_reject}
 \end{figure}
 
-We model the probability that a host $h$ chooses surfer $s_k$ out of a competitor set $S$ using a logistic model
+We represent the probability that a host $h$ chooses surfer $s_k$ out of a competitor set $S$ with a logistic model
 \begin{eqnarray}
-p(s_k | h, S) &=& \frac{\exp(\theta^T \Phi(s_k,h))}{\sum_{s_j \in S} \exp(\theta^T \Phi(s_j,h)) + \exp(r)}
+p(s_k | h, S) &=& \frac{\exp(\theta^T \Phi(s_k,h,c)}{\sum_{s_j \in S} \exp(\theta^T \Phi(s_j,h,c)) + \exp(r)}
 \end{eqnarray}
-where $\Phi(s_k,h)$ is the output of the featurization function $\Phi: (s,h,r)  \mapsto \mathbb{R}^D$ and $\theta$ is the $D$-dimensional parameter vector we learn.
-The model is implictly able to learn a bias term by appending a one to the feature representation $\Phi(s_k,h)$.
+where $\Phi(s_k,h,c)$ is the output of the featurization function $\Phi: (s,h,c)  \mapsto \mathbb{R}^D$ and $\theta$ is the $D$-dimensional parameter vector we learn.
+The parameter $c$ represents the context of the couch request, such as time, and will henceforth be omitted from notation but implictly included.
+We also implictly model a bias term by appending $1$ to the representation $\Phi(s_k,h)$.
 
 Accordingly, we model the probability that $h$ rejects all $s_k \in S$ as
 \begin{eqnarray}
