@@ -42,8 +42,7 @@ def test_predictionerror(fg, sgd, data):
   N = data.get_nsamples()
   
   indices = range(comm_rank, N, comm_size) 
-  update_lookahead_cnt = 0
-  
+  update_lookahead_cnt = 0  
   req_ids = data.get_req_ids_for_samples(indices[0:LOOK_AHEAD_LENGTH])
   fg.reinit_out_prod_get(req_ids)
 
@@ -55,8 +54,6 @@ def test_predictionerror(fg, sgd, data):
       update_lookahead_cnt = 0
     
     competitorset = data.get_sample(i)
-    for l in competitorset.get_surferlist():
-      assert(l[1] in req_ids)
     pred = sgd.predict(competitorset, testingphase=False)
     true = competitorset.get_winner()
     #if true:
@@ -79,10 +76,22 @@ def test_predictionerror(fg, sgd, data):
   return errorrate, truenonerate, prednonerate
 
 
-def test_meannormalizedwinnerrank(sgd, data): 
+def test_meannormalizedwinnerrank(fg, sgd, data): 
   sumnrank = 0.0
   N = data.get_nsamples()
-  for i in range(comm_rank, N, comm_size):
+  
+  indices = range(comm_rank, N, comm_size)
+  update_lookahead_cnt = 0  
+  req_ids = data.get_req_ids_for_samples(indices[0:LOOK_AHEAD_LENGTH])
+  fg.reinit_out_prod_get(req_ids)
+  
+  for i in indices:
+    update_lookahead_cnt += 1
+    if update_lookahead_cnt == LOOK_AHEAD_LENGTH:
+      req_ids = data.get_req_ids_for_samples(indices[i:i+LOOK_AHEAD_LENGTH])
+      fg.reinit_out_prod_get(req_ids)
+      update_lookahead_cnt = 0
+      
     competitorset = data.get_sample(i)
     cand, scores = sgd.rank(competitorset)
     true = competitorset.get_winner()
@@ -276,7 +285,7 @@ def run():
       safebarrier(comm)
       
       errorrate, truenonerate, prednonerate = test_predictionerror(fg, sgd, cs_train)
-      meannrank = test_meannormalizedwinnerrank(sgd, cs_train)
+      meannrank = test_meannormalizedwinnerrank(fg, sgd, cs_train)
       trainerrors[lw,lr] = errorrate
       trainmeannrank[lw,lr] = meannrank
       if comm_rank == 0:
@@ -291,11 +300,10 @@ def run():
       time.sleep(sec)
       
       cs_test = CompetitorSetCollection(num_sets=num_sets, testing=testing, validation=True, just_winning_sets=just_winning_sets)
-      fg.reinit_out_prod_get(cs_test.get_all_req_ids())
-                  
+                        
       errorrate, truenonerate, prednonerate = test_predictionerror(fg, sgd, cs_test)
       testerrors[lw,lr] = errorrate
-      meannrank = test_meannormalizedwinnerrank(sgd, cs_test)
+      meannrank = test_meannormalizedwinnerrank(fg, sgd, cs_test)
       testerrors[lw,lr] = errorrate
       testmeannrank[lw,lr] = meannrank
       if comm_rank == 0:
