@@ -91,14 +91,14 @@ class OuterProductDumper():
       #print '%d dumps 100 rows'%comm_rank
       self.dump_outer_product(req_id, data)
       t -= time.time()
-      if counter % 1000 == 0:
+      if counter % 10000 == 0:
         print '%s finished %s/%s' % (comm_rank, counter, 
                                      len(self.req_user_map.keys()))
-           
+        self.commit()
+
             
       total_time -= t
       
-      self.commit()
     print 'mean time: %f sec'%(total_time/float(counter))
     t = time.time()
     
