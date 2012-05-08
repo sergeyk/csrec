@@ -49,12 +49,14 @@ def test_predictionerror(fg, sgd, data):
   req_ids = data.get_req_ids_for_samples(indices[0:LOOK_AHEAD_LENGTH])
   fg.reinit_out_prod_get(req_ids)
 
-  for i in indices:
-    update_lookahead_cnt += 1
+  for idx, i in enumerate(indices):
+    
     if update_lookahead_cnt == LOOK_AHEAD_LENGTH:
-      req_ids = data.get_req_ids_for_samples(indices[i:i+LOOK_AHEAD_LENGTH])
+      req_ids = data.get_req_ids_for_samples(indices[idx:idx+LOOK_AHEAD_LENGTH])
       fg.reinit_out_prod_get(req_ids)
       update_lookahead_cnt = 0
+    else:
+      update_lookahead_cnt += 1
     
     competitorset = data.get_sample(i)
     pred = sgd.predict(competitorset, testingphase=False)
@@ -125,7 +127,7 @@ def run():
   #lambda_reject = 0.01
   verbose = False
   personalization = False # no hashing -> faster
-  rhostsize = 10000
+  rhostsize = 1000000
   
   fg = FeatureGetter(False)
 
@@ -316,10 +318,7 @@ def run():
             else:
               pickle.dump( (sgd.theta, sgd.r, sgd.r_hosts), open( dirname+filename, "wb" ) )
               print "Stored params at " + dirname+filename  
-        
-        
-        
-        
+                
       # Compute the errors
       safebarrier(comm)
       
@@ -338,7 +337,7 @@ def run():
       #print "machine %d is sleeping for %d sec."%(comm_rank,sec)
       #time.sleep(sec)
       
-      for i in range(2,comm_size,3):
+      for i in range(2,comm_size+2,3):
         if comm_rank==i or comm_rank==i-1 or comm_rank==i-2:
           print "Machine %d/%d - Start loading the competitorsets for VAL"%(comm_rank,comm_size)
           cs_test = CompetitorSetCollection(num_sets=num_sets, mode='val')

@@ -1,4 +1,4 @@
-''' Provide competitor sets for 
+''' Provide competitor sets for
 '''
 
 import numpy as np
@@ -85,7 +85,6 @@ class CompetitorSetCollection:
       if not self.num_sets == 'max':
         request += " limit 0, " +str(self.num_sets)
     
-    
     if mode == 'train' and not num_sets == 'max':
       set_filename = os.path.join(csrec_paths.ROOT, 'competitor_sets', 'all_set_ids')
       if not os.path.exists(set_filename):
@@ -99,17 +98,18 @@ class CompetitorSetCollection:
       else:
         set_ids = cPickle.load(open(set_filename, 'r'))
         
-      smaller_set_ids = np.random.random_integers(0,len(set_ids)-1,self.num_sets).tolist()
+      smaller_set_ids = np.random.permutation(len(set_ids)).tolist()[:self.num_sets]
+      #smaller_set_ids = np.random.random_integers(0,len(set_ids)-1,self.num_sets).tolist()
       
       base_string = "select * from competitor_sets where set_id in ("
       sets = []
       counter = 0
       set_req = base_string
-      add_string = " %d,"
-      for s in smaller_set_ids:
+      add_string = "%d,"
+      for s_idx, s in enumerate(smaller_set_ids):
         set_req += add_string%s
         counter += 1
-        if counter == 100000:
+        if counter == 100000 or s_idx == len(smaller_set_ids)-1:
           counter = 0
           set_req = set_req[:-1]+')' # remove last 'or'
           t_db = time.time()
@@ -169,5 +169,6 @@ class CompetitorSetCollection:
 if __name__=='__main__':
   t = time.time()
   cs_coll_train = CompetitorSetCollection(num_sets=1000000)
+  print cs_coll_train.get_nsamples(), 'samples'
   t -= time.time()
   print 'Loading comp set took %f secs'%-t
