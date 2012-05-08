@@ -26,6 +26,7 @@ import os.path
 import numpy as np
 from mpi.mpi_imports import *
 import time 
+import MySQLdb as mdb
 
 try:
     import cPickle as pickle
@@ -155,8 +156,18 @@ def run():
     #  if num_sets > 500000:
     #    raise RuntimeError('num_sets should not be larger than 500000. That takes \
     #      already 2.3G mem and we dont wanna run into mem errors')
-      cs_train = CompetitorSetCollection(num_sets=num_sets, testing=testing, validation=False, just_winning_sets=just_winning_sets)
-          
+      try:
+          cs_train = CompetitorSetCollection(num_sets=num_sets, testing=testing, validation=False, just_winning_sets=just_winning_sets)
+      except mdb.OperationalError, e:
+        if int(e.args[0]) == 1040:
+          base_sleep_time = 1
+          sleep_time = random.randint(0,3) + base_sleep_time
+          time.sleep(sleep_time)
+          print '%s: max connection error, sleeping' % commrank
+        else:
+          print '\n\n\t\t%s: Error %d: %s\n\n' % (commrank, e.args[0],e.args[1])
+          sys.exit(1)
+
       t1 = time.time()
       print "Machine %d/%d - Finished loading the competitorsets for TRAIN."%(comm_rank,comm_size)
       print "Loading competitorsets took %s."%(t1-t0)
