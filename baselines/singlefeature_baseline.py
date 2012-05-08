@@ -4,7 +4,8 @@ try:
     import cPickle as pickle
 except:
     import pickle
-    
+
+from user_dictionary import UserDictionaries
 # can assume dict[userID] -> (x,y,z,..)
 # and thresholds
 
@@ -13,13 +14,12 @@ def argsort(seq):
     return sorted(range(len(seq)), key=seq.__getitem__, reverse=True)
 
 def get_features_and_thresholds():
-  # load pickle
-  filename = "foo"
-  features, thresholds = pickle.load( open(filename, "rb" ) )
+  ud = UserDictionaries()
+  features = ud.get_dictionary()
+  thresholds = [ud.get_thresh_val_for_feat(i) for i in range(6)]
   return features, thresholds
 
-def singlefeature_baseline_test_predictionerror(data, featureidx=0):
-  features, thresholds = get_features_and_thresholds()
+def singlefeature_baseline_test_predictionerror(data, features, thresholds, featureidx=0):
   correct = 0
   N = data.get_nsamples()
   for i in range(N):
@@ -29,15 +29,14 @@ def singlefeature_baseline_test_predictionerror(data, featureidx=0):
     idx = argsort(scores)
     sortedscores = [scores[i] for i in idx]
     sortedcandidates = [userIDlist[i] for i in idx]
-    pred = sortedcandidates[0] if sortedscores[0]>thesholds[featureidx] else None
+    pred = sortedcandidates[0] if sortedscores[0]>thresholds[featureidx] else None
     if cs.get_winner()==pred:
       correct += 1
   accuracy = correct / float(N)
   return accuracy
   
  
-def singlefeature_baseline_test_predictionerror_mpi(data, featureidx=0):
-  features, thresholds = get_features_and_thresholds()
+def singlefeature_baseline_test_predictionerror_mpi(data, features, thresholds, featureidx=0):
   correct = 0
   N = data.get_nsamples()
   for i in range(comm_rank, N, comm_size):
@@ -47,7 +46,7 @@ def singlefeature_baseline_test_predictionerror_mpi(data, featureidx=0):
     idx = argsort(scores)
     sortedscores = [scores[i] for i in idx]
     sortedcandidates = [userIDlist[i] for i in idx]
-    pred = sortedcandidates[0] if sortedscores[0]>thesholds[featureidx] else None
+    pred = sortedcandidates[0] if sortedscores[0]>thresholds[featureidx] else None
     if cs.get_winner()==pred:
       correct += 1
   correct = comm.allreduce(correct)
@@ -55,18 +54,17 @@ def singlefeature_baseline_test_predictionerror_mpi(data, featureidx=0):
   return accuracy
   
 
-def singlefeature_baseline_test_meannormalizedwinnerrank(data, featureidx=0):
-  features, thresholds = get_features_and_thresholds()
+def singlefeature_baseline_test_meannormalizedwinnerrank(data, features, thresholds, featureidx=0):
   sumnrank = 0.0
   N = data.get_nsamples()
   for i in range(N):
     cs = data.get_sample(i)
-    true = competitorset.get_winner()
+    true = cs.get_winner()
     userIDlist = list(zip(*cs.get_surferlist())[0])
     scores = [features[userID][featureidx] for userID in userIDlist]
-    # add None with threshold
+    # add None with thresholds
     userIDlist.append(None)
-    scores.append(threshold[featureidx])
+    scores.append(thresholds[featureidx])
     idx = argsort(scores)
     sortedscores = [scores[i] for i in idx]
     sortedcandidates = [userIDlist[i] for i in idx]
@@ -76,18 +74,17 @@ def singlefeature_baseline_test_meannormalizedwinnerrank(data, featureidx=0):
   return meannrank
   
   
-def singlefeature_baseline_test_meannormalizedwinnerrank_mpi(data, featureidx=0):
-  features, thresholds = get_features_and_thresholds()
+def singlefeature_baseline_test_meannormalizedwinnerrank_mpi(data, features, thresholds, featureidx=0):
   sumnrank = 0.0
   N = data.get_nsamples()
-  for i in range(N):
+  for i in range(comm_rank, N, comm_size):
     cs = data.get_sample(i)
-    true = competitorset.get_winner()
+    true = cs.get_winner()
     userIDlist = list(zip(*cs.get_surferlist())[0])
     scores = [features[userID][featureidx] for userID in userIDlist]
-    # add None with threshold
+    # add None with thresholds
     userIDlist.append(None)
-    scores.append(threshold[featureidx])
+    scores.append(thresholds[featureidx])
     idx = argsort(scores)
     sortedscores = [scores[i] for i in idx]
     sortedcandidates = [userIDlist[i] for i in idx]

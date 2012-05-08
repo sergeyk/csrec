@@ -35,6 +35,9 @@ class UserDictionaries():
     
   def get_dictionary_for_user(self, user_id):
     return self.dict[user_id]
+    
+  def get_dictionary(self):
+    return self.dict
   
   def get_thresh_val_for_feat(self, feature):
     if type(feature) == type("string"):

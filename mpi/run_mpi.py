@@ -121,14 +121,14 @@ def test_meannormalizedwinnerrank(fg, sgd, data, verbose=False):
 
 
 def run(): 
-  lambdas = [float(sys.argv[1])]
+  lambdas = [(float(sys.argv[1]),float(sys.argv[2]))]
   if comm_rank == 0:
     print "using lambda:", lambdas
  
   memory_for_personalized_parameters = 20 #512.0 # memory in MB if using personalized SGD learning  
   percentage = 0.2 # Dependent on machines in future min:10%, 2nodes->80%
-  outer_iterations = 1 #10
-  nepoches = 0.0003 #0.05 #10
+  outer_iterations = 10 #10
+  nepoches = 0.05 #10
   alpha = 100.0
   beta = 0.001 #0.01
   #lambda_winner = 0.01
@@ -164,7 +164,7 @@ def run():
     if comm_rank==i or comm_rank==i-1 or comm_rank==i-2:
       print "Machine %d/%d - Start loading the competitorsets for TRAIN"%(comm_rank,comm_size)
       t0 = time.time()
-      num_sets = 100000 # TODO remove
+      num_sets = 1000000 # TODO remove
       print num_sets
 
       # TODO: CAREFULL - num_sets shouldn't be bigger than 500000
@@ -194,10 +194,12 @@ def run():
   trainmeannrank = np.zeros((len(lambdas),len(lambdas)))
   testmeannrank = np.zeros((len(lambdas),len(lambdas)))
   
-  for lw,lambda_winner in enumerate(lambdas):
+  for lw in range(len(lambdas)):
+  #for lw,lambda_winner in enumerate(lambdas):
     #for lr,lambda_reject in enumerate(lambdas):
+      lambda_winner, lambda_reject = lambdas[lw]
       lr = lw # we can't afford the full CV
-      lambda_reject = lambda_winner #* 10.0
+      #lambda_reject = lambda_winner #* 10.0
         
       # Create sgd object   
       if personalization:
