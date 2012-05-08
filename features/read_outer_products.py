@@ -30,17 +30,10 @@ class OuterProducGetter():
     feat[r] = 1
     return feat
   
-  def recreate_outer_prods_from_req_ids(self, req_ids):
-    self.outer_products = {}
-    self.create_outer_prods_from_req_ids(req_ids)
-  
-
   def create_outer_prods_from_req_ids(self, req_ids):
     self.outer_products = {}
     self.unsafe_create_outer_prods_from_req_ids(req_ids)
-        
-      
-    
+          
   def unsafe_create_outer_prods_from_req_ids(self, req_ids):
     '''
     We expect a list of request ids and will split them into readable chunks 
