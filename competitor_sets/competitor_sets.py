@@ -49,47 +49,28 @@ class CompetitorSetCollection:
   CompetitorSet object'''
   
   # The split date forms a 60:40 split.
-  def __init__(self, num_sets=100, split_date='2011-07-11 05:36:34', testing=False, validation=False, just_winning_sets = False):
+  def __init__(self, num_sets=100, mode = 'train'):
+    ''' mode needs to be of train/test/val'''
     print 'start Sqler'
     self.sq = get_sqler()
     
-    if testing:
-      if validation:
-        self.db = 'competitor_sets_test_val'
-      else:
-        self.db = 'competitor_sets_test_train'
-      
-      if just_winning_sets:
-        res = self.sq.rqst("select "+self.db+".* from "+self.db+" join (select set_id from (select set_id, count(winner) as \
-          cnt, sum(winner) as sum from "+self.db+" group by set_id)as t where \
-          cnt >1 and sum > 0) as TT on ("+self.db+".set_id = TT.set_id);")
-        
-      else:    
-        res = self.sq.rqst('select * from '+self.db+' group by set_id;')
-    else: 
-      self.db = 'competitor_sets'          
-      
-      self.split_date = split_date
-      self.num_sets = num_sets # How much do we want
-      if validation:
-        date_restrict = "> "
-      else:
-        date_restrict = "< "        
-      date_restrict += "'"+self.split_date+"'"
-      
-              
-      if just_winning_sets:
-# select set_id from (select set_id, count(winner) as cnt, sum(winner) as 
-# sum from competitor_sets group by set_id)as t where cnt >1 and sum > 0;
-        self.set_ids_table = "select set_id from \
-         (select set_id, count(winner) as cnt, sum(winner) as sum \
-         from competitor_sets  where date "+date_restrict+" group by set_id order \
-         by rand()  ) as T where cnt > 1 and sum > 0"      
-        
-      else:
-        self.set_ids_table = "select set_id \
-         from competitor_sets  where date "+date_restrict+" group by set_id order \
-         by rand()"
+    self.db = 'competitor_sets'          
+    
+    self.num_sets = num_sets # How much do we want
+    if mode=='train':
+      train_val_test = 1
+    elif mode == 'val':
+      train_val_test = 2
+    elif mode == 'test':
+      train_val_test = 3
+    else:
+      raise RuntimeError('Unknown mode %s in competitorSetColleciton'%mode)            
+    train_val_test = str(train_val_test)
+    
+    if mode == 'train':
+      self.set_ids_table = "select train_val_test, set_id from (select train_val_test, set_id \
+       from competitor_sets group by set_id) as t where train_val_test = " + \
+       train_val_test + " order by rand()"
       
       if not self.num_sets == 'max':
         self.set_ids_table += "limit 0, " +str(self.num_sets)
@@ -97,9 +78,15 @@ class CompetitorSetCollection:
       request = "select competitor_sets.* from competitor_sets join (" + \
         self.set_ids_table + ") as T on (competitor_sets.set_id = T.set_id) \
         order by set_id"
-      
-      print 'start loading competitor'
-      res = self.sq.rqst(request, True)       
+    else:
+      request = "select * from competitor_sets where train_val_test = " + \
+        train_val_test
+        
+      if not self.num_sets == 'max':
+        request += " limit 0, " +str(self.num_sets)
+    
+    print 'start loading competitor'
+    res = self.sq.rqst(request, True)       
     
     sets = res.fetch_row(11000000,0)
     last_set_id = sets[0][CompetitorSet.TRANS['set_id']]

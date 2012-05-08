@@ -157,15 +157,15 @@ def run():
     #    raise RuntimeError('num_sets should not be larger than 500000. That takes \
     #      already 2.3G mem and we dont wanna run into mem errors')
       try:
-        cs_train = CompetitorSetCollection(num_sets=num_sets, testing=testing, validation=False, just_winning_sets=just_winning_sets)
+        cs_train = CompetitorSetCollection(num_sets=num_sets, mode = 'train')
       except mdb.OperationalError, e:
         if int(e.args[0]) == 1040:
           base_sleep_time = 1
           sleep_time = random.randint(0,3) + base_sleep_time
           time.sleep(sleep_time)
-          print '%s: max connection error, sleeping' % commrank
+          print '%s: max connection error, sleeping' % comm_rank
         else:
-          print '\n\n\t\t%s: Error %d: %s\n\n' % (commrank, e.args[0],e.args[1])
+          print '\n\n\t\t%s: Error %d: %s\n\n' % (comm_rank, e.args[0],e.args[1])
           sys.exit(1)
 
       t1 = time.time()
@@ -324,15 +324,15 @@ def run():
         if i==comm_rank:
           print "Machine %d/%d - Start loading the competitorsets for TEST"%(comm_rank,comm_size)
           try:
-            cs_test = CompetitorSetCollection(num_sets=num_sets, testing=testing, validation=True, just_winning_sets=just_winning_sets)
+            cs_test = CompetitorSetCollection(num_sets=num_sets, mode='val')
           except mdb.OperationalError, e:
             if int(e.args[0]) == 1040:
               base_sleep_time = 1
               sleep_time = random.randint(0,3) + base_sleep_time
               time.sleep(sleep_time)
-              print '%s: max connection error, sleeping' % commrank
+              print '%s: max connection error, sleeping' % comm_rank
             else:
-              print '\n\n\t\t%s: Error %d: %s\n\n' % (commrank, e.args[0],e.args[1])
+              print '\n\n\t\t%s: Error %d: %s\n\n' % (comm_rank, e.args[0],e.args[1])
               sys.exit(1) 
       
         safebarrier(comm)
