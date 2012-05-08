@@ -7,6 +7,7 @@ import sklearn.cluster
 import time
 import cPickle
 import os, sys
+from functools import wraps
 
 RON_MODE = False#(os.path.exists('/home/ron'))
 
@@ -105,3 +106,20 @@ class Sqler:
       return datetime.datetime.strptime(timestring, '%Y-%m-%d %H:%M:%S')
 
   
+def safe_mysql(f):
+  @wraps(f)
+  def wrapper(*args, **kwds):
+    try:
+      return f(*args, **kwds)
+    except mdb.OperationalError, e:
+      if int(e.args[0]) == 1040:
+        base_sleep_time = 1
+        sleep_time = random.randint(0,3) + base_sleep_time
+        time.sleep(sleep_time)
+        print '%s: max connection error, sleeping' % commrank
+      else:
+        print '\n\n\t\t%s: Error %d: %s\n\n' % (commrank, e.args[0],e.args[1])
+        sys.exit(1)
+  return wrapper
+
+
