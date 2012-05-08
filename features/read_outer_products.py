@@ -97,7 +97,8 @@ class OuterProducGetter():
           self.outer_products[res[0]] = r
         req_len_cnter = 0
         first_elem = True
-
+    
+    assert(len(self.outer_products.keys()) == len(req_ids))
     t_out -= time.time()
     print '\t creating outer prods took %f secs'%-t_out
           
