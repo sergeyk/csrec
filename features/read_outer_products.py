@@ -83,12 +83,6 @@ class OuterProducGetter():
         req_len_cnter = 0
         first_elem = True
     
-<<<<<<< HEAD
-    if (len(self.outer_products.keys()) != len(req_ids)):
-      import pdb
-      pdb.set_trace()
-=======
->>>>>>> 45b83b5493b2573de31d53cac58d95e4809cd192
     t_out -= time.time()
     print '\t creating outer prods took %f secs'%-t_out
           
