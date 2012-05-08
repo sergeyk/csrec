@@ -8,7 +8,6 @@ import feature_processor
 import csrec_paths
 from MySQLdb import converters
 import pprint
-
 from cached_interests import cached_profiles
 
 def get_languages(cursor, user_id):

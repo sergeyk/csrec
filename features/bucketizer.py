@@ -106,7 +106,7 @@ DEFAULT_BUCKETIZER_FN = DefaultBucketizerFn()
 DEFAULT_DIVIDERS = cPickle.load(open(csrec_paths.get_features_dir()+'bucket_dividers.pkl', 'rb'))
 
 def cross_bucketized_features(user1_dct, user2_dct, req_dct, 
-                              feature_dimension, field_names, debug=True):
+                              feature_dimension, field_names, debug=False):
     cur_feature_offset = 0
     crossed_feature_vector = np.zeros(feature_dimension, np.dtype(np.int32))
     debug_info = []
