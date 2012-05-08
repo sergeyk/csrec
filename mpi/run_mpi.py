@@ -108,12 +108,11 @@ def test_meannormalizedwinnerrank(fg, sgd, data):
   return meannrank
 
 
-def run():
-      
+def run():  
   memory_for_personalized_parameters = 20 #512.0 # memory in MB if using personalized SGD learning  
   percentage = 0.2 # Dependent on machines in future min:10%, 2nodes->80%
-  outer_iterations = 10 #10
-  nepoches = 0.05 #0.05 #10
+  outer_iterations = 3 #10
+  nepoches = 0.3 #0.05 #10
   alpha = 100.0
   beta = 0.001 #0.01
   #lambda_winner = 0.01
@@ -132,9 +131,9 @@ def run():
   get_feature_function = fg.get_features
     
   sq = get_sqler()
-  overallnum_sets = sq.get_num_compsets()
-  num_sets = int(overallnum_sets*percentage)
-  overallnum_testsets = sq.get_num_compsets(validation = True)
+  #overallnum_sets = sq.get_num_compsets()
+  #num_sets = int(overallnum_sets*percentage)
+  #overallnum_testsets = sq.get_num_compsets(validation = True)
   just_winning_sets = False
   testing = False # should be false to get the full data set
   #testing = True # should be false to get the full data set
@@ -144,12 +143,11 @@ def run():
   #print "machine %d is sleeping for %d sec."%(comm_rank,sec)
   #time.sleep(sec)
   
-
   for i in range(comm_size):
     if i==comm_rank:
       print "Machine %d/%d - Start loading the competitorsets for TRAIN"%(comm_rank,comm_size)
       t0 = time.time()
-      num_sets = 300000 # TODO remove
+      num_sets = 1000000 # TODO remove
       print num_sets
 
       # TODO: CAREFULL - num_sets shouldn't be bigger than 500000
@@ -163,9 +161,9 @@ def run():
           base_sleep_time = 1
           sleep_time = random.randint(0,3) + base_sleep_time
           time.sleep(sleep_time)
-          print '%s: max connection error, sleeping' % commrank
+          print '%s: max connection error, sleeping' % comm_rank
         else:
-          print '\n\n\t\t%s: Error %d: %s\n\n' % (commrank, e.args[0],e.args[1])
+          print '\n\n\t\t%s: Error %d: %s\n\n' % (comm_rank, e.args[0],e.args[1])
           sys.exit(1)
 
       t1 = time.time()
@@ -181,7 +179,7 @@ def run():
   time.sleep(sec)
   
   # CV over lamba1, lambda2
-  lambdas = [10**-3, 10**-2, 10**-1, 10**0, 10**+1]
+  #lambdas = [10**-3, 10**-2, 10**-1, 10**0, 10**+1]
   #lambdas = [10**-1]
 
   trainerrors = np.zeros((len(lambdas),len(lambdas)))
@@ -249,6 +247,8 @@ def run():
         print "outer iteration %d/%d: node %d at safebarrier"%(outit+1, outer_iterations, comm_rank)
         safebarrier(comm)
         
+        if comm_rank == 0:
+          print "all nodes arrived and we start allreduce/broadcasting"
         theta = comm.allreduce(sgd.theta)/float(comm_size)
         if personalization:
           theta_hosts = comm.allreduce(sgd.theta_hosts)/float(comm_size)
@@ -291,7 +291,7 @@ def run():
           # 777 permission on directory
           os.system('chmod -R 777 '+dirname)
               
-          filename = 'parameters_lwin_%f_lrej_%f_testing_%d_personalized_%d.pkl'%(lambda_winner, lambda_reject, testing, personalization)
+          filename = 'parameters_lwin_%f_lrej_%f_testing_%d_personalized_%d_numsets_%d.pkl'%(lambda_winner, lambda_reject, testing, personalization, num_sets)
           if os.path.exists('/tscratch'):
             if personalization:
               pickle.dump( (sgd.theta, sgd.theta_hosts, sgd.r, sgd.r_hosts), open( dirname+filename, "wb" ) )
@@ -330,9 +330,9 @@ def run():
               base_sleep_time = 1
               sleep_time = random.randint(0,3) + base_sleep_time
               time.sleep(sleep_time)
-              print '%s: max connection error, sleeping' % commrank
+              print '%s: max connection error, sleeping' % comm_rank
             else:
-              print '\n\n\t\t%s: Error %d: %s\n\n' % (commrank, e.args[0],e.args[1])
+              print '\n\n\t\t%s: Error %d: %s\n\n' % (comm_rank, e.args[0],e.args[1])
               sys.exit(1) 
       
         safebarrier(comm)
@@ -373,7 +373,7 @@ def run():
     
     
     # store errorrates somewhere
-    filename = 'errors_testing_%d_%d.pkl'%(testing,personalization)
+    filename = 'errors_testing_%d_personalized_%d_numsets_%d.pkl'%(testing,personalization,num_sets)
     
     if os.path.exists('/tscratch'):
       pickle.dump( (trainerrors, testerrors, trainmeannrank, testmeannrank), open( dirname+filename, "wb" ) )

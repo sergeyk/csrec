@@ -156,7 +156,7 @@ def run():
   #print sgd
   
   # load ALL test data
-  num_sets = 10000 # 'max' -> if max, everybody should have same testset
+  num_sets = 'max' # 'max' or 10000 -> if max, everybody should have same testset
   for i in range(comm_size):
     if i==comm_rank:
       print "Machine %d/%d - Start loading the competitorsets for TEST"%(comm_rank,comm_size)
