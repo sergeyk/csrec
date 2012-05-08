@@ -97,17 +97,19 @@ class SGDLearningPersonalized:
         theta_h = theta_h * rademacherflips
         return theta_h
 
-    def predict(self, competitorset):
-        cand, scores = self.rank(competitorset)
+    def predict(self, competitorset, testingphase=False):
+        cand, scores = self.rank(competitorset, testingphase=testingphase)
         return cand[0]
    
-    def rank(self, competitorset):
+    def rank(self, competitorset, testingphase=False):
         # used for inference later and to evaluate error on testset
         hostID = competitorset.get_hostID()        
         
         # if we don't have a r_host yet create one with param zero
         if not self.r_hosts.has_key(hostID):
             self.r_hosts[competitorset.get_hostID()] = 0.0
+            if testingphase:
+              print "IN PREDICT: I complain, I have never seen this host before!"
         
         # before without bias
         #features = [self.get_feature(surferID,hostID,requestID) for (surferID, requestID) in competitorset.get_surferlist()] 
