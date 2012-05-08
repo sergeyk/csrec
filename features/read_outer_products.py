@@ -5,7 +5,9 @@ Instead of reading the features one at a time, we
 import numpy as np
 import cPickle
 from competitor_sets.Sqler import Sqler
-import time
+import time, random
+import MySQLdb as mdb
+from mpi.mpi_imports import *
 
 class OuterProducGetter():
   
@@ -31,8 +33,26 @@ class OuterProducGetter():
   def recreate_outer_prods_from_req_ids(self, req_ids):
     self.outer_products = {}
     self.create_outer_prods_from_req_ids(req_ids)
-    
+  
+
   def create_outer_prods_from_req_ids(self, req_ids):
+    while True:
+      try:
+        unsafe_create_outer_prods_from_req_ids(req_ids)
+        return
+      except mdb.OperationalError, e:
+        if int(e.args[0]) == 1040:
+          base_sleep_time = 1
+          sleep_time = random.randint(0,3) + base_sleep_time
+          time.sleep(sleep_time)
+          print '%s: max connection error, sleeping' % commrank
+        else:
+          print '\n\n\t\t%s: Error %d: %s\n\n' % (commrank, e.args[0],e.args[1])
+          sys.exit(1)
+      
+      
+    
+  def unsafe_create_outer_prods_from_req_ids(self, req_ids):
     '''
     We expect a list of request ids and will split them into readable chunks 
     '''
