@@ -1,6 +1,34 @@
 % !TEX root=report.tex
 \section{Problem Formalization and Prediction Model} \label{sec:model}
 
+From the CouchSurfing user database, we form a set of \emph{hosts} $\mathcal{H}$ such that every $h \in \mathcal{H}$ has hosted at least $K$ persons since signing up for a user account.
+We initially set $K=1$; a higher setting may reduce the amount of noise in the set of hosts.
+
+For every host $h$, there is at least one \emph{competitor set} $S$ of at least $K$ \emph{surfers}, where surfers $s \in S$ has made a couch request to $h$.
+A competitor set corresponds to a decision made by the host to either host one of the $s$ or to reject all of them.
+The composition of this set is inferred from data based on the timing of couch requests and host decisions, and is discussed in \autoref{subsec:competitor_sets}.
+
+In fact, $h$ may have multiple such competitor sets.
+We refer to the set of competitor sets for host $h$ by $\mathcal{S}_h$.
+(All notation is also presented in \autoref{tab:notation}.)
+
+\comment{
+\begin{table}
+    \begin{tabular}{|l|l|l|}
+        \hline
+        h \in \mathcal{H} & host, from a set of all users who have received at least $K$ couch requests                                    & ~ \\ \hline
+        \mathcal{S}_h     & set of competitor sets $S$ for host $h$                                                                        & ~ \\ 
+        S                 & competitor set for host $h$, composed of surfers who have made a couch request to $h$ at roughly the same time & ~ \\
+        \hline
+    \end{tabular}
+\label{tab:notation}
+\end{table}
+}
+
+\subsection{Competitor Sets} \label{subsec:competitor_sets}
+\todo{tobi}.
+
+\subsection{Prediction Model}
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.6\linewidth]{figures/reject_vs_no_reject.pdf}

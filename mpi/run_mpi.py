@@ -41,7 +41,7 @@ def test_predictionerror(sgd, data):
   
   for i in range(comm_rank, N, comm_size):
     competitorset = data.get_sample(i)
-    pred = sgd.predict(competitorset)
+    pred = sgd.predict(competitorset, testingphase=False)
     true = competitorset.get_winner()
     #if true:
     #  print 'prediction', pred
@@ -90,8 +90,8 @@ def run():
       
   memory_for_personalized_parameters = 20 #512.0 # memory in MB if using personalized SGD learning  
   percentage = 0.2 # Dependent on machines in future min:10%, 2nodes->80%
-  outer_iterations = 2 #10
-  nepoches = 2.0 #10
+  outer_iterations = 10 #10
+  nepoches = 0.3 #10
   alpha = 100.0
   beta = 0.001 #0.01
   #lambda_winner = 0.01
@@ -119,7 +119,7 @@ def run():
   
   print "Start loading the competitorsets for TRAIN and TEST"
   t0 = time.time()
-  num_sets = 1000 #100000 # TODO remove
+  num_sets = 100000 #100000 # TODO remove
   print num_sets
   # TODO: CAREFULL - num_sets shouldn't be bigger than 500000
   if num_sets > 500000:
@@ -136,7 +136,7 @@ def run():
   
   # CV over lamba1, lambda2
   #lambdas = [10**-3, 10**-2, 10**-1, 10**0, 10**+1]
-  lambdas = [10**-1]
+  lambdas = [10**-2]
 
   trainerrors = np.zeros((len(lambdas),len(lambdas)))
   testerrors = np.zeros((len(lambdas),len(lambdas)))
@@ -146,7 +146,7 @@ def run():
   for lw,lambda_winner in enumerate(lambdas):
     #for lr,lambda_reject in enumerate(lambdas):
       lr = lw # we can't afford the full CV
-      lambda_reject = lambda_winner
+      lambda_reject = lambda_winner * 10.0
         
       # Create sgd object   
       if personalization:
@@ -167,11 +167,12 @@ def run():
           # draw random sample  
           sampleindex = random.randint(0,N-1)    
           competitorset = cs_train.get_sample(sampleindex)
+
           for l in competitorset.get_surferlist():
             assert(l[1] in req_ids)
             
-          if verbose and not i%1000 and i>1:
-              print "Iterations \n\tout: %d/%d \n\tin: %d/%d - eta %f"%(outit+1,outer_iterations, innerit+1,niter,eta_t)
+          if verbose and not i%10000 and i>1:
+              print "Iterations \n\tout: %d/%d \n\tin: %d/%d - eta %f - lambda %f"%(outit+1,outer_iterations, innerit+1,niter,eta_t, lambda_winner)
               print "\ttheta", min(sgd.theta), max(sgd.theta)
               print "\tr", sgd.r
               print "\tr_hosts", sgd.r_hosts.get(competitorset.get_hostID(), -999) ,min(sgd.r_hosts.values()), max(sgd.r_hosts.values()) 
