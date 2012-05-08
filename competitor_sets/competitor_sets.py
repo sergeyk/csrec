@@ -82,7 +82,6 @@ class CompetitorSetCollection:
       if not self.num_sets == 'max':
         request += " limit 0, " +str(self.num_sets)
     
-    
     if mode == 'train' and not num_sets == 'max':
       set_filename = os.path.join(csrec_paths.ROOT, 'competitor_sets', 'all_set_ids')
       if not os.path.exists(set_filename):
@@ -96,7 +95,8 @@ class CompetitorSetCollection:
       else:
         set_ids = cPickle.load(open(set_filename, 'r'))
         
-      smaller_set_ids = np.random.random_integers(0,len(set_ids)-1,self.num_sets).tolist()
+      smaller_set_ids = np.random.permutation(len(set_ids)).tolist()[:self.num_sets]
+      #smaller_set_ids = np.random.random_integers(0,len(set_ids)-1,self.num_sets).tolist()
       
       base_string = "select * from competitor_sets where set_id in ("
       sets = []
