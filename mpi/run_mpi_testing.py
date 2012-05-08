@@ -69,7 +69,7 @@ def test_predictionerror(fg, sgd, data, allow_rejects=True):
         # it is not yet in there! so load by the grace of god!
         fg.outer_product_getter.unsafe_create_outer_prods_from_req_ids(l[1])
     try:
-      pred = sgd.predict(competitorset, testingphase=False)
+      pred = sgd.predict(competitorset, testingphase=False, allow_rejects=allow_rejects)
     except:
       from IPython import embed
       embed()
@@ -120,9 +120,13 @@ def test_meannormalizedwinnerrank(fg, sgd, data, allow_rejects=True):
       except:
         # it is not yet in there! so load by the grace of god!
         fg.outer_product_getter.unsafe_create_outer_prods_from_req_ids(l[1])
-    cand, scores = sgd.rank(competitorset)
+    cand, scores = sgd.rank(competitorset, allow_rejects=allow_rejects)
     true = competitorset.get_winner()
-    nrank = cand.index(true) / float(len(cand)-1) # len-1 because we have rank 0..n-1
+    if not allow_rejects and true==None: continue #TODO remove, this is bug
+    if len(cand)==1:
+      nrank = 0.0
+    else:
+      nrank = cand.index(true) / float(len(cand)-1) # len-1 because we have rank 0..n-1
     #if len(cand)>2:
     #  print "from meanNrank eval"
     #  print true, cand, cand.index(true), nrank, sumnrank
@@ -148,7 +152,8 @@ def run():
   if comm_rank == 0:
     dirname = '/tscratch/tmp/csrec/'        
     filename = 'parameters_lwin_%f_lrej_%f_testing_%d_personalized_%d_numsets_%d_outerit_%d_nepoches_%d.pkl'%(lambda_winner, lambda_reject, testing, personalization, num_sets, outer_iterations,nepoches)
-    filename = 'parameters_lwin_0.000100_lrej_0.000100_testing_0_personalized_0_numsets_10000_outerit_10_nepoches_0.pkl' # TODO remove
+    #filename = 'parameters_lwin_0.000100_lrej_0.000100_testing_0_personalized_0_numsets_10000_outerit_10_nepoches_0.pkl' # TODO remove
+    filename = 'parameters_lwin_0.001000_lrej_0.001000_testing_0_personalized_0_numsets_100000_outerit_10_nepoches_0.pkl'
     print filename
 
     if personalization:
@@ -186,7 +191,7 @@ def run():
   #print sgd
   
   # load ALL test data
-  num_sets = 30000 #'max' # 'max' or 10000 -> if max, everybody should have same testset
+  num_sets = 'max' # 'max' or 10000 -> if max, everybody should have same testset
   for i in range(2,comm_size+2,3):
     if comm_rank==i or comm_rank==i-1 or comm_rank==i-2:
       print "Machine %d/%d - Start loading the competitorsets for TEST"%(comm_rank,comm_size)
@@ -194,8 +199,8 @@ def run():
       
     safebarrier(comm)
   
-  baseline = False
-  allow_rejects = True
+  baseline = True
+  allow_rejects = False
   # let every machine do part of it
   if baseline:
       rejectaccuracy = reject_baseline_test_predictionerror_mpi(cs_test, allow_rejects=allow_rejects)
@@ -221,8 +226,8 @@ def run():
         
          
   else:
-    errorrate, truenonerate, prednonerate = test_predictionerror(fg, sgd, cs_test)
-    meannrank = test_meannormalizedwinnerrank(fg, sgd, cs_test)
+    errorrate, truenonerate, prednonerate = test_predictionerror(fg, sgd, cs_test, allow_rejects=allow_rejects)
+    meannrank = test_meannormalizedwinnerrank(fg, sgd, cs_test, allow_rejects=allow_rejects)
     if comm_rank == 0:
       print "[TEST] Errorrate: %f"%(errorrate)
       print "TrueNone-Rate: %f -> error: %f"%(truenonerate, 1.0 - truenonerate)

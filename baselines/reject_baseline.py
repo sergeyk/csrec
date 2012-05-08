@@ -1,7 +1,9 @@
 # reject baseline - always rejecting is not too bad (~15% error on small testset)
 from mpi.mpi_imports import *
 
-def reject_baseline_test_predictionerror(data):
+def reject_baseline_test_predictionerror(data, allow_rejects=True):
+  if not allow_rejects:
+    return 0.0
   nones = 0
   N = data.get_nsamples()
   for i in range(N):
@@ -11,7 +13,9 @@ def reject_baseline_test_predictionerror(data):
   accuracy = nones / float(N)
   return accuracy
   
-def reject_baseline_test_predictionerror_mpi(data):
+def reject_baseline_test_predictionerror_mpi(data, allow_rejects=True):
+  if not allow_rejects:
+    return 0.0
   nones = 0
   N = data.get_nsamples()
   for i in range(comm_rank, N, comm_size):
@@ -25,7 +29,10 @@ def reject_baseline_test_predictionerror_mpi(data):
   
 
   
-def reject_baseline_test_meannormalizedwinnerrank(data):
+def reject_baseline_test_meannormalizedwinnerrank(data, allow_rejects=True):
+  if not allow_rejects:
+    # then we simply have random baseline here, too
+    return 0.5
   sumnrank = 0.0
   N = data.get_nsamples()
   for i in range(N):
@@ -42,7 +49,10 @@ def reject_baseline_test_meannormalizedwinnerrank(data):
   return meannrank
   
   
-def reject_baseline_test_meannormalizedwinnerrank_mpi(data):
+def reject_baseline_test_meannormalizedwinnerrank_mpi(data, allow_rejects=True):
+  if not allow_rejects:
+    # then we simply have random baseline here, too
+    return 0.5
   sumnrank = 0.0
   N = data.get_nsamples()
   for i in range(comm_rank, N, comm_size):

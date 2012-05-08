@@ -19,7 +19,7 @@ def get_features_and_thresholds():
   thresholds = [ud.get_thresh_val_for_feat(i) for i in range(6)]
   return features, thresholds
 
-def singlefeature_baseline_test_predictionerror(data, features, thresholds, featureidx=0):
+def singlefeature_baseline_test_predictionerror(data, features, thresholds, featureidx=0, allow_rejects=True):
   correct = 0
   N = data.get_nsamples()
   for i in range(N):
@@ -29,14 +29,17 @@ def singlefeature_baseline_test_predictionerror(data, features, thresholds, feat
     idx = argsort(scores)
     sortedscores = [scores[i] for i in idx]
     sortedcandidates = [userIDlist[i] for i in idx]
-    pred = sortedcandidates[0] if sortedscores[0]>thresholds[featureidx] else None
+    if allow_rejects:
+      pred = sortedcandidates[0] if sortedscores[0]>thresholds[featureidx] else None
+    else:
+      pred = sortedcandidates[0]
     if cs.get_winner()==pred:
       correct += 1
   accuracy = correct / float(N)
   return accuracy
   
  
-def singlefeature_baseline_test_predictionerror_mpi(data, features, thresholds, featureidx=0):
+def singlefeature_baseline_test_predictionerror_mpi(data, features, thresholds, featureidx=0, allow_rejects=True):
   correct = 0
   N = data.get_nsamples()
   for i in range(comm_rank, N, comm_size):
@@ -46,7 +49,10 @@ def singlefeature_baseline_test_predictionerror_mpi(data, features, thresholds, 
     idx = argsort(scores)
     sortedscores = [scores[i] for i in idx]
     sortedcandidates = [userIDlist[i] for i in idx]
-    pred = sortedcandidates[0] if sortedscores[0]>thresholds[featureidx] else None
+    if allow_rejects:
+      pred = sortedcandidates[0] if sortedscores[0]>thresholds[featureidx] else None
+    else:
+      pred = sortedcandidates[0]
     if cs.get_winner()==pred:
       correct += 1
   correct = comm.allreduce(correct)
@@ -54,7 +60,7 @@ def singlefeature_baseline_test_predictionerror_mpi(data, features, thresholds, 
   return accuracy
   
 
-def singlefeature_baseline_test_meannormalizedwinnerrank(data, features, thresholds, featureidx=0):
+def singlefeature_baseline_test_meannormalizedwinnerrank(data, features, thresholds, featureidx=0, allow_rejects=True):
   sumnrank = 0.0
   N = data.get_nsamples()
   for i in range(N):
@@ -62,9 +68,10 @@ def singlefeature_baseline_test_meannormalizedwinnerrank(data, features, thresho
     true = cs.get_winner()
     userIDlist = list(zip(*cs.get_surferlist())[0])
     scores = [features[userID][featureidx] for userID in userIDlist]
-    # add None with thresholds
-    userIDlist.append(None)
-    scores.append(thresholds[featureidx])
+    if allow_rejects:
+      # add None with thresholds
+      userIDlist.append(None)
+      scores.append(thresholds[featureidx])
     idx = argsort(scores)
     sortedscores = [scores[i] for i in idx]
     sortedcandidates = [userIDlist[i] for i in idx]
@@ -74,21 +81,27 @@ def singlefeature_baseline_test_meannormalizedwinnerrank(data, features, thresho
   return meannrank
   
   
-def singlefeature_baseline_test_meannormalizedwinnerrank_mpi(data, features, thresholds, featureidx=0):
+def singlefeature_baseline_test_meannormalizedwinnerrank_mpi(data, features, thresholds, featureidx=0, allow_rejects=True):
   sumnrank = 0.0
   N = data.get_nsamples()
   for i in range(comm_rank, N, comm_size):
     cs = data.get_sample(i)
     true = cs.get_winner()
+    if not allow_rejects and true==None: continue #TODO remove, this is bug
     userIDlist = list(zip(*cs.get_surferlist())[0])
     scores = [features[userID][featureidx] for userID in userIDlist]
-    # add None with thresholds
-    userIDlist.append(None)
-    scores.append(thresholds[featureidx])
+    if allow_rejects:
+      # add None with thresholds
+      userIDlist.append(None)
+      scores.append(thresholds[featureidx])
     idx = argsort(scores)
     sortedscores = [scores[i] for i in idx]
     sortedcandidates = [userIDlist[i] for i in idx]
-    nrank = sortedcandidates.index(true) / float(len(sortedcandidates)-1) # len-1 because we have rank 0..n-1
+    #nrank = sortedcandidates.index(true) / float(len(sortedcandidates)-1) # len-1 because we have rank 0..n-1
+    if len(sortedcandidates)==1:
+      nrank = 0.0
+    else:
+      nrank = sortedcandidates.index(true) / float(len(sortedcandidates)-1) # len-1 because we have rank 0..n-1
     sumnrank += nrank
   sumnrank = comm.allreduce(sumnrank)  
   meannrank= sumnrank/float(N)  

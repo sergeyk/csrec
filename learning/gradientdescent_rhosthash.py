@@ -40,6 +40,7 @@ class SGDLearningRHOSTHASH:
         self.rhostsize = rhostsize
         self.r_hosts = r_hosts if r_hosts!=None else np.zeros(rhostsize)
         self.get_feature = get_feature_function
+        self.mu = -0.001 # prior for r
     
     def get_score(self, feature):
         return np.exp(np.dot(self.theta,feature))
@@ -48,11 +49,11 @@ class SGDLearningRHOSTHASH:
         hidx, rademacher = hosthash(hostID,self.rhostsize)
         return np.exp(self.r + rademacher*self.r_hosts[hidx])
  
-    def predict(self, competitorset, testingphase=False):
-        cand, scores = self.rank(competitorset, testingphase=testingphase)
+    def predict(self, competitorset, testingphase=False, allow_rejects=True):
+        cand, scores = self.rank(competitorset, testingphase=testingphase, allow_rejects=allow_rejects)
         return cand[0]
     
-    def rank(self, competitorset, testingphase=False):
+    def rank(self, competitorset, testingphase=False, allow_rejects=True):
         # used for inference later and to evaluate error on testset
         hostID = competitorset.get_hostID()        
         
@@ -64,9 +65,11 @@ class SGDLearningRHOSTHASH:
         hidx, rademacher = hosthash(hostID,self.rhostsize)
         rejectscore = np.exp(self.r + rademacher*self.r_hosts[hidx])
         
-        scores.append(rejectscore)
+        
         candidates = list(zip(*competitorset.get_surferlist())[0])
-        candidates.append(None)
+        if allow_rejects:
+          candidates.append(None)
+          scores.append(rejectscore)
         idx = argsort(scores)
         sortedscores = [scores[i] for i in idx]
         sortedcandidates = [candidates[i] for i in idx]
@@ -97,8 +100,8 @@ class SGDLearningRHOSTHASH:
             temp = [p*f for (p,f) in zip(probabilities,features)]
             self.theta =  (1 - eta * lambda_winner) * self.theta - eta * np.sum(temp, axis=0)
             #self.r = self.r - eta * (rejectprobability - 1)
-            self.r = (1 - eta * lambda_reject) * self.r - eta * (rejectprobability - 1)
-            self.r_hosts[hidx] =  rademacher*((1 - eta * lambda_reject) * rademacher*self.r_hosts[hidx] - eta * (rejectprobability - 1))
+            self.r = (1 - eta * lambda_reject) * self.r - eta * (rejectprobability - 1) + eta * self.mu
+            self.r_hosts[hidx] =  rademacher*((1 - eta * lambda_reject) * rademacher*self.r_hosts[hidx] - eta * (rejectprobability - 1) + eta * self.mu)
         else:
             # there was a winner
             winneridx = zip(*competitorset.get_surferlist())[0].index(competitorset.get_winner())
@@ -106,8 +109,8 @@ class SGDLearningRHOSTHASH:
             temp = [p*f for (p,f) in zip(probabilities,features)]
             self.theta = (1 - eta * lambda_winner) * self.theta - eta * (np.sum(temp, axis=0) - features[winneridx])
             #self.r = self.r - eta * rejectprobability
-            self.r = (1 - eta * lambda_reject) * self.r - eta * rejectprobability
-            self.r_hosts[hidx] =  rademacher*((1 - eta * lambda_reject) * rademacher*self.r_hosts[hidx] - eta * rejectprobability)
+            self.r = (1 - eta * lambda_reject) * self.r - eta * rejectprobability + eta * self.mu
+            self.r_hosts[hidx] =  rademacher*((1 - eta * lambda_reject) * rademacher*self.r_hosts[hidx] - eta * rejectprobability + eta * self.mu)
             
 
 if __name__=='__main__':

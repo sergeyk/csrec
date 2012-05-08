@@ -132,7 +132,7 @@ def run():
   memory_for_personalized_parameters = 20 #512.0 # memory in MB if using personalized SGD learning  
   percentage = 0.2 # Dependent on machines in future min:10%, 2nodes->80%
   outer_iterations = 10 #10
-  nepoches = 0.05 #10
+  nepoches = 0.30 #10
   alpha = 100.0
   beta = 0.001 #0.01
   #lambda_winner = 0.01
@@ -168,7 +168,7 @@ def run():
     if comm_rank==i or comm_rank==i-1 or comm_rank==i-2:
       print "Machine %d/%d - Start loading the competitorsets for TRAIN"%(comm_rank,comm_size)
       t0 = time.time()
-      num_sets = 10000 #1000000 # TODO remove
+      num_sets = 1000000 # TODO remove
       print num_sets
 
       # TODO: CAREFULL - num_sets shouldn't be bigger than 500000
@@ -322,7 +322,7 @@ def run():
           # 777 permission on directory
           os.system('chmod -R 777 '+dirname)
               
-          filename = 'parameters_lwin_%f_lrej_%f_testing_%d_personalized_%d_numsets_%d_outerit_%d_nepoches_%d.pkl'%(lambda_winner, lambda_reject, testing, personalization, num_sets, outer_iterations,nepoches)
+          filename = 'parameters_lwin_%f_lrej_%f_testing_%d_personalized_%d_numsets_%d_outerit_%d_nepoches_%d_mu.pkl'%(lambda_winner, lambda_reject, testing, personalization, num_sets, outer_iterations,nepoches)
           if os.path.exists('/tscratch'):
             if personalization:
               pickle.dump( (sgd.theta, sgd.theta_hosts, sgd.r, sgd.r_hosts), open( dirname+filename, "wb" ) )
