@@ -102,6 +102,7 @@ def clusterize(sq, reqs):
       if num_winners > 1:
         raise RuntimeError('There are still sets with more than 1 winner :/')
   req_sets += new_req_sets
+
   return req_sets  
 
 def get_sessions(lower, upper, force=False):

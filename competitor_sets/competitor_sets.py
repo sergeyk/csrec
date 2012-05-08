@@ -49,7 +49,8 @@ class CompetitorSetCollection:
   ''' Storage of all competitor sets for all hosts. Load from dump, provide 
   CompetitorSet object'''
   
-  # The split date forms a 60:40 split.
+  NUM_TRAIN_SETS = 2954911 # Looked up and fix 
+  
   def __init__(self, num_sets=100, mode = 'train'):
     ''' mode needs to be of train/test/val'''
     print 'start Sqler'
@@ -69,16 +70,9 @@ class CompetitorSetCollection:
     train_val_test = str(train_val_test)
     
     if mode == 'train':
-      self.set_ids_table = "select train_val_test, set_id from (select train_val_test, set_id \
-       from competitor_sets group by set_id) as t where train_val_test = " + \
-       train_val_test + " order by rand()"
+      request = "select set_id from competitor_sets where \
+       train_val_test = 1"
       
-      if not self.num_sets == 'max':
-        self.set_ids_table += "limit 0, " +str(self.num_sets)
-            
-      request = "select competitor_sets.* from competitor_sets join (" + \
-        self.set_ids_table + ") as T on (competitor_sets.set_id = T.set_id) \
-        order by set_id"
     else:
       request = "select * from competitor_sets where train_val_test = " + \
         train_val_test
@@ -91,7 +85,29 @@ class CompetitorSetCollection:
     
     embed()       
     
-    sets = res.fetch_row(11000000,0)
+    
+    if mode == 'train' and not num_sets == 'max':
+      random.seed(time.time())
+      # ok this is it, we need to go random
+      sets = []
+      go_on = True
+      entering = False
+      last_set_id = -1
+      while go_on:
+        row = res.fetch_row(1,0)
+        if row == ():
+          go_on = False
+          break
+        set_id = row[1]
+        if set_id == last_set_id:
+          if entering:
+            sets.append(row)
+        else:
+          # We see a new set_id. decide randomly whether to pick this.
+          
+    
+    else:
+      sets = res.fetch_row(11000000,0)
     last_set_id = sets[0][CompetitorSet.TRANS['set_id']]
     curr_set = []
     self.all_sets = []
