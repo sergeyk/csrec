@@ -6,18 +6,15 @@ import time
 import cPickle
 import os
 from Sqler import *
-from mpi4py import MPI
 import shutil
 import csrec_paths
+from mpi.mpi_imports import *
+
 try:
   from IPython import embed
 except:
   'failed to import embed'
-
-comm = MPI.COMM_WORLD
-comm_rank = comm.Get_rank()
-comm_size = comm.Get_size()
- 
+   
 def swap_inds(arr, a, b):
   arr[np.where(arr==a)[0]] = -1
   arr[np.where(arr==b)[0]] = a
@@ -55,7 +52,7 @@ def split_requests(reqs, cluster):
   
 def clusterize(sq, reqs):
   # 3 Days is the magical number. We expect a mean compset-size of 2.4
-  MINUTES_BANDWIDTH = 60*24*7
+  MINUTES_BANDWIDTH = 60*24*3
   # ========= Cluster Responses =============
   rsps_raw = [x[4] for x in reqs]
   
@@ -74,10 +71,37 @@ def clusterize(sq, reqs):
   # Get reqest sets
   req_sets = split_requests(reqs, cluster)
   
-  try:
-    assert (len(reqs) == sum(len(x) for x in req_sets))
-  except:
-    embed()
+  # If a set has several winner....split it maan!
+  look_at_that = False
+  new_req_sets = []
+  pop_indices = []
+  for req_idx, req_set in enumerate(req_sets):
+    num_winners = sum([r[1] == 'Y' for r in req_set])
+    if num_winners > 1:
+      # Remove that one and compute new split up ones
+      pop_indices.append(req_idx)
+      winners = []
+      losers = []
+      for req in req_set:      
+        if req[1] == 'Y':
+          winners.append(req)
+        else:
+          losers.append(req)
+          
+      # for all winners we want one req_set                  
+      for win in winners:
+        new_req_sets.append(losers + [win])  
+      look_at_that = True
+  
+  for pop_ind_ind, pop_index in enumerate(np.sort(pop_indices)):    
+    req_sets.pop(pop_index-pop_ind_ind)
+    
+  if look_at_that:
+    for req_idx, req_set in enumerate(req_sets):
+      num_winners = sum([r[1] == 'Y' for r in req_set])
+      if num_winners > 1:
+        raise RuntimeError('There are still sets with more than 1 winner :/')
+  req_sets += new_req_sets
   return req_sets  
 
 def get_sessions(lower, upper, force=False):
@@ -116,6 +140,7 @@ def get_sessions(lower, upper, force=False):
       row = rows[rowdex]
       
       hid = row[0]
+      print '%d is at user %d'%(comm_rank, hid)
       if not last_hid == hid and not last_hid == -1:
         # we have a new host
         #print 'at host %s'%last_hid
@@ -124,12 +149,12 @@ def get_sessions(lower, upper, force=False):
           reqs.append(row)
         else:
           into_next = True    
+        
         try:
           clus = clusterize(sq, reqs)
         except:
-          print ''
-          reqs = [row]
-          continue
+          None                
+                  
 #        running_count += len(clus)
 #        running_sum += np.sum([len(x) for x in clus])
 #        print 'the mean is %f'%(running_sum/float(running_count))
@@ -160,21 +185,24 @@ def create_sessions():
 def compile_sessions():  
   sq = Sqler()
   first_lines = True  
-  comp_set_id = comm_rank*500000
+  comp_set_id = 0
   too_much_count = 0
   # IS THIS SUPPOSE TO BE COMPETITOR SETS OR COMPETITOR SETS 2?
-  default_string = "INSERT INTO `competitor_sets` (`req_id`, `set_id`, \
+  default_string = "INSERT INTO `competitor_sets2` (`req_id`, `set_id`, \
     `host_id`, `surfer_id`, `winner`, `date`) VALUES "
   index = 1
   write_string = default_string
   max_batch_size = 8000
-  for i in range(comm_rank, 20, comm_size):
+  last_write=False
+  for i in range(20):
     read_cluss = cPickle.load(open('cluss_%d'%i,'r'))
     print 'opened file %d'%i
     ###################
     processed = 1
-    for cl in read_cluss:        
-      for r in cl:
+    for cl_idx, cl in enumerate(read_cluss):        
+      for r_idx, r in enumerate(cl):
+        if r_idx == len(cl)-1 and cl_idx == len(read_cluss)-1:
+          last_write=True
         if not first_lines:
           write_string += ','
         else:
@@ -188,7 +216,7 @@ def compile_sessions():
         index+=1
       #print '%d wrote comp set %d'%(comm_rank, comp_set_id)
         too_much_count += 1      
-      if too_much_count > max_batch_size:
+      if too_much_count > max_batch_size or last_write:
         too_much_count = 0
         #print write_string
         sq.rqst(write_string+';', False)       
@@ -202,6 +230,7 @@ def compile_sessions():
     ###################  
   
 if __name__=='__main__':
-  None
-  create_sessions()  
-  compile_sessions()
+  create_sessions()
+  safebarrier(comm)
+  if comm_rank==0:  
+    compile_sessions()
