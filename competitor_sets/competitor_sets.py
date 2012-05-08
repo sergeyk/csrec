@@ -1,4 +1,4 @@
-''' Provide competitor sets for 
+''' Provide competitor sets for
 '''
 
 import numpy as np

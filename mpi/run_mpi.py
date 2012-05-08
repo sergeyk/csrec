@@ -48,12 +48,14 @@ def test_predictionerror(fg, sgd, data):
   req_ids = data.get_req_ids_for_samples(indices[0:LOOK_AHEAD_LENGTH])
   fg.reinit_out_prod_get(req_ids)
 
-  for i in indices:
-    update_lookahead_cnt += 1
+  for idx, i in enumerate(indices):
+    
     if update_lookahead_cnt == LOOK_AHEAD_LENGTH:
-      req_ids = data.get_req_ids_for_samples(indices[i:i+LOOK_AHEAD_LENGTH])
+      req_ids = data.get_req_ids_for_samples(indices[idx:idx+LOOK_AHEAD_LENGTH])
       fg.reinit_out_prod_get(req_ids)
       update_lookahead_cnt = 0
+    else:
+      update_lookahead_cnt += 1
     
     competitorset = data.get_sample(i)
     pred = sgd.predict(competitorset, testingphase=False)
@@ -314,10 +316,7 @@ def run():
             else:
               pickle.dump( (sgd.theta, sgd.r, sgd.r_hosts), open( dirname+filename, "wb" ) )
               print "Stored params at " + dirname+filename  
-        
-        
-        
-        
+                
       # Compute the errors
       safebarrier(comm)
       
