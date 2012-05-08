@@ -56,7 +56,7 @@ class OuterProductDumper():
   def dump_outer_product(self, req_id, data):
     thedata = cPickle.dumps(data)    
     try:        
-      self.cursor.execute(self.request, (req_id, thedata, ))
+      self.cursor.execute(self.request, (req_id, thedata ))
     except MySQLdb.IntegrityError:
       pass
   
@@ -94,9 +94,7 @@ class OuterProductDumper():
       if counter % 10000 == 0:
         print '%s finished %s/%s' % (comm_rank, counter, 
                                      len(self.req_user_map.keys()))
-        self.commit()
 
-            
       total_time -= t
       
     print 'mean time: %f sec'%(total_time/float(counter))

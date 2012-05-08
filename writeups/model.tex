@@ -11,9 +11,12 @@ All notation is also presented in \autoref{tab:notation} for reference.
 \begin{tabular}{lp{7cm}}
 Symbol & Meaning\\
 \hline
-$h \in \mathcal{H}$   & Host, from a set of all users who have received at least $K$ couch requests\\ 
-$\mathcal{S}_h$       & Set of competitor sets $S$ for host $h$\\
-$S \in \mathcal{S}_h$ & Competitor set for host $h$, composed of surfers who have made a couch request to $h$ at roughly the same time \\
+$h \in \mathcal{H}$   & Host, from a set of all users who have received at least $K$ couch requests. \\ 
+$\mathcal{S}_h$       & Set of all competitor sets $S$ for host $h$. \\
+$S \in \mathcal{S}_h$ & Competitor set for host $h$, composed of surfers who have made a couch request to $h$ at roughly the same time. \\
+$\Phi(s,h,c)$         & Featurization function mapping a couch request from a surfer to a host to $\mathbb{R}^D.$\\
+$\theta$,$r$          & Global parameters: weights for the couch request features, and a ``reject-all'' parameter.\\
+$\theta_h$,$r_h$      & Corresponding host-specific parameters.\\
 \hline
 \end{tabular}\end{table}
 
@@ -41,12 +44,13 @@ When modeling the reject option, however, the probabilities change and $h_1$ is 
 \label{fig:reject_vs_no_reject}
 \end{figure}
 
-We model the probability that a host $h$ chooses surfer $s_k$ out of a competitor set $S$ using a logistic model
+We represent the probability that a host $h$ chooses surfer $s_k$ out of a competitor set $S$ with a logistic model
 \begin{eqnarray}
-p(s_k | h, S) &=& \frac{\exp(\theta^T \Phi(s_k,h))}{\sum_{s_j \in S} \exp(\theta^T \Phi(s_j,h)) + \exp(r)}
+p(s_k | h, S) &=& \frac{\exp(\theta^T \Phi(s_k,h,c)}{\sum_{s_j \in S} \exp(\theta^T \Phi(s_j,h,c)) + \exp(r)}
 \end{eqnarray}
-where $\Phi(s_k,h)$ is the output of the featurization function $\Phi: (s,h,r)  \mapsto \mathbb{R}^D$ and $\theta$ is the $D$-dimensional parameter vector we learn.
-The model is implictly able to learn a bias term by appending a one to the feature representation $\Phi(s_k,h)$.
+where $\Phi(s_k,h,c)$ is the output of the featurization function $\Phi: (s,h,c)  \mapsto \mathbb{R}^D$ and $\theta$ is the $D$-dimensional parameter vector we learn.
+The parameter $c$ represents the context of the couch request, such as time, and will henceforth be omitted from notation but implictly included.
+We also implictly model a bias term by appending $1$ to the representation $\Phi(s_k,h)$.
 
 Accordingly, we model the probability that $h$ rejects all $s_k \in S$ as
 \begin{eqnarray}
@@ -101,10 +105,15 @@ r &\leftarrow& (1- \eta \lambda_2) r - \eta (p(\text{reject} | h_n, S_n)-1)
 \end{eqnarray}
 
 The update equations for $\theta_h$ and $r_h$ are the same as the ones for $\theta$ and $r$, respectively, but they are only updated for the current host $h$.
-These update equations make intuitive sense.
-For $\theta$, we essentially increase the contribution from the features of the winner and decrease it for all the losers always according to their probability of being chosen.
+
+These update equations make intuitive sense, as for $\theta$, we essentially increase the contribution from the features of the winner and decrease it for all the losers always according to their probability of being chosen.
 This means that if the model did a bad prediction we update our parameters more than normally.
-For $r$ it is similar in the sense that we increase it whenever everybody actually got rejected and decrease it if we had a winner.
+And for $r$, the story is similar in the sense that we increase the parameter value whenever everyone in the competitor set actually got rejected, and decrease it when we have a winner.
+
+To scale the learning computation, we follow \cite{Zinkevich2010}'s SimuParallelSGD algorithm, and distribute random $T$-sized subsets of the data to $m$ different machines.
+On each worker, SGD is used to update the parameters, sampling data in random order.
+We modify the algorithm by repeating the above in a loop, each time averaging the per-machine parameter vectors and re-distributing them back to all workers.
+The main idea of the algorithm is that in a large-scale learning situation such as concerns the CouchSurfing database, one can consider the present data to be a subset of a vritually infinite set, and so drawing with replacement and without replacement can both be simulated by shuffling the data and accessing it sequentially.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %-----------------OLD STUFF------

@@ -1,14 +1,20 @@
 % !TEX root=report.tex
 \section{Evaluation} \label{sec:evaluation}
- 
-1. Talk about data
-summary of statistics about the data, nr surfers/hosts/couchrequests, nr competitorsets, distribution over size of competitorsets, 
 
-2. Evaluation measures
-prediction accuracy, mean normalized rank of winner
+The CouchSurfing dataset was made available to the authors in the form of an anonymized MySQL database dump.
+As shown in \autoref{fig:requests_distribution}, the distribution of number of requests received is roughly logarithmic on a logarithmic scale.
 
-3. Baselines
-[so far we have some code for random baseline + allreject baseline but nothing more fancy, also CS hasn't responded to our email]
+\begin{figure}[ht]
+\centering
+\includegraphics[width=1\linewidth]{figures/req_received_dist2.png}
+\caption{Distribution of requests received by a host. \todo{Tobi: these numbers must be incorrect}}
+\label{fig:requests_distribution}
+\end{figure}
 
-3. Results
-(In progress.)
+\todo{summary of statistics about the data, nr surfers/hosts/couchrequests, nr competitorsets, distribution over size of competitorsets}
+
+\todo{Evaluation measures: prediction accuracy, mean normalized rank of winner}
+
+\todo{Baselines: [so far we have some code for random baseline + allreject baseline but nothing more fancy, also CS hasn't responded to our email]}
+
+\todo{Results (In progress.)}
