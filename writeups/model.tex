@@ -59,7 +59,7 @@ p(\text{reject} | h, S) &=& \frac{\exp(r)}{\sum_{s_j \in S} \exp(\theta^T \Phi(s
 
 In this formulation, each surfer $s_k$ receives a score $\exp(\theta^T \Phi(s_k,h))$ modeling the natural competition between multiple surfers that requested to stay with the host.
 In the end, we predict that the surfer with the highest score wins, or that everybody gets rejected if the ``reject score'' $\exp{(r)}$ is largest. 
-Note, however, that this is not exactly the standard multinomial logistic regression model since in our case we have the same parameters but we have different features for the different ``classes'' (i.e. surfers). \todo{what does this mean?}
+Note, however, that this is not exactly the standard multinomial logistic regression model since in our case we have the same parameters but we have different features for the different ``classes'' (i.e. surfers).
 
 It may at first seem that we are essentially simply ranking the surfers, and so a reject option is not needed.
 In fact, we are modeling the host decision process, and the reject option is very important.

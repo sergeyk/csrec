@@ -2,28 +2,30 @@
 \section{Evaluation} \label{sec:evaluation}
 
 The CouchSurfing dataset was made available to the authors in the form of an anonymized MySQL database dump.
-As shown in \autoref{fig:requests_distribution}, the distribution of number of requests received is roughly logarithmic on a logarithmic scale.
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=1\linewidth]{figures/req_received_dist2.png}
-\caption{Distribution of requests received by a host.}
-\label{fig:requests_distribution}
-\end{figure}
 
 In the light of the described need of CouchSurfing, we focused on the evaluation from the host perspective, i.e. rejects are not as important (surfer's care about rejects) and assistance is particularly important when the host faces a lot of couchrequest at the same time (a large competitor set). Therefore, we look at all competitor sets that have a winner and group them by their cardinality. We compare our system against a random baseline, and several rule-based approaches that presumably resemble the system currently in use at Couchsurfing (e.g. ordering by the number of references or friends). We call these single-feature baselines. Unfortunately, the ranking algorithm currently deployed at CouchSurfing was not shared with us, yet. However, we were told that it is a simple rule-based approach that most likely involves the parameters mentioned above.
 
-We use two different measures to evaluate performance: Prediction Accuracy (PA), and Average Normalized Winner Rank (ANWR). Prediction Accuracy is the fraction of correctly predicted winner's from several competitor sets (larger is better). Average Normalized Winner Rank is a more general measure that captures what position the actual winner has in our computed ranking/smaller is better) We normalize the rank to be between zero and number of competitors minus one. Note that a prediction only counts as a positive towards PA if it occured at the first place in the ranking. The ANWR is less strict in this case. \todo{maybe something mathematical here?}
+\begin{itemize}
+\item \textit{Random} Baseline that predicts a random element from the
+competitor set
+\item \textit{Priority1/2} Baseline that CouchSurfing presumably uses
+to rank surfers and hosts on their website
+\item \textit{Vouched} The number of people that vouched for a given user
+\item \textit{References/to} References given to and received from other users
+\item \textit{Friend links} Number of friends on CouchSurfing
+\end{itemize}
+
+We use two different measures to evaluate performance: Prediction Accuracy (PA), and Average Normalized Winner Rank (ANWR). Prediction Accuracy is the fraction of correctly predicted winner's from several competitor sets (larger is better). Average Normalized Winner Rank is a more general measure that captures what position the actual winner has in our computed ranking/smaller is better) We normalize the rank to be between zero and number of competitors minus one. Note that a prediction only counts as a positive towards PA if it occured at the first place in the ranking. The ANWR is less strict in this case.
 
 We compute these two measure on the CouchSurfing Data that has 11 million couch request grouped into 5.5 million competitor sets. We split these competitor sets into a training, validation, and test set (60/20/20\%) in time to ensure that we do not look ahead into the future to make predictions easier. Please not that the state of the system we compute our features from lies ``in the future''. This can help but in some cases hurt as described below.
 
 \begin{figure}[ht]
 \centering
 \subfloat[Prediction Accuracy (higher is better)]{
-  \includegraphics[width=0.45\linewidth]{figures/prediciton_accuracy.png}
-}
+  \includegraphics[width=0.75\linewidth]{figures/prediciton_accuracy.png}
+}\\
 \subfloat[Average Winner Rank (lower is better)]{
-  \includegraphics[width=0.45\linewidth]{figures/avg_winner_rank.png}
+  \includegraphics[width=0.75\linewidth]{figures/avg_winner_rank.png}
 }
 \caption{Our evaluations: prediction accuracy and average winner rank. In both cases, we do better than all baselines.}
 \label{fig:eval}
