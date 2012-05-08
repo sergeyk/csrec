@@ -36,8 +36,8 @@ class FeatureGetter():
         self.outer_product_getter = OuterProducGetter(self.dimension)
 
     def get_cached_feature(self, req_id):
-        return self.outer_product_getter.get_product(req_id)
-    
+        return self.outer_product_getter.get_product(req_id)  
+          
     def upt_out_prod_get(self, req_ids):
         #print 'initialize outer prods'        
         self.outer_product_getter.create_outer_prods_from_req_ids(req_ids)

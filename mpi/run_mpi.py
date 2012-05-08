@@ -54,6 +54,7 @@ def test_predictionerror(fg, sgd, data):
     if update_lookahead_cnt == LOOK_AHEAD_LENGTH-1:
       req_ids = data.get_req_ids_for_samples(indices[idx:idx+LOOK_AHEAD_LENGTH+1])
       fg.upt_out_prod_get(req_ids)
+      
       update_lookahead_cnt = 0
     else:
       update_lookahead_cnt += 1    
@@ -61,7 +62,11 @@ def test_predictionerror(fg, sgd, data):
     competitorset = data.get_sample(i)
     for l in competitorset.get_surferlist():
       #print l[1]
-      assert(l[1] in req_ids)
+      try:
+        assert(l[1] in fg.outer_product_getter.outer_products.keys())
+      except:
+        # it is not yet in there! so load by the grace of god!
+        fg.outer_product_getter.unsafe_create_outer_prods_from_req_ids(l[1])
     pred = sgd.predict(competitorset, testingphase=False)
     true = competitorset.get_winner()
   
@@ -127,13 +132,13 @@ def run():
  
   memory_for_personalized_parameters = 20 #512.0 # memory in MB if using personalized SGD learning  
   percentage = 0.2 # Dependent on machines in future min:10%, 2nodes->80%
-  outer_iterations = 2 #10
-  nepoches = 0.5 #10
+  outer_iterations = 5 #10
+  nepoches = 0.3 #10
   alpha = 100.0
   beta = 0.001 #0.01
   #lambda_winner = 0.01
   #lambda_reject = 0.01
-  verbose = False
+  verbose = True #False
   personalization = False # no hashing -> faster
   rhostsize = 1000000
   
@@ -244,11 +249,11 @@ def run():
           for l in competitorset.get_surferlist():
             assert(l[1] in req_ids)
   
-          if verbose and not i%10000 and i>1:
+          if verbose and not i%(niter/5) and i>1:
               print "Iterations \n\tout: %d/%d \n\tin: %d/%d - eta %f - lambda %f"%(outit+1,outer_iterations, innerit+1,niter,eta_t, lambda_winner)
               print "\ttheta", min(sgd.theta), max(sgd.theta)
               print "\tr", sgd.r
-              print "\tr_hosts", sgd.r_hosts.get(competitorset.get_hostID(), -999) ,min(sgd.r_hosts.values()), max(sgd.r_hosts.values()) 
+              print "\tr_hosts",min(sgd.r_hosts), max(sgd.r_hosts) 
               print "\ttrue", competitorset.get_winner()
               print "\tpredicted", sgd.predict(competitorset)
               print "\tranking", sgd.rank(competitorset)
@@ -325,7 +330,7 @@ def run():
           if not RON_MODE:
               os.system('chmod -R 777 '+dirname)
               
-          filename = 'parameters_lwin_%f_lrej_%f_testing_%d_personalized_%d_numsets_%d_outerit_%d_nepoches_%d.pkl'%(lambda_winner, lambda_reject, testing, personalization, num_sets, outer_iterations,nepoches)
+          filename = 'parameters_lwin_%f_lrej_%f_testing_%d_personalized_%d_numsets_%d_outerit_%d_nepoches_%d_mu.pkl'%(lambda_winner, lambda_reject, testing, personalization, num_sets, outer_iterations,nepoches)
           if os.path.exists('/tscratch'):
             if personalization:
               pickle.dump( (sgd.theta, sgd.theta_hosts, sgd.r, sgd.r_hosts), open( dirname+filename, "wb" ) )

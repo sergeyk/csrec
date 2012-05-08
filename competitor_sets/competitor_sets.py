@@ -57,7 +57,7 @@ class CompetitorSetCollection:
   NUM_TRAIN_SETS = 2954911 # Looked up and fix 
   
   def __init__(self, num_sets=100, mode = 'train'):
-    ''' mode needs to be of train/test/val'''
+    ''' mode needs to be of train/test/test_win/val'''
     print 'start Sqler'
     self.sq = get_sqler()
     
@@ -68,63 +68,67 @@ class CompetitorSetCollection:
       train_val_test = 1
     elif mode == 'val':
       train_val_test = 2
-    elif mode == 'test':
+    elif mode == 'test' or mode == 'test_win':
       train_val_test = 3
     else:
       raise RuntimeError('Unknown mode %s in competitorSetColleciton'%mode)            
     train_val_test = str(train_val_test)
     
     if mode == 'train':
-      request = "select * from competitor_sets where \
-       train_val_test = 1"
-      
+      if num_sets == 'max':
+        request = "select * from competitor_sets where \
+         train_val_test = 1"
+      else:
+        set_filename = os.path.join(csrec_paths.ROOT, 'competitor_sets', 'all_set_ids')
+        if not os.path.exists(set_filename):
+          set_ids_req = "select distinct set_id from competitor_sets where train_val_test=1"
+          print 'read the set_ids'
+          res = self.sq.rqst(set_ids_req)
+          set_ids = res.fetch_row(11000000,0)
+          set_ids = [int(x[0]) for x in set_ids]
+          cPickle.dump(set_ids, open(set_filename, 'w'))
+          print 'pickled the set_ids'
+        else:
+          set_ids = cPickle.load(open(set_filename, 'r'))
+          
+        smaller_set_ids = np.random.permutation(len(set_ids)).tolist()[:self.num_sets]
+        #smaller_set_ids = np.random.random_integers(0,len(set_ids)-1,self.num_sets).tolist()
+        
+        base_string = "select * from competitor_sets where set_id in ("
+        sets = []
+        counter = 0
+        set_req = base_string
+        add_string = "%d,"
+        for s_idx, s in enumerate(smaller_set_ids):
+          set_req += add_string%s
+          counter += 1
+          if counter == 100000 or s_idx == len(smaller_set_ids)-1:
+            counter = 0
+            set_req = set_req[:-1]+')' # remove last 'or'
+            t_db = time.time()
+            cursor = self.sq.db.cursor()
+            cursor.execute(set_req)
+            sets += cursor.fetchall()
+            set_req = base_string
+        
+        t_db -= time.time()
+  #      print 'db lookup for compset took %f sec'%-t
+                 
     else:
       request = "select * from competitor_sets where train_val_test = " + \
-        train_val_test
-        
+        train_val_test        
+      if mode == 'test_win':
+        # We want just competitorsets with a winner in it.
+        request = "select * from competitor_sets where train_val_test = " + \
+          train_val_test + " and winner_set=1"
+          
       if not self.num_sets == 'max':
         request += " limit 0, " +str(self.num_sets)
-    
-    if mode == 'train' and not num_sets == 'max':
-      set_filename = os.path.join(csrec_paths.ROOT, 'competitor_sets', 'all_set_ids')
-      if not os.path.exists(set_filename):
-        set_ids_req = "select distinct set_id from competitor_sets where train_val_test=1"
-        print 'read the set_ids'
-        res = self.sq.rqst(set_ids_req)
-        set_ids = res.fetch_row(11000000,0)
-        set_ids = [int(x[0]) for x in set_ids]
-        cPickle.dump(set_ids, open(set_filename, 'w'))
-        print 'pickled the set_ids'
-      else:
-        set_ids = cPickle.load(open(set_filename, 'r'))
-        
-      smaller_set_ids = np.random.permutation(len(set_ids)).tolist()[:self.num_sets]
-      #smaller_set_ids = np.random.random_integers(0,len(set_ids)-1,self.num_sets).tolist()
-      
-      base_string = "select * from competitor_sets where set_id in ("
-      sets = []
-      counter = 0
-      set_req = base_string
-      add_string = "%d,"
-      for s_idx, s in enumerate(smaller_set_ids):
-        set_req += add_string%s
-        counter += 1
-        if counter == 100000 or s_idx == len(smaller_set_ids)-1:
-          counter = 0
-          set_req = set_req[:-1]+')' # remove last 'or'
-          t_db = time.time()
-          cursor = self.sq.db.cursor()
-          cursor.execute(set_req)
-          sets += cursor.fetchall()
-          set_req = base_string
-      
-      t_db -= time.time()
-#      print 'db lookup for compset took %f sec'%-t      
-    
-    else:
+
       print 'start loading competitor'
       res = self.sq.rqst(request, True)
       sets = res.fetch_row(11000000,0)
+      
     last_set_id = sets[0][CompetitorSet.TRANS['set_id']]
     curr_set = []
     self.all_sets = []
