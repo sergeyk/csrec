@@ -124,7 +124,7 @@ def run():
   
   print "Start loading the competitorsets for TRAIN and TEST"
   t0 = time.time()
-  num_sets = 2000#200000 # TODO remove
+  num_sets = 200000 # TODO remove
   print num_sets
   # TODO: CAREFULL - num_sets shouldn't be bigger than 500000
   if num_sets > 500000:
@@ -176,7 +176,7 @@ def run():
           for l in competitorset.get_surferlist():
             assert(l[1] in req_ids)
             
-          if verbose and not i%1000 and i>1:
+          if verbose and not i%10000 and i>1:
               print "Iterations \n\tout: %d/%d \n\tin: %d/%d - eta %f - lambda %f"%(outit+1,outer_iterations, innerit+1,niter,eta_t, lambda_winner)
               print "\ttheta", min(sgd.theta), max(sgd.theta)
               print "\tr", sgd.r
