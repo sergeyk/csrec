@@ -5,6 +5,7 @@ import numpy as np
 from Sqler import *
 from mpi.mpi_imports import *
 import random
+from IPython import embed 
 
 class CompetitorSet:
   
@@ -86,7 +87,9 @@ class CompetitorSetCollection:
         request += " limit 0, " +str(self.num_sets)
     
     print 'start loading competitor'
-    res = self.sq.rqst(request, True)       
+    res = self.sq.rqst(request, True)
+    
+    embed()       
     
     sets = res.fetch_row(11000000,0)
     last_set_id = sets[0][CompetitorSet.TRANS['set_id']]
@@ -131,7 +134,7 @@ class CompetitorSetCollection:
     return req_ids
 
 if __name__=='__main__':
-  cs_coll_train = CompetitorSetCollection(num_sets=10000)
+  cs_coll_train = CompetitorSetCollection(num_sets=1000000)
   cs_coll_test = CompetitorSetCollection(num_sets=10000, mode='val')
   #cs_coll.get_user_dict("examplar_user_table")
   N = cs_coll_train.get_nsamples()
