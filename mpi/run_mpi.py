@@ -138,7 +138,6 @@ def run():
   t0 = time.time()
   num_sets = 2000#200000 # TODO remove
   print num_sets
-
   # TODO: CAREFULL - num_sets shouldn't be bigger than 500000
 #  if num_sets > 500000:
 #    raise RuntimeError('num_sets should not be larger than 500000. That takes \
