@@ -11,3 +11,5 @@ littlepy/
 *.brf
 *.fls
 writeups/*.pdf
+*.pkl
+sync
