@@ -1,32 +1,34 @@
 % !TEX root=report.tex
 \section{Problem Formalization and Prediction Model} \label{sec:model}
 
+Now we formalize the problem and present our model.
+All notation is also presented in \autoref{tab:notation} for reference.
+
+\begin{table}
+\centering
+\caption{Summary of our notation.}
+\label{tab:notation}
+\begin{tabular}{lp{7cm}}
+Symbol & Meaning\\
+\hline
+$h \in \mathcal{H}$   & Host, from a set of all users who have received at least $K$ couch requests\\ 
+$\mathcal{S}_h$       & Set of competitor sets $S$ for host $h$\\
+$S \in \mathcal{S}_h$ & Competitor set for host $h$, composed of surfers who have made a couch request to $h$ at roughly the same time \\
+\hline
+\end{tabular}\end{table}
+
 From the CouchSurfing user database, we form a set of \emph{hosts} $\mathcal{H}$ such that every $h \in \mathcal{H}$ has hosted at least $K$ persons since signing up for a user account.
 We initially set $K=1$; a higher setting may reduce the amount of noise in the set of hosts.
 
-For every host $h$, there is at least one \emph{competitor set} $S$ of at least $K$ \emph{surfers}, where surfers $s \in S$ has made a couch request to $h$.
-A competitor set corresponds to a decision made by the host to either host one of the $s$ or to reject all of them.
-The composition of this set is inferred from data based on the timing of couch requests and host decisions, and is discussed in \autoref{subsec:competitor_sets}.
+For every host $h$, there is at least one \emph{competitor set} $S$ of at least $K$ \emph{surfers}, where each surfer $s \in S$ has made a couch request to $h$.
+A competitor set corresponds to a decision made by the host to either host one of the $s$ in the set, or to reject all of them.
+The composition of this set is inferred from data based on the timing of couch requests and host decisions.
+This is discussed in \autoref{subsec:competitor_sets}.
 
 In fact, $h$ may have multiple such competitor sets.
 We refer to the set of competitor sets for host $h$ by $\mathcal{S}_h$.
-(All notation is also presented in \autoref{tab:notation}.)
 
-\comment{
-\begin{table}
-    \begin{tabular}{|l|l|l|}
-        \hline
-        h \in \mathcal{H} & host, from a set of all users who have received at least $K$ couch requests                                    & ~ \\ \hline
-        \mathcal{S}_h     & set of competitor sets $S$ for host $h$                                                                        & ~ \\ 
-        S                 & competitor set for host $h$, composed of surfers who have made a couch request to $h$ at roughly the same time & ~ \\
-        \hline
-    \end{tabular}
-\label{tab:notation}
-\end{table}
-}
-
-\subsection{Competitor Sets} \label{subsec:competitor_sets}
-\todo{tobi}.
+\input{competitor_sets.tex}
 
 \subsection{Prediction Model}
 \begin{figure}[ht]
@@ -39,48 +41,73 @@ When modeling the reject option, however, the probabilities change and $h_1$ is 
 \label{fig:reject_vs_no_reject}
 \end{figure}
 
-We predict the probability that a host $h$ chooses the surfers $s_{k^*}$ among a competitorset $S=\{ s_1, \dots, s_n\}$ or that he rejects all of them using the following logistic model:
+We model the probability that a host $h$ chooses surfer $s_k$ out of a competitor set $S$ using a logistic model
 \begin{eqnarray}
-p(s_k | h, S) &=& \frac{\exp(\theta^T \Phi(s_k,h))}{\sum_{s_j \in S} \exp(\theta^T \Phi(s_j,h)) + \exp(r)} \\
+p(s_k | h, S) &=& \frac{\exp(\theta^T \Phi(s_k,h))}{\sum_{s_j \in S} \exp(\theta^T \Phi(s_j,h)) + \exp(r)}
+\end{eqnarray}
+where $\Phi(s_k,h)$ is the output of the featurization function $\Phi: (s,h,r)  \mapsto \mathbb{R}^D$ and $\theta$ is the $D$-dimensional parameter vector we learn.
+The model is implictly able to learn a bias term by appending a one to the feature representation $\Phi(s_k,h)$.
+
+Accordingly, we model the probability that $h$ rejects all $s_k \in S$ as
+\begin{eqnarray}
 p(\text{reject} | h, S) &=& \frac{\exp(r)}{\sum_{s_j \in S} \exp(\theta^T \Phi(s_j,h)) + \exp(r)}
 \end{eqnarray}
-In this formulation, each surfer $s_k$ receives a score $\exp(\theta^T \Phi(s_k,h))$ modeling the natural competition between multiple surfers that requested to stay with the host. In the end, we predict that the surfer with the highest score wins, or that everybody gets rejected if the rejectscore $\exp{(r)}$ is largest. 
-Further, we implicitly learn a bias term by appending a one to the feature representation $\Phi(s_k,h)$.
-Note, however, that this is not exactly the standard multinomial logistic regression model since in our case we have the same parameters but we have different features for the different ``classes'' (i.e. surfers).
 
-Even though we essentially just rank the candidates for the host that sent a couchrequest it is still important to model the possibility of rejection. It enables us to model actual probabilities that are very important from the perspective of the surfers. For them, we rank the different host in order of the likelihood that their couchrequest to these hosts would be successful. Because we compare different hosts to each other here their pickiness actually matters to the surfer. See Figure \ref{fig:reject_vs_no_reject} for an example where modeling 
+In this formulation, each surfer $s_k$ receives a score $\exp(\theta^T \Phi(s_k,h))$ modeling the natural competition between multiple surfers that requested to stay with the host.
+In the end, we predict that the surfer with the highest score wins, or that everybody gets rejected if the ``reject score'' $\exp{(r)}$ is largest. 
+Note, however, that this is not exactly the standard multinomial logistic regression model since in our case we have the same parameters but we have different features for the different ``classes'' (i.e. surfers). \todo{what does this mean?}
 
-The parameters (to be learned) for this model capture what hosts prefer in surfers and their request, i.e. their language, nationality, age, gender etc. Because the feature $\Phi(s_k,h)$ depends on both the surfer and the host we also model that i.e. Americans like to host surfers from certain countries and that hosts generally prefer to have a language in common with the couchsurfer.
+It may at first seem that we are essentially simply ranking the surfers, and so a reject option is not needed.
+In fact, we are modeling the host decision process, and the reject option is very important.
+As \autoref{fig:reject_vs_no_reject} demonstrates, the reject options enables us to model the ``pickiness'' of a host.
+This allows us greater accuracy in predicting the decision outcomes for a competitor set, and allows CouchSurfing to rank potential hosts returned in a user search according to their actual likelihood of acceptance.
 
-These preferences might be very different from host to host though. Also, some hosts might be more picky than others rejecting almost all requests and we should be able to capure that, too. Therefore, we introduce host-specific parameters $\theta_h$ and $r_h$ to model these effects. Because we have millions of hosts storing all these parameters explicitly would require tens of gigabytes of memory. % TODO should the hashing trick get it's own section? I would say explain it a bit in related work and a bit here again
-Since this is infeasible we make use of the hashing trick to hash the parameters into an array of predefined size (allowing for collisions between parameters). Thereby, we can control how much memory we want to allocate for personalization. This trick has been successfully applied e.g. for spam classification \cite{Attenberg2009}.
+The parameters $\theta$ for this model should capture what hosts prefer in surfers and their request, i.e. their language, nationality, age, gender etc.
+Because the feature $\Phi(s_k,h)$ depends on both the surfer and the host we also model that i.e. Americans like to host surfers from certain countries and that hosts generally prefer to have a language in common with the couchsurfer.
+Further details are given in \autoref{sec:features}.
+
+\subsubsection{Host preference personalization}
+However, these preferences may be very different from host to host.
+Also, some hosts might be more picky than others rejecting almost all requests and we should be able to capure that, too.
+Therefore, we introduce host-specific parameters $\theta_h$ and $r_h$ to model these effects.
+Because we have millions of hosts storing all these parameters explicitly would require tens of gigabytes of memory.
+
+Since this is infeasible we make use of the ``hashing trick'' to hash the parameters into an array of predefined size (allowing for collisions between parameters).
+Thereby, we can control how much memory we want to allocate for personalization.
+This trick has been successfully applied e.g. for spam classification \cite{Attenberg2009}.
+
 Including personalized parameters leads to the following updated model:
 \begin{eqnarray}
 p(s_k | h, S) &=& \frac{\exp((\theta + \theta_h)^T \Phi(s_k,h))}{\sum_{s_j \in S} \exp((\theta + \theta_h)^T \Phi(s_j,h)) + \exp(r + r_{h})} \\
 p(\text{reject} | h, S) &=& \frac{\exp(r+r_{h})}{\sum_{s_j \in S} \exp((\theta + \theta_h)^T \Phi(s_j,h)) + \exp(r + r_{h})}
 \end{eqnarray}
-As an error measure we use the negative log-likelihood of the data with $l_2$-penalty on the parameters for regularization. In our Stochastic Gradient Descent (SGD), we randomly sample a host $h$ and a competitorset $S=\{ s_1, \dots, s_n\}$. There are two cases: either there is one surfer $s_{k^*}$ that got accepted, or everybody got rejected. We obtain the following update equations for SGD where $\lambda_1, \lambda_2$ are regularization parameters and $\eta$ is the learning rate
 
-1. Case: Some surfer $s_{k^*}$ gets chosen (no reject):
+\subsubsection{Learning the parameters}
+As an error measure, we use the negative log-likelihood of the data with $l_2$-penalty on the parameters for regularization.
+In our Stochastic Gradient Descent (SGD), we randomly sample a host $h$ and a competitorset $S=\{ s_1, \dots, s_n\}$.
+There are two cases: either there is one surfer $s_{k^*}$ that got accepted, or everybody got rejected.
+We obtain the following update equations for SGD where $\lambda_1, \lambda_2$ are regularization parameters and $\eta$ is the learning rate
+
+1. Case: Some surfer $s_{k^*}$ gets chosen.
 \begin{eqnarray}
 \theta &\leftarrow& (1- \eta \lambda_1) \theta - \eta (\sum_{j \in S_n} p(s_j | h, S) \Phi(s_j,h_n) - \Phi(s_{k^*},h_n))\\
 r &\leftarrow& (1- \eta \lambda_2) r - \eta p(\text{reject} | h_n, S_n)
 \end{eqnarray}
 
-2. Case: No surfer gets chosen (reject):
+2. Case: No surfer gets chosen (reject).
 \begin{eqnarray}
 \theta &\leftarrow& (1- \eta \lambda_1) \theta - \eta (\sum_{j \in S_n} p(s_k | h, S) \Phi(s_j,h_n))\\
 r &\leftarrow& (1- \eta \lambda_2) r - \eta (p(\text{reject} | h_n, S_n)-1)
 \end{eqnarray}
 
-The update equations for $\theta_h$ and $r_h$ are the same as the ones for $\theta$ and $r$, respectively, but they are only updated for the current host $h$. 
-Also note that these update equations intuitively make sense . For $\theta$ we essentially increase the contribution from the features of the winner and decrease it for all the losers always according to their probability of being chosen. This means that if the model did a bad prediction we update our parameters more than normally. For $r$ it is similar in the sense that we increase it whenever everybody actually got rejected and decrease it if we had a winner.
-
+The update equations for $\theta_h$ and $r_h$ are the same as the ones for $\theta$ and $r$, respectively, but they are only updated for the current host $h$.
+These update equations make intuitive sense.
+For $\theta$, we essentially increase the contribution from the features of the winner and decrease it for all the losers always according to their probability of being chosen.
+This means that if the model did a bad prediction we update our parameters more than normally.
+For $r$ it is similar in the sense that we increase it whenever everybody actually got rejected and decrease it if we had a winner.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
-% this is where the old stuff starts
 %-----------------OLD STUFF------
-%
 %\begin{eqnarray}
 %p(s_k | h_n, S_n) &=& \frac{\exp(\theta^T \Phi(s_k,h_n))}{\sum_{j \in S_n} \exp(\theta^T \Phi(s_j,h_n)) + \exp(r + r_{h_n})} \\
 %p(\text{reject} | h_n, S_n) &=& \frac{\exp(r+r_{h_n})}{\sum_{j \in S_n} \exp(\theta^T \Phi(s_j,h_n)) + \exp(r + r_{h_n})}
