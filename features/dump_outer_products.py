@@ -61,7 +61,7 @@ class OuterProductDumper():
   
   def commit(self):
     self.sq.commit()
-
+    
   def get_dicts(self, req_id):
     user1 = self.req_user_map[req_id][0]
     dict1 = pull_data_for_user(self.cursor, user1)
@@ -96,12 +96,11 @@ class OuterProductDumper():
       if counter % 1000 == 0 or req_idx == len(all_keys)-1:
         print '%s finished %s/%s' % (comm_rank, counter, 
                                      len(self.req_user_map.keys()))
+
         self.dump_outer_product(datas)
         datas = []
       total_time -= t
       
-      
-      self.commit()
     print 'mean time: %f sec'%(total_time/float(counter))
     t = time.time()
     
