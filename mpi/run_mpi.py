@@ -143,6 +143,7 @@ def run():
   #print "machine %d is sleeping for %d sec."%(comm_rank,sec)
   #time.sleep(sec)
   
+
   for i in range(comm_size):
     if i==comm_rank:
       print "Machine %d/%d - Start loading the competitorsets for TRAIN"%(comm_rank,comm_size)
