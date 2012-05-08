@@ -31,6 +31,8 @@ try:
     import cPickle as pickle
 except:
     import pickle
+    
+LOOK_AHEAD_LENGTH = 10000
 
 def test_predictionerror(fg, sgd, data):
 # computes predictionacc or error (getting it exactly right or not) 
@@ -41,7 +43,7 @@ def test_predictionerror(fg, sgd, data):
   
   indices = range(comm_rank, N, comm_size) 
   update_lookahead_cnt = 0
-  LOOK_AHEAD_LENGTH = 10000
+  
   req_ids = data.get_req_ids_for_samples(indices[0:LOOK_AHEAD_LENGTH])
   fg.reinit_out_prod_get(req_ids)
 
@@ -182,7 +184,6 @@ def run():
         
         random.shuffle(sampleindices)
         update_lookahead_cnt = 0
-        LOOK_AHEAD_LENGTH = 10000
         req_ids = cs_train.get_req_ids_for_samples(sampleindices[0:LOOK_AHEAD_LENGTH])
         fg.init_out_prod_get(req_ids)
         
