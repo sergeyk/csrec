@@ -53,20 +53,26 @@ def test_predictionerror(fg, sgd, data, allow_rejects=True):
 
   for idx, i in enumerate(indices):
     
-    if update_lookahead_cnt == LOOK_AHEAD_LENGTH-1:
-      req_ids = data.get_req_ids_for_samples(indices[idx:idx+LOOK_AHEAD_LENGTH+1])
+    if update_lookahead_cnt == LOOK_AHEAD_LENGTH-2:
+      req_ids = data.get_req_ids_for_samples(indices[idx:idx+LOOK_AHEAD_LENGTH+2])
       fg.upt_out_prod_get(req_ids)
       update_lookahead_cnt = 0
     else:
       update_lookahead_cnt += 1
     
     competitorset = data.get_sample(i)
-    #try:
-    #  pred = sgd.predict(competitorset, testingphase=False, allow_rejects=allow_rejects)
-    #except:
-    #  from IPython import embed
-    #  embed()
-    pred = sgd.predict(competitorset, testingphase=False, allow_rejects=allow_rejects)
+    for l in competitorset.get_surferlist():
+      #print l[1]
+      try:
+        assert(l[1] in fg.outer_product_getter.outer_products.keys())
+      except:
+        # it is not yet in there! so load by the grace of god!
+        fg.outer_product_getter.unsafe_create_outer_prods_from_req_ids(l[1])
+    try:
+      pred = sgd.predict(competitorset, testingphase=False)
+    except:
+      from IPython import embed
+      embed()
     true = competitorset.get_winner()
     #if true:
     #  print 'prediction', pred
@@ -99,15 +105,22 @@ def test_meannormalizedwinnerrank(fg, sgd, data, allow_rejects=True):
   
   for idx, i in enumerate(indices):
     
-    if update_lookahead_cnt == LOOK_AHEAD_LENGTH-1:
-      req_ids = data.get_req_ids_for_samples(indices[idx:idx+LOOK_AHEAD_LENGTH+1])
+    if update_lookahead_cnt == LOOK_AHEAD_LENGTH-2:
+      req_ids = data.get_req_ids_for_samples(indices[idx:idx+LOOK_AHEAD_LENGTH+2])
       fg.upt_out_prod_get(req_ids)
       update_lookahead_cnt = 0
     else:
       update_lookahead_cnt += 1
       
     competitorset = data.get_sample(i)
-    cand, scores = sgd.rank(competitorset, allow_rejects=allow_rejects)
+    for l in competitorset.get_surferlist():
+      #print l[1]
+      try:
+        assert(l[1] in fg.outer_product_getter.outer_products.keys())
+      except:
+        # it is not yet in there! so load by the grace of god!
+        fg.outer_product_getter.unsafe_create_outer_prods_from_req_ids(l[1])
+    cand, scores = sgd.rank(competitorset)
     true = competitorset.get_winner()
     nrank = cand.index(true) / float(len(cand)-1) # len-1 because we have rank 0..n-1
     #if len(cand)>2:

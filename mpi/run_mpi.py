@@ -53,6 +53,7 @@ def test_predictionerror(fg, sgd, data):
     if update_lookahead_cnt == LOOK_AHEAD_LENGTH-1:
       req_ids = data.get_req_ids_for_samples(indices[idx:idx+LOOK_AHEAD_LENGTH+1])
       fg.upt_out_prod_get(req_ids)
+      
       update_lookahead_cnt = 0
     else:
       update_lookahead_cnt += 1    
@@ -60,7 +61,11 @@ def test_predictionerror(fg, sgd, data):
     competitorset = data.get_sample(i)
     for l in competitorset.get_surferlist():
       #print l[1]
-      assert(l[1] in req_ids)
+      try:
+        assert(l[1] in fg.outer_product_getter.outer_products.keys())
+      except:
+        # it is not yet in there! so load by the grace of god!
+        fg.outer_product_getter.unsafe_create_outer_prods_from_req_ids(l[1])
     pred = sgd.predict(competitorset, testingphase=False)
     true = competitorset.get_winner()
   
