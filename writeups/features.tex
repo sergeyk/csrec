@@ -5,8 +5,6 @@ The featurization function $\Phi(s,h,r)$ maps properties of a couch request $r$ 
 The properties we care about include structured personal information such as age, gender, languages spoken, countries lived in, countries traveled to, and so on.
 Additionally, we would like to use user interests, extracted from free form text on their profiles, and their status and activity on the website, e.g. the number of references, number of friends, or message response rate.
 
-\todo{may be helpful to illustrate with a figure}
-
 We developed a general approach for dealing with a wide variety of features.
 For each feature, we construct a histogram whose boundaries are determined by the inverse distribution of values in the training set.
 Using this mapping from value to bin we vectorize each feature by mapping it to a binary vector (e.g. $age=27$ to $b=[0,0,0,1,0,\dots]^T$).
@@ -21,7 +19,7 @@ The final feature vector is quite sparse.
 
 \subsection{User interests} \label{subsec:user_interests}
 
-As mentioned, we extract ``interest'' features from free-form user profile text as additional signal to the feature vector.
+As mentioned, we extract ``interestst'' features from free-form user profile text as additional signal to the feature vector.
 
 \todo{add some more information about interest extraction + interest graph + clustering + interest feature here}
 Interest graph: the compatibility strength between surfer and host is determined by $num_overlapping_interest(host, surfer)$ through some type of decaying activation propagation.  This will be based on the "Taste Fabric" paper and the "Semantic Recommendation" paper.  This method assumes homophily and that interests are the strongest attractors between people (doesn't take into account demographics etc.).  This method is reversible.

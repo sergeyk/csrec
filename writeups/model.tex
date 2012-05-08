@@ -105,10 +105,15 @@ r &\leftarrow& (1- \eta \lambda_2) r - \eta (p(\text{reject} | h_n, S_n)-1)
 \end{eqnarray}
 
 The update equations for $\theta_h$ and $r_h$ are the same as the ones for $\theta$ and $r$, respectively, but they are only updated for the current host $h$.
-These update equations make intuitive sense.
-For $\theta$, we essentially increase the contribution from the features of the winner and decrease it for all the losers always according to their probability of being chosen.
+
+These update equations make intuitive sense, as for $\theta$, we essentially increase the contribution from the features of the winner and decrease it for all the losers always according to their probability of being chosen.
 This means that if the model did a bad prediction we update our parameters more than normally.
-For $r$ it is similar in the sense that we increase it whenever everybody actually got rejected and decrease it if we had a winner.
+And for $r$, the story is similar in the sense that we increase the parameter value whenever everyone in the competitor set actually got rejected, and decrease it when we have a winner.
+
+To scale the learning computation, we follow \cite{Zinkevich2010}'s SimuParallelSGD algorithm, and distribute random $T$-sized subsets of the data to $m$ different machines.
+On each worker, SGD is used to update the parameters, sampling data in random order.
+We modify the algorithm by repeating the above in a loop, each time averaging the per-machine parameter vectors and re-distributing them back to all workers.
+The main idea of the algorithm is that in a large-scale learning situation such as concerns the CouchSurfing database, one can consider the present data to be a subset of a vritually infinite set, and so drawing with replacement and without replacement can both be simulated by shuffling the data and accessing it sequentially.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %-----------------OLD STUFF------
