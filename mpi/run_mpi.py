@@ -124,7 +124,7 @@ def run():
   #lambda_reject = 0.01
   verbose = False
   personalization = False # no hashing -> faster
-  rhostsize = 10000
+  rhostsize = 1000000
   
   fg = FeatureGetter(False)
 
@@ -149,7 +149,7 @@ def run():
   #print "machine %d is sleeping for %d sec."%(comm_rank,sec)
   #time.sleep(sec)
   
-  for i in range(2,comm_size,3):
+  for i in range(2,comm_size+2,3):
     if comm_rank==i or comm_rank==i-1 or comm_rank==i-2:
       print "Machine %d/%d - Start loading the competitorsets for TRAIN"%(comm_rank,comm_size)
       t0 = time.time()
@@ -334,7 +334,7 @@ def run():
       #print "machine %d is sleeping for %d sec."%(comm_rank,sec)
       #time.sleep(sec)
       
-      for i in range(2,comm_size,3):
+      for i in range(2,comm_size+2,3):
         if comm_rank==i or comm_rank==i-1 or comm_rank==i-2:
           print "Machine %d/%d - Start loading the competitorsets for VAL"%(comm_rank,comm_size)
           cs_test = CompetitorSetCollection(num_sets=num_sets, mode='val')

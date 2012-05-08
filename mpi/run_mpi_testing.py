@@ -29,6 +29,7 @@ import time
 import MySQLdb as mdb
 from baselines.reject_baseline import *
 from baselines.random_baseline import *
+from baselines.singlefeature_baseline import *
 
 try:
     import cPickle as pickle
@@ -156,7 +157,7 @@ def run():
   #print sgd
   
   # load ALL test data
-  num_sets = 'max' # 'max' or 10000 -> if max, everybody should have same testset
+  num_sets = 10000 #'max' # 'max' or 10000 -> if max, everybody should have same testset
   for i in range(comm_size):
     if i==comm_rank:
       print "Machine %d/%d - Start loading the competitorsets for TEST"%(comm_rank,comm_size)
@@ -177,6 +178,16 @@ def run():
         print "RANDOM accuracy:", randomaccuracy
         print "REJECT meannrank:", rejectmeannrank
         print "RANDOM meannrank:", randommeannrank  
+        
+      # do single feature baseline for all features
+      for featureidx in range(5):
+        sgfeataccuracy = singlefeature_baseline_test_predictionerror_mpi(cs_test)
+        sgfeatmeannrank = singlefeature_baseline_test_meannormalizedwinnerrank_mpi(cs_test)
+        if comm_rank == 0:
+          print "Baselines"
+          print "SGFEAT accuracy - featidx %d : %f"%(featureidx, sgfeataccuracy)
+          print "SGFEAT meannrank - featidx %d : %f"%(featureidx, sgfeatmeannrank) 
+        
          
   else:
     errorrate, truenonerate, prednonerate = test_predictionerror(fg, sgd, cs_test)
