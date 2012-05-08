@@ -49,10 +49,21 @@ def test_predictionerror(fg, sgd, data):
   fg.reinit_out_prod_get(req_ids)
 
   for idx, i in enumerate(indices):
+    
+    if update_lookahead_cnt == LOOK_AHEAD_LENGTH-1:
+      req_ids = data.get_req_ids_for_samples(indices[idx:idx+LOOK_AHEAD_LENGTH+1])
+      fg.reinit_out_prod_get(req_ids)
+      update_lookahead_cnt = 0
+    else:
+      update_lookahead_cnt += 1    
         
     competitorset = data.get_sample(i)
+    for l in competitorset.get_surferlist():
+      #print l[1]
+      assert(l[1] in req_ids)
     pred = sgd.predict(competitorset, testingphase=False)
     true = competitorset.get_winner()
+  
     #if true:
     #  print 'prediction', pred
     #  print 'true val', true
@@ -61,12 +72,7 @@ def test_predictionerror(fg, sgd, data):
     truenones += (true==None)
     prednones += (pred==None)
     
-    if update_lookahead_cnt == LOOK_AHEAD_LENGTH:
-      req_ids = data.get_req_ids_for_samples(indices[idx:idx+LOOK_AHEAD_LENGTH])
-      fg.reinit_out_prod_get(req_ids)
-      update_lookahead_cnt = 0
-    else:
-      update_lookahead_cnt += 1
+    
     
   safebarrier(comm)
   
@@ -120,8 +126,8 @@ def run():
  
   memory_for_personalized_parameters = 20 #512.0 # memory in MB if using personalized SGD learning  
   percentage = 0.2 # Dependent on machines in future min:10%, 2nodes->80%
-  outer_iterations = 10 #10
-  nepoches = 0.05 #0.05 #10
+  outer_iterations = 1 #10
+  nepoches = 0.0003 #0.05 #10
   alpha = 100.0
   beta = 0.001 #0.01
   #lambda_winner = 0.01
@@ -157,7 +163,7 @@ def run():
     if comm_rank==i or comm_rank==i-1 or comm_rank==i-2:
       print "Machine %d/%d - Start loading the competitorsets for TRAIN"%(comm_rank,comm_size)
       t0 = time.time()
-      num_sets = 1000000 # TODO remove
+      num_sets = 100000 # TODO remove
       print num_sets
 
       # TODO: CAREFULL - num_sets shouldn't be bigger than 500000
