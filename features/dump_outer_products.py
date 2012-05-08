@@ -56,13 +56,13 @@ class OuterProductDumper():
   def dump_outer_product(self, req_id, data):
     thedata = cPickle.dumps(data)    
     try:        
-      self.cursor.execute(self.request, (req_id, thedata, ))
+      self.cursor.execute(self.request, (req_id, thedata ))
     except MySQLdb.IntegrityError:
       pass
   
   def commit(self):
     self.sq.commit()
-
+    
   def get_dicts(self, req_id):
     user1 = self.req_user_map[req_id][0]
     dict1 = pull_data_for_user(self.cursor, user1)
@@ -94,12 +94,9 @@ class OuterProductDumper():
       if counter % 1000 == 0:
         print '%s finished %s/%s' % (comm_rank, counter, 
                                      len(self.req_user_map.keys()))
-           
-            
+
       total_time -= t
-      counter = 0
       
-      self.commit()
     print 'mean time: %f sec'%(total_time/float(counter))
     t = time.time()
     

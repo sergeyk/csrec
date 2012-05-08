@@ -22,7 +22,7 @@ class FeatureGetter():
     'user_data.pkl'
     """
 
-    def __init__(self, testing=True):
+    def __init__(self, testing=False):
         if testing:
             DATA_FILE = 'sampled_user_data.pkl'
             self.user_pklfile = csrec_paths.get_features_dir() +DATA_FILE
