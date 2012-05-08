@@ -34,7 +34,7 @@ def reject_baseline_test_meannormalizedwinnerrank(data):
     if true==None:
       nrank = 0
     else:
-      n = len(cand) 
+      n = len(competitorset.get_surferlist()) + 1 # all candidates + rejectcandidate
       nrank = float(n)/(2*float(n-1)) # Tim thinks it works out like this mathematically
     sumnrank += nrank
     
@@ -51,7 +51,7 @@ def reject_baseline_test_meannormalizedwinnerrank_mpi(data):
     if true==None:
       nrank = 0
     else:
-      n = len(cand) 
+      n = len(competitorset.get_surferlist()) + 1 # all candidates + rejectcandidate
       nrank = float(n)/(2*float(n-1)) # Tim thinks it works out like this mathematically
     sumnrank += nrank
   

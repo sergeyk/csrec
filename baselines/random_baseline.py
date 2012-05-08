@@ -8,7 +8,7 @@ def random_baseline_test_predictionerror(data):
     cs = data.get_sample(i)
     noptions = 1 + len(cs.get_surferlist())
     sumacc += 1 / float(noptions)
-  accuracy = sumacc / len(data)
+  accuracy = sumacc / float(N)
   return accuracy
 
 def random_baseline_test_predictionerror_mpi(data):
@@ -20,7 +20,7 @@ def random_baseline_test_predictionerror_mpi(data):
     sumacc += 1 / float(noptions)
   safebarrier(comm)
   sumacc = comm.allreduce(sumacc)
-  accuracy = sumacc / len(data)
+  accuracy = sumacc / float(N)
   return accuracy
 
 def random_baseline_test_meannormalizedwinnerrank():

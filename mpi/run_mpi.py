@@ -16,6 +16,7 @@ Roadmap:
 '''
 from learning.gradientdescent_personalization import SGDLearningPersonalized
 from learning.gradientdescent import SGDLearning
+from learning.gradientdescent_rhosthash import SGDLearningRHOSTHASH
 from competitor_sets.competitor_sets import CompetitorSetCollection
 from competitor_sets.Sqler import *
 from features.user_features import FeatureGetter
@@ -123,6 +124,7 @@ def run():
   #lambda_reject = 0.01
   verbose = False
   personalization = False # no hashing -> faster
+  rhostsize = 10000
   
   fg = FeatureGetter(False)
 
@@ -151,7 +153,7 @@ def run():
     if i==comm_rank:
       print "Machine %d/%d - Start loading the competitorsets for TRAIN"%(comm_rank,comm_size)
       t0 = time.time()
-      num_sets = 1000000 # TODO remove
+      num_sets = 1000 #1000000 # TODO remove
       print num_sets
 
       # TODO: CAREFULL - num_sets shouldn't be bigger than 500000
@@ -200,7 +202,9 @@ def run():
       if personalization:
         sgd = SGDLearningPersonalized(featuredimension, get_feature_function, memory_for_personalized_parameters) # featdim +1 iff cheating
       else:
-        sgd = SGDLearning(featuredimension, get_feature_function) # without personalization/hashing, faster
+        #sgd = SGDLearning(featuredimension, get_feature_function) # without personalization/hashing, faster
+        sgd = SGDLearningRHOSTHASH(featuredimension, get_feature_function, rhostsize=rhostsize)
+        
       N = cs_train.get_nsamples()
       niter = int(N*nepoches)
       
@@ -254,30 +258,46 @@ def run():
         if comm_rank == 0:
           print "all nodes arrived and we start allreduce/broadcasting"
         theta = comm.allreduce(sgd.theta)/float(comm_size)
+        if comm_rank == 0:
+          print "allreduce done for theta"
         if personalization:
           theta_hosts = comm.allreduce(sgd.theta_hosts)/float(comm_size)
+          if comm_rank == 0:
+            print "allreduce done for theta_hosts"
         r = comm.allreduce(sgd.r)/float(comm_size)
+        if comm_rank == 0:
+          print "allreduce done for r"
               
         # For the r_hosts we need to juggle a little bit to get it going
         # Just build the mean over all machines that actually touched a specific host
         #if comm_rank == 0:
           #embed()
         #safebarrier(comm)
-        r_hosts_orig = sgd.r_hosts
-        r_hosts_list = comm.allreduce([sgd.r_hosts])
         
-        my_hosts = r_hosts_orig.keys()
-        host_count = {k:0 for k in my_hosts}
-        new_r_hosts = {k:0 for k in my_hosts}
-        for other_hosts in r_hosts_list:
-          for key in other_hosts:
-            if key in my_hosts:
-              host_count[key] += 1
-              new_r_hosts[key] += other_hosts[key]
-        for k in new_r_hosts:
-          new_r_hosts[k] /= host_count[k]      
-        r_hosts = new_r_hosts
-      
+        #r_hosts_orig = sgd.r_hosts
+        #r_hosts_list = comm.allreduce([sgd.r_hosts])
+        #if comm_rank == 0:
+        #  print "allreduce done for r_hosts"
+        
+        #my_hosts = r_hosts_orig.keys()
+        #host_count = {k:0 for k in my_hosts}
+        #new_r_hosts = {k:0 for k in my_hosts}
+        #for other_hosts in r_hosts_list:
+        #  for key in other_hosts:
+        #    if key in my_hosts:
+        #      host_count[key] += 1
+        #      new_r_hosts[key] += other_hosts[key]
+        #for k in new_r_hosts:
+        #  new_r_hosts[k] /= host_count[k]      
+        #r_hosts = new_r_hosts
+        #if comm_rank == 0:
+        #  print "special computing done for r_hosts"
+        
+        
+        r_hosts = comm.allreduce(sgd.r_hosts)/float(comm_size)
+        if comm_rank == 0:
+          print "allreduce done for r_hosts"
+        
         print 'spreading mean of parameters done!'
         sgd.theta = theta
         if personalization: sgd.theta_hosts = theta_hosts
