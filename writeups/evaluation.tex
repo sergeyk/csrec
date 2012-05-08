@@ -11,6 +11,7 @@ These baselines present simple feature-based rules, such as ordering by the numb
 We call these single-feature baselines.
 Although the exact ranking model currently deployed at CouchSurfing was not shared with us, we were told that it is a simple rule-based approach that most likely involves the parameters mentioned above.
 
+The specific baselines were:
 \begin{itemize}
 \item \textit{Random} Baseline that predicts a random element from the
 competitor set
@@ -47,6 +48,18 @@ This has certain effects, described below.
 \label{fig:eval}
 \end{figure}
 
-For a summary of the results see \autoref{fig:eval} which shows PA and ANWR on competitorsets of a certain minimum cardinality. One can observe that we consistently outperform the baselines by X-Y percent. For larger competitor sets the recommendation or ranking task becomes harder and performance drops. Especially in this regime, our algorithm supports hosts better in choosing the right couch surfer to accept. Due to the normalization the ANWR stays roughly constant. The average rank for the random baseline is 0.5 (``the middle''). Interestingly, some of the single-feature baselines do worse than the random baseline (e.g. the number of people that have vouched to you) even though one might think they would be helpful. The number of friends and the number of references performs better. Using our system, on average, a host needs to browse 39\% of the list compared to 46\% for the the second best ranking approach.
+For a summary of the results see \autoref{fig:eval} which shows PA and ANWR on competitor sets of a certain minimum cardinality.
+One can observe that we consistently outperform the baselines by several percent.
+For larger competitor sets, the recommendation or ranking task becomes harder and performance drops.
+Especially in this regime, our algorithm supports hosts better in choosing the right couch surfer to accept.
 
-Why is this such a hard problem? First of all, notice that estimating probabilities including the possibility of rejection is much harder than just ranking of candidates due to the fact that rejectance might have nothing to do with the candidates themself or the hosts preference but may simply be dependent on the host's availability. This availability is hard to to infer automatically from the user's profile. For us it was impossible to capture this kind of time-dependent information because we were only supplied with the current state of the CouchSurfing database. Furthermore, note that this also means that we cannot know e.g. when two users became friends on the network. This can lead to interfering behavior. Assume that we know that host $h$ accepted surfer $s$ from  a competitor set $S$ and we know that they are friends. Our model infers that it this friendship might be \textit{the} critical and discriminative feature. However, $h$ and $s$ might not have been friends before the accepted couchrequest but only after they spent some time with each other. Similarly, our current model does not capture other temporal relationships such as whether host and surfer had been in contact before the actual request. We hypothesize that accurate modeling of this temporal structure in the data should improve performance significantly.
+Due to the normalization the ANWR error metric stays roughly constant as cardinality of the set increases.
+The average rank for the random baseline is 0.5 (``the middle'').
+Interestingly, some of the single-feature baselines do worse than the random baseline (e.g. the number of people that have vouched to you).
+The number of friends and the number of references performs better than random.
+Using our system, on average, a host needs to browse 39\% of the list compared to 46\% for the the second best approach.
+
+\subsection{Discussion}
+Why is this such a hard problem? First of all, notice that estimating probabilities including the possibility of rejection is much harder than just ranking of candidates due to the fact that rejectance might have nothing to do with the candidates themself or the hosts preference but may simply be dependent on the host's availability. This availability is hard to to infer automatically from the user's profile. For us it was impossible to capture this kind of time-dependent information because we were only supplied with the current state of the CouchSurfing database.
+
+Furthermore, note that this also means that we cannot know e.g. when two users became friends on the network. This can lead to interfering behavior. Assume that we know that host $h$ accepted surfer $s$ from  a competitor set $S$ and we know that they are friends. Our model infers that it this friendship might be \textit{the} critical and discriminative feature. However, $h$ and $s$ might not have been friends before the accepted couchrequest but only after they spent some time with each other. Similarly, our current model does not capture other temporal relationships such as whether host and surfer had been in contact before the actual request. We hypothesize that accurate modeling of this temporal structure in the data should improve performance significantly.
