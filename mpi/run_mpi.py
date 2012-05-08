@@ -17,7 +17,7 @@ Roadmap:
 from learning.gradientdescent_personalization import SGDLearningPersonalized
 from learning.gradientdescent import SGDLearning
 from competitor_sets.competitor_sets import CompetitorSetCollection
-from competitor_sets.Sqler import Sqler
+from competitor_sets.Sqler import *
 from features.user_features import FeatureGetter
 from math import sqrt
 import random
@@ -44,13 +44,13 @@ def test_predictionerror(fg, sgd, data):
   
   indices = range(comm_rank, N, comm_size) 
   update_lookahead_cnt = 0  
-  req_ids = data.get_req_ids_for_samples(indices[0:LOOK_AHEAD_LENGTH])
+  req_ids = data.get_req_ids_for_samples(indices[0:LOOK_AHEAD_LENGTH+1])
   fg.reinit_out_prod_get(req_ids)
 
   for i in indices:
     update_lookahead_cnt += 1
     if update_lookahead_cnt == LOOK_AHEAD_LENGTH:
-      req_ids = data.get_req_ids_for_samples(indices[i:i+LOOK_AHEAD_LENGTH])
+      req_ids = data.get_req_ids_for_samples(indices[i:i+LOOK_AHEAD_LENGTH+1])
       fg.reinit_out_prod_get(req_ids)
       update_lookahead_cnt = 0
     
@@ -131,7 +131,7 @@ def run():
 
   get_feature_function = fg.get_features
     
-  sq = Sqler()
+  sq = get_sqler()
   overallnum_sets = sq.get_num_compsets()
   num_sets = int(overallnum_sets*percentage)
   overallnum_testsets = sq.get_num_compsets(validation = True)

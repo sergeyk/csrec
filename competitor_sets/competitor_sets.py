@@ -154,4 +154,3 @@ if __name__=='__main__':
   print cs.get_hostID()
   print cs.get_surferlist()
   print cs.get_winner()
-  

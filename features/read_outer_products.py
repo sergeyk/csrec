@@ -4,7 +4,7 @@ Instead of reading the features one at a time, we
 '''
 import numpy as np
 import cPickle
-from competitor_sets.Sqler import Sqler
+from competitor_sets.Sqler import Sqler, get_sqler
 import time, random
 import MySQLdb as mdb
 from mpi.mpi_imports import *
@@ -20,7 +20,7 @@ class OuterProducGetter():
     self.init_db()
     
   def init_db(self):
-    sqler = Sqler()
+    sqler = get_sqler()
     self.sq = sqler.db
     self.cursor = self.sq.cursor()
         
@@ -60,7 +60,7 @@ class OuterProducGetter():
     sql_cmd_extens = " or req_id = %d "
     sql_cmd_base = "select req_id, data from "+self.DUMP_TABLE+" where req_id = %d "
     print 'create outer products from req ids...'
-    t = time.time()
+    t_out = time.time()
     req_len_cnter = 0
     first_elem = True
     last_elem = False
@@ -95,12 +95,12 @@ class OuterProducGetter():
           self.outer_products[res[0]] = r
         req_len_cnter = 0
         first_elem = True
-    t -= time.time()
-    print '\t creating outer prods took %f secs'%-t
+    t_out -= time.time()
+    print '\t creating outer prods took %f secs'%-t_out
           
 if __name__=='__main__':
   # get the damn req_ids
-  sq = Sqler()
+  sq = get_sqler()
   cursor = sq.db.cursor()
   cursor.execute("Select id from couchrequest limit 0,500000")
   req_ids = cursor.fetchall()

@@ -105,7 +105,7 @@ def clusterize(sq, reqs):
   return req_sets  
 
 def get_sessions(lower, upper, force=False):
-  sq = Sqler()
+  sq = get_sqler()
   #table = 'couchrequest'
   table = 'couchrequest'    
   
@@ -183,7 +183,7 @@ def create_sessions():
   get_sessions(lower, upper, force=False)
   
 def compile_sessions():  
-  sq = Sqler()
+  sq = get_sqler()
   first_lines = True  
   comp_set_id = 0
   too_much_count = 0
