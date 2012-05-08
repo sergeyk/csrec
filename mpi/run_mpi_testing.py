@@ -31,6 +31,7 @@ import MySQLdb as mdb
 from baselines.reject_baseline import *
 from baselines.random_baseline import *
 from baselines.singlefeature_baseline import *
+RON_MODE = (os.path.exists('/home/ron'))
 
 try:
     import cPickle as pickle
@@ -71,8 +72,9 @@ def test_predictionerror(fg, sgd, data, allow_rejects=True):
     try:
       pred = sgd.predict(competitorset, testingphase=False, allow_rejects=allow_rejects)
     except:
-      from IPython import embed
-      embed()
+        if not RON_MODE:
+            from IPython import embed
+            embed()
     true = competitorset.get_winner()
     #if true:
     #  print 'prediction', pred
@@ -154,7 +156,12 @@ def run():
     filename = 'parameters_lwin_%f_lrej_%f_testing_%d_personalized_%d_numsets_%d_outerit_%d_nepoches_%d.pkl'%(lambda_winner, lambda_reject, testing, personalization, num_sets, outer_iterations,nepoches)
     #filename = 'parameters_lwin_0.000100_lrej_0.000100_testing_0_personalized_0_numsets_10000_outerit_10_nepoches_0.pkl' # TODO remove
     filename = 'parameters_lwin_0.001000_lrej_0.001000_testing_0_personalized_0_numsets_100000_outerit_10_nepoches_0.pkl'
+    4
     print filename
+    if RON_MODE:
+        dirname = '/home/ron/csrec/params/'
+        filename = 'parameters_lwin_0.100000_lrej_0.100000_testing_0_personalized_0_numsets_500000_outerit_2_nepoches_0.pkl'
+
 
     if personalization:
       theta, theta_hosts, r, r_hosts = pickle.load( open( dirname+filename, "rb" ) ) 
@@ -199,7 +206,7 @@ def run():
       
     safebarrier(comm)
   
-  baseline = True
+  baseline = False
   allow_rejects = False
   # let every machine do part of it
   if baseline:
