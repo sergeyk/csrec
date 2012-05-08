@@ -17,7 +17,7 @@ class OuterProductDumper():
   START_OFFSET = 0
 
   def __init__(self):
-    sqler = Sqler()
+    sqler = get_sqler()
     self.sq = sqler.db
     self.cursor = self.sq.cursor()
     self.fg = FeatureGetter()
