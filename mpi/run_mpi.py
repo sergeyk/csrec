@@ -46,13 +46,13 @@ def test_predictionerror(fg, sgd, data):
   indices = range(comm_rank, N, comm_size) 
   update_lookahead_cnt = 0  
   req_ids = data.get_req_ids_for_samples(indices[0:LOOK_AHEAD_LENGTH])
-  fg.reinit_out_prod_get(req_ids)
+  fg.upt_out_prod_get(req_ids)
 
   for idx, i in enumerate(indices):
     
     if update_lookahead_cnt == LOOK_AHEAD_LENGTH-1:
       req_ids = data.get_req_ids_for_samples(indices[idx:idx+LOOK_AHEAD_LENGTH+1])
-      fg.reinit_out_prod_get(req_ids)
+      fg.upt_out_prod_get(req_ids)
       update_lookahead_cnt = 0
     else:
       update_lookahead_cnt += 1    
@@ -93,13 +93,13 @@ def test_meannormalizedwinnerrank(fg, sgd, data, verbose=False):
   indices = range(comm_rank, N, comm_size)
   update_lookahead_cnt = 0  
   req_ids = data.get_req_ids_for_samples(indices[0:LOOK_AHEAD_LENGTH])
-  fg.reinit_out_prod_get(req_ids)
+  fg.upt_out_prod_get(req_ids)
   
   for i in indices:
     update_lookahead_cnt += 1
     if update_lookahead_cnt == LOOK_AHEAD_LENGTH:
       req_ids = data.get_req_ids_for_samples(indices[i:i+LOOK_AHEAD_LENGTH])
-      fg.reinit_out_prod_get(req_ids)
+      fg.upt_out_prod_get(req_ids)
       update_lookahead_cnt = 0
       
     competitorset = data.get_sample(i)
@@ -220,7 +220,7 @@ def run():
         random.shuffle(sampleindices)
         update_lookahead_cnt = 0
         req_ids = cs_train.get_req_ids_for_samples(sampleindices[0:LOOK_AHEAD_LENGTH])
-        fg.init_out_prod_get(req_ids)
+        fg.upt_out_prod_get(req_ids)
         
 #        from IPython import embed
 #        embed()  
@@ -233,7 +233,7 @@ def run():
           update_lookahead_cnt += 1
           if update_lookahead_cnt == LOOK_AHEAD_LENGTH:
             req_ids = cs_train.get_req_ids_for_samples(sampleindices[innerit:innerit+LOOK_AHEAD_LENGTH])
-            fg.reinit_out_prod_get(req_ids)
+            fg.upt_out_prod_get(req_ids)
             update_lookahead_cnt = 0
           
           # draw random sample - UPDATE: now first get a random permutation, then do it            
@@ -386,15 +386,11 @@ def run():
     
     
     # store errorrates somewhere
-    filename = 'errors_lwin_%f_lrej_%f_testing_%d_personalized_%d_numsets_%d_%d_outerit_%d_nepoches_%d.pkl'%(lambda_winner,lambda_reject,testing,personalization,num_sets, outer_iterations,nepoches)
+    filename = 'errors_lwin_%f_lrej_%f_testing_%d_personalized_%d_numsets_%d_outerit_%d_nepoches_%d.pkl'%(lambda_winner,lambda_reject,testing,personalization,num_sets, outer_iterations,nepoches)
     
     if os.path.exists('/tscratch'):
       pickle.dump( (trainerrors, testerrors, trainmeannrank, testmeannrank), open( dirname+filename, "wb" ) )
-      os.system('chmod -R 777 '+dirname)
-     
-     
-     
-     
+      os.system('chmod -R 777 '+dirname)    
      
 if __name__=='__main__':
   run()
