@@ -112,12 +112,12 @@ def run():
   memory_for_personalized_parameters = 20 #512.0 # memory in MB if using personalized SGD learning  
   percentage = 0.2 # Dependent on machines in future min:10%, 2nodes->80%
   outer_iterations = 1 #10 #10
-  nepoches = 0.0005 #0.05 #10
+  nepoches = 0.05 #0.05 #10
   alpha = 100.0
   beta = 0.001 #0.01
   #lambda_winner = 0.01
   #lambda_reject = 0.01
-  verbose = True
+  verbose = False
   personalization = False # no hashing -> faster
   
   fg = FeatureGetter(False)
@@ -157,10 +157,16 @@ def run():
       cs_train = CompetitorSetCollection(num_sets=num_sets, testing=testing, validation=False, just_winning_sets=just_winning_sets)
           
       t1 = time.time()
-      print "Finished loading the competitorsets for TRAIN"
+      print "Machine %d/%d - Finished loading the competitorsets for TRAIN."%(comm_rank,comm_size)
       print "Loading competitorsets took %s."%(t1-t0)
+ 
     safebarrier(comm)
   
+  
+  # sleeping so that we dont kill database
+  sec = comm_rank
+  print "machine %d is sleeping for %d sec."%(comm_rank,sec)
+  time.sleep(sec)
   
   # CV over lamba1, lambda2
   #lambdas = [10**-3, 10**-2, 10**-1, 10**0, 10**+1]
@@ -202,7 +208,7 @@ def run():
           i = outit*niter + innerit
           eta_t = 1/sqrt(alpha+i*beta)
           if not i%(niter/5):
-              print "Iterations \n  out: %d/%d \n  in: %d/%d - eta %f"%(outit+1,outer_iterations, innerit+1,niter,eta_t)
+              print "Machine %d/%d - Iterations \n  out: %d/%d \n  in: %d/%d - eta %f"%(comm_rank, comm_size, outit+1,outer_iterations, innerit+1,niter,eta_t)
           
           update_lookahead_cnt += 1
           if update_lookahead_cnt == LOOK_AHEAD_LENGTH:
