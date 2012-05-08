@@ -50,10 +50,21 @@ def test_predictionerror(fg, sgd, data):
   fg.reinit_out_prod_get(req_ids)
 
   for idx, i in enumerate(indices):
+    
+    if update_lookahead_cnt == LOOK_AHEAD_LENGTH-1:
+      req_ids = data.get_req_ids_for_samples(indices[idx:idx+LOOK_AHEAD_LENGTH+1])
+      fg.reinit_out_prod_get(req_ids)
+      update_lookahead_cnt = 0
+    else:
+      update_lookahead_cnt += 1    
         
     competitorset = data.get_sample(i)
+    for l in competitorset.get_surferlist():
+      #print l[1]
+      assert(l[1] in req_ids)
     pred = sgd.predict(competitorset, testingphase=False)
     true = competitorset.get_winner()
+  
     #if true:
     #  print 'prediction', pred
     #  print 'true val', true
@@ -62,12 +73,7 @@ def test_predictionerror(fg, sgd, data):
     truenones += (true==None)
     prednones += (pred==None)
     
-    if update_lookahead_cnt == LOOK_AHEAD_LENGTH:
-      req_ids = data.get_req_ids_for_samples(indices[idx:idx+LOOK_AHEAD_LENGTH])
-      fg.reinit_out_prod_get(req_ids)
-      update_lookahead_cnt = 0
-    else:
-      update_lookahead_cnt += 1
+    
     
   safebarrier(comm)
   

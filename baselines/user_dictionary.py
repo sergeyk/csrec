@@ -10,14 +10,15 @@ import time
 from IPython import embed
 
 class UserDictionaries():
-  def __init__(self, threshold=0.75):
+  def __init__(self, threshold=0.75, force=False):
     self.dict_file = os.path.join(csrec_paths.get_dataset_dir(),'baseline_feat_dict')
     self.threshold = threshold
     sq = get_sqler()
     self.cursor = sq.db.cursor()
     self.features = ['priority', 'priority2', 'vouched', 'references_count', 
       'friend_link_count', 'references_to_count']
-    if  os.path.exists(self.dict_file):
+    if os.path.exists(self.dict_file) and not force:
+      print 'load user baseline dictionary from %s'%self.dict_file
       self.dict = cPickle.load(open(self.dict_file, 'r'))
     else:
       self.dict = {}
@@ -25,12 +26,12 @@ class UserDictionaries():
       cPickle.dump(self.dict, open(self.dict_file, 'w'))    
     
     self.thresh_file = os.path.join(csrec_paths.get_dataset_dir(),'baseline_feat_threshs_'+str(self.threshold))
-    if  os.path.exists(self.thresh_file):
+    if  os.path.exists(self.thresh_file) and not force:
       self.threshs = cPickle.load(open(self.thresh_file, 'r'))
     else:
       self.threshs = []
       self.create_threshs()
-      cPickle.dump(self.dict, open(self.thresh_file, 'w'))
+      cPickle.dump(self.threshs, open(self.thresh_file, 'w'))
     
   def get_dictionary_for_user(self, user_id):
     return self.dict[user_id]
@@ -71,10 +72,14 @@ class UserDictionaries():
       t = time.time()
       self.cursor.execute("select "+f+" from user order by "+f+" limit "+str(pick_elem)+", 1")      
       res = self.cursor.fetchall()[0][0]
+      print 'thresh:', res
       self.threshs.append(res)
       t -= time.time()
       print 'db request took %f'%-t
       
 if __name__=='__main__':
-  ud = UserDictionaries()
-  ud.create_dictionary()
+  ud = UserDictionaries(force=True)
+  #ud.create_dictionary()
+  embed()
+  ud.get_dictionary_for_user(8)
+  
