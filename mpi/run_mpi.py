@@ -313,13 +313,17 @@ def run():
       if comm_rank == 0:
           if RON_MODE:
               dirname = '/home/ron/csrec/params/'
+              filename = 'parameters_lwin_%f_lrej_%f_testing_%d_personalized_%d_numsets_%d_outerit_%d_nepoches_%d.pkl' % (lambda_winner, lambda_reject, testing, personalization, num_sets, outer_iterations,nepoches)
+              pickle.dump( (sgd.theta, sgd.r, sgd.r_hosts), open( dirname+filename, "wb" ) )
+              print 'writing params to', dirname+filename
           else:
               dirname = '/tscratch/tmp/csrec/'
           if os.path.exists('/tscratch'):
             if not os.path.exists(dirname):
               os.makedirs(dirname)
           # 777 permission on directory
-          os.system('chmod -R 777 '+dirname)
+          if not RON_MODE:
+              os.system('chmod -R 777 '+dirname)
               
           filename = 'parameters_lwin_%f_lrej_%f_testing_%d_personalized_%d_numsets_%d_outerit_%d_nepoches_%d.pkl'%(lambda_winner, lambda_reject, testing, personalization, num_sets, outer_iterations,nepoches)
           if os.path.exists('/tscratch'):
