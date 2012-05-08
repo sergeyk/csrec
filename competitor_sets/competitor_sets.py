@@ -6,6 +6,8 @@ from Sqler import *
 from mpi.mpi_imports import *
 import random
 from IPython import embed 
+import time
+import csrec_paths
 
 class CompetitorSet:
   
@@ -80,38 +82,34 @@ class CompetitorSetCollection:
       if not self.num_sets == 'max':
         request += " limit 0, " +str(self.num_sets)
     
-    print 'start loading competitor'
-    res = self.sq.rqst(request, True)
     
     if mode == 'train' and not num_sets == 'max':
-      probability = self.num_sets/float(self.NUM_TRAIN_SETS)
-      random.seed(time.time())
-      # ok this is it, we need to go random
-      sets = []
-      go_on = True
-      entering = False
-      last_set_id = -1
-      while go_on:
-        row = res.fetch_row(1,0)
-        if row == ():
-          go_on = False
-          break
-        row = row[0]
-        set_id = row[1]
-        if set_id == last_set_id:
-          if entering:
-            sets.append(row)
-        else:
-          # We see a new set_id. decide randomly whether to pick this.
-          prob = random.random()
-          if prob < probability:
-            entering = True
-            sets.append(row)
-          else:
-            entering = False
-        last_set_id = set_id          
+      set_filename = os.path.join(csrec_paths.ROOT, 'competitor_sets', 'all_set_ids')
+      if not os.path.exists(set_filename):
+        set_ids_req = "select distinct set_id from competitor_sets where train_val_test=1"
+        print 'read the set_ids'
+        res = self.sq.rqst(set_ids_req)
+        set_ids = res.fetch_row(11000000,0)
+        set_ids = [(int(x[0]), ) for x in set_ids]
+        cPickle.dump(set_ids, open(set_filename, 'w'))
+      else:
+        set_ids = cPickle.load(open(set_filename, 'r'))
+        
+      indices = [random.randint(0,len(set_ids)-1) for x in range(self.num_sets)]
+      smaller_set_ids = [set_ids[i] for i in indices]
+      #print 'set_ids:',set_ids
+      #print smaller_set_ids
+      fetch_request = "select * from competitor_sets where set_id = %s"
+      t_db = time.time()
+      cursor = self.sq.db.cursor()
+      cursor.executemany(fetch_request, smaller_set_ids)
+      sets = cursor.fetchall()
+      t_db -= time.time()
+      print 'db lookup for compset took %f sec'%-t      
     
     else:
+      print 'start loading competitor'
+      res = self.sq.rqst(request, True)
       sets = res.fetch_row(11000000,0)
     last_set_id = sets[0][CompetitorSet.TRANS['set_id']]
     curr_set = []
@@ -155,13 +153,7 @@ class CompetitorSetCollection:
     return req_ids
 
 if __name__=='__main__':
+  t = time.time()
   cs_coll_train = CompetitorSetCollection(num_sets=1000000)
-  cs_coll_test = CompetitorSetCollection(num_sets=10000, mode='val')
-  #cs_coll.get_user_dict("examplar_user_table")
-  N = cs_coll_train.get_nsamples()
-  N2 = cs_coll_test.get_nsamples()
-  print N, N2
-  cs = cs_coll_train.get_sample(random.randint(0,N-1))
-  print cs.get_hostID()
-  print cs.get_surferlist()
-  print cs.get_winner()
+  t -= time.time()
+  print 'Loading comp set took %f secs'%-t
