@@ -97,7 +97,6 @@ class OuterProductDumper():
            
             
       total_time -= t
-      counter = 0
       
       self.commit()
     print 'mean time: %f sec'%(total_time/float(counter))
