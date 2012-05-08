@@ -5,6 +5,9 @@ import numpy as np
 from Sqler import *
 from mpi.mpi_imports import *
 import random
+from IPython import embed 
+import time
+import csrec_paths
 
 class CompetitorSet:
   
@@ -48,7 +51,8 @@ class CompetitorSetCollection:
   ''' Storage of all competitor sets for all hosts. Load from dump, provide 
   CompetitorSet object'''
   
-  # The split date forms a 60:40 split.
+  NUM_TRAIN_SETS = 2954911 # Looked up and fix 
+  
   def __init__(self, num_sets=100, mode = 'train'):
     ''' mode needs to be of train/test/val'''
     print 'start Sqler'
@@ -68,16 +72,9 @@ class CompetitorSetCollection:
     train_val_test = str(train_val_test)
     
     if mode == 'train':
-      self.set_ids_table = "select train_val_test, set_id from (select train_val_test, set_id \
-       from competitor_sets group by set_id) as t where train_val_test = " + \
-       train_val_test + " order by rand()"
+      request = "select * from competitor_sets where \
+       train_val_test = 1"
       
-      if not self.num_sets == 'max':
-        self.set_ids_table += "limit 0, " +str(self.num_sets)
-            
-      request = "select competitor_sets.* from competitor_sets join (" + \
-        self.set_ids_table + ") as T on (competitor_sets.set_id = T.set_id) \
-        order by set_id"
     else:
       request = "select * from competitor_sets where train_val_test = " + \
         train_val_test
@@ -85,10 +82,46 @@ class CompetitorSetCollection:
       if not self.num_sets == 'max':
         request += " limit 0, " +str(self.num_sets)
     
-    print 'start loading competitor'
-    res = self.sq.rqst(request, True)       
     
-    sets = res.fetch_row(11000000,0)
+    if mode == 'train' and not num_sets == 'max':
+      set_filename = os.path.join(csrec_paths.ROOT, 'competitor_sets', 'all_set_ids')
+      if not os.path.exists(set_filename):
+        set_ids_req = "select distinct set_id from competitor_sets where train_val_test=1"
+        print 'read the set_ids'
+        res = self.sq.rqst(set_ids_req)
+        set_ids = res.fetch_row(11000000,0)
+        set_ids = [int(x[0]) for x in set_ids]
+        cPickle.dump(set_ids, open(set_filename, 'w'))
+        print 'pickled the set_ids'
+      else:
+        set_ids = cPickle.load(open(set_filename, 'r'))
+        
+      smaller_set_ids = np.random.random_integers(0,len(set_ids)-1,self.num_sets).tolist()
+      
+      base_string = "select * from competitor_sets where set_id in ("
+      sets = []
+      counter = 0
+      set_req = base_string
+      add_string = " %d,"
+      for s in smaller_set_ids:
+        set_req += add_string%s
+        counter += 1
+        if counter == 100000:
+          counter = 0
+          set_req = set_req[:-1]+')' # remove last 'or'
+          t_db = time.time()
+          cursor = self.sq.db.cursor()
+          cursor.execute(set_req)
+          sets += cursor.fetchall()
+          set_req = base_string
+      
+      t_db -= time.time()
+#      print 'db lookup for compset took %f sec'%-t      
+    
+    else:
+      print 'start loading competitor'
+      res = self.sq.rqst(request, True)
+      sets = res.fetch_row(11000000,0)
     last_set_id = sets[0][CompetitorSet.TRANS['set_id']]
     curr_set = []
     self.all_sets = []
@@ -131,13 +164,7 @@ class CompetitorSetCollection:
     return req_ids
 
 if __name__=='__main__':
-  cs_coll_train = CompetitorSetCollection(num_sets=10000)
-  cs_coll_test = CompetitorSetCollection(num_sets=10000, mode='val')
-  #cs_coll.get_user_dict("examplar_user_table")
-  N = cs_coll_train.get_nsamples()
-  N2 = cs_coll_test.get_nsamples()
-  print N, N2
-  cs = cs_coll_train.get_sample(random.randint(0,N-1))
-  print cs.get_hostID()
-  print cs.get_surferlist()
-  print cs.get_winner()
+  t = time.time()
+  cs_coll_train = CompetitorSetCollection(num_sets=1000000)
+  t -= time.time()
+  print 'Loading comp set took %f secs'%-t

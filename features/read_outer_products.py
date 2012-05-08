@@ -60,6 +60,7 @@ class OuterProducGetter():
     sql_cmd_extens = " or req_id = %d "
     sql_cmd_base = "select req_id, data from "+self.DUMP_TABLE+" where req_id = %d "
     print 'create outer products from req ids...'
+
     t_out = time.time()
     req_len_cnter = 0
     first_elem = True
@@ -96,6 +97,7 @@ class OuterProducGetter():
           self.outer_products[res[0]] = r
         req_len_cnter = 0
         first_elem = True
+
     t_out -= time.time()
     print '\t creating outer prods took %f secs'%-t_out
           

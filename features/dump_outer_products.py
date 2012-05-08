@@ -22,7 +22,7 @@ class OuterProductDumper():
     self.cursor = self.sq.cursor()
     self.fg = FeatureGetter()
               
-    self.dump_table = 'outer_products'
+    self.dump_table = 'outer_products2'
     self.request = "INSERT INTO "+self.dump_table+" (req_id, data) VALUES (%s, %s)"
     req_per_node = self.NUM_COUCHREQUESTS/comm_size 
     lower = comm_rank*req_per_node + self.START_OFFSET
