@@ -33,17 +33,14 @@ class FeatureGetter():
         self.num_users_total = 0
         self.total_num_fields = 0
         self.testing = testing
+        self.outer_product_getter = OuterProducGetter(self.dimension)
 
     def get_cached_feature(self, req_id):
         return self.outer_product_getter.get_product(req_id)
     
-    def init_out_prod_get(self, req_ids):
-        print 'initialize outer prods'
-        self.outer_product_getter = OuterProducGetter(self.dimension)
+    def upt_out_prod_get(self, req_ids):
+        #print 'initialize outer prods'        
         self.outer_product_getter.create_outer_prods_from_req_ids(req_ids)
-        
-    def reinit_out_prod_get(self, req_ids):
-        self.outer_product_getter.recreate_outer_prods_from_req_ids(req_ids)
         
     def init_dimensions(self):
         self.dimension = bucketizer.get_full_crossed_dimension(self.field_names)
