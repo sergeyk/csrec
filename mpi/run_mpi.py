@@ -91,7 +91,7 @@ def run():
   memory_for_personalized_parameters = 20 #512.0 # memory in MB if using personalized SGD learning  
   percentage = 0.2 # Dependent on machines in future min:10%, 2nodes->80%
   outer_iterations = 10 #10
-  nepoches = 0.3 #10
+  nepoches = 0.1 #10
   alpha = 100.0
   beta = 0.001 #0.01
   #lambda_winner = 0.01
@@ -117,9 +117,14 @@ def run():
   testing = False # should be false to get the full data set
   #testing = True # should be false to get the full data set
   
+  # sleeping so that we dont kill database
+  sec = 20*comm_rank
+  print "machine %d is sleeping for %d sec."%(comm_rank,sec)
+  time.sleep(sec)
+  
   print "Start loading the competitorsets for TRAIN and TEST"
   t0 = time.time()
-  num_sets = 100000 #100000 # TODO remove
+  num_sets = 2000#200000 # TODO remove
   print num_sets
   # TODO: CAREFULL - num_sets shouldn't be bigger than 500000
   if num_sets > 500000:
@@ -136,7 +141,7 @@ def run():
   
   # CV over lamba1, lambda2
   #lambdas = [10**-3, 10**-2, 10**-1, 10**0, 10**+1]
-  lambdas = [10**-2]
+  lambdas = [10**-1]
 
   trainerrors = np.zeros((len(lambdas),len(lambdas)))
   testerrors = np.zeros((len(lambdas),len(lambdas)))
@@ -146,7 +151,7 @@ def run():
   for lw,lambda_winner in enumerate(lambdas):
     #for lr,lambda_reject in enumerate(lambdas):
       lr = lw # we can't afford the full CV
-      lambda_reject = lambda_winner * 10.0
+      lambda_reject = lambda_winner #* 10.0
         
       # Create sgd object   
       if personalization:
@@ -161,7 +166,7 @@ def run():
         for innerit in range(niter):
           i = outit*niter + innerit
           eta_t = 1/sqrt(alpha+i*beta)
-          if not i%(niter/2):
+          if not i%(niter/5):
               print "Iterations \n  out: %d/%d \n  in: %d/%d - eta %f"%(outit+1,outer_iterations, innerit+1,niter,eta_t)
 
           # draw random sample  
@@ -171,7 +176,7 @@ def run():
           for l in competitorset.get_surferlist():
             assert(l[1] in req_ids)
             
-          if verbose and not i%10000 and i>1:
+          if verbose and not i%1000 and i>1:
               print "Iterations \n\tout: %d/%d \n\tin: %d/%d - eta %f - lambda %f"%(outit+1,outer_iterations, innerit+1,niter,eta_t, lambda_winner)
               print "\ttheta", min(sgd.theta), max(sgd.theta)
               print "\tr", sgd.r
@@ -218,6 +223,26 @@ def run():
         
       print 'done with training' 
         
+      # Store the parameters to /tscratch/tmp/csrec
+      if comm_rank == 0:
+          dirname = '/tscratch/tmp/csrec/'
+          if os.path.exists('/tscratch'):
+            if not os.path.exists(dirname):
+              os.makedirs(dirname)
+          # 777 permission on directory
+          os.system('chmod -R 777 '+dirname)
+              
+          filename = 'parameters_lwin_%f_lrej_%f_testing_%d.pkl'%(lambda_winner, lambda_reject, testing)
+          if os.path.exists('/tscratch'):
+            if personalization:
+              pickle.dump( (sgd.theta, sgd.theta_hosts, sgd.r, sgd.r_hosts), open( dirname+filename, "wb" ) )
+            else:
+              pickle.dump( (sgd.theta, sgd.r, sgd.r_hosts), open( dirname+filename, "wb" ) )
+              print "Stored params at " + dirname+filename  
+        
+        
+        
+        
       # Compute the errors
       safebarrier(comm)
       
@@ -231,6 +256,10 @@ def run():
           print "TrueNone-Rate: %f -> error: %f"%(truenonerate, 1.0 - truenonerate)
           print "PredNone-Rate: %f"%(prednonerate)
           print "MEANNRANK: %f"%(meannrank)
+      
+      # need to sleep again st we don't kill database
+      print "machine %d is sleeping for %d sec."%(comm_rank,sec)
+      time.sleep(sec)
       
       cs_test = CompetitorSetCollection(num_sets=num_sets, testing=testing, validation=True, just_winning_sets=just_winning_sets)
       fg.reinit_out_prod_get(cs_test.get_all_req_ids())
@@ -248,21 +277,7 @@ def run():
           print "MEANNRANK: %f"%(meannrank)
 
 
-      # Store the parameters to /tscratch/tmp/csrec
-      if comm_rank == 0:
-          dirname = '/tscratch/tmp/csrec/'
-          if os.path.exists('/tscratch'):
-            if not os.path.exists(dirname):
-              os.makedirs(dirname)
-          # 777 permission on directory
-          os.system('chmod -R 777 '+dirname)
-              
-          filename = 'parameters_lwin_%f_lrej_%f_testing_%d.pkl'%(lambda_winner, lambda_reject, testing)
-          if os.path.exists('/tscratch'):
-            if personalization:
-              pickle.dump( (sgd.theta, sgd.theta_hosts, sgd.r, sgd.r_hosts), open( dirname+filename, "wb" ) )
-            else:
-              pickle.dump( (sgd.theta, sgd.r, sgd.r_hosts), open( dirname+filename, "wb" ) )
+
 
   # end of CV for loops
 
