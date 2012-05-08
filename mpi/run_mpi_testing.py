@@ -53,14 +53,16 @@ def test_predictionerror(fg, sgd, data):
 
   for idx, i in enumerate(indices):
     
-    if update_lookahead_cnt == LOOK_AHEAD_LENGTH-1:
-      req_ids = data.get_req_ids_for_samples(indices[idx:idx+LOOK_AHEAD_LENGTH+1])
+    if update_lookahead_cnt == LOOK_AHEAD_LENGTH-2:
+      req_ids = data.get_req_ids_for_samples(indices[idx:idx+LOOK_AHEAD_LENGTH+2])
       fg.upt_out_prod_get(req_ids)
       update_lookahead_cnt = 0
     else:
       update_lookahead_cnt += 1
     
     competitorset = data.get_sample(i)
+    for l in competitorset.get_surferlist():
+      assert(l[1] in req_ids)
     try:
       pred = sgd.predict(competitorset, testingphase=False)
     except:
@@ -98,8 +100,8 @@ def test_meannormalizedwinnerrank(fg, sgd, data):
   
   for idx, i in enumerate(indices):
     
-    if update_lookahead_cnt == LOOK_AHEAD_LENGTH-1:
-      req_ids = data.get_req_ids_for_samples(indices[idx:idx+LOOK_AHEAD_LENGTH+1])
+    if update_lookahead_cnt == LOOK_AHEAD_LENGTH-2:
+      req_ids = data.get_req_ids_for_samples(indices[idx:idx+LOOK_AHEAD_LENGTH+2])
       fg.upt_out_prod_get(req_ids)
       update_lookahead_cnt = 0
     else:
