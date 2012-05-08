@@ -36,6 +36,7 @@ class OuterProducGetter():
   
 
   def create_outer_prods_from_req_ids(self, req_ids):
+    self.outer_products = {}
     while True:
       try:
         self.unsafe_create_outer_prods_from_req_ids(req_ids)
