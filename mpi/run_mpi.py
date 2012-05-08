@@ -112,7 +112,7 @@ def run():
       
   memory_for_personalized_parameters = 20 #512.0 # memory in MB if using personalized SGD learning  
   percentage = 0.2 # Dependent on machines in future min:10%, 2nodes->80%
-  outer_iterations = 1#10 #10
+  outer_iterations = 10 #10
   nepoches = 0.05 #0.05 #10
   alpha = 100.0
   beta = 0.001 #0.01
@@ -149,7 +149,7 @@ def run():
     if i==comm_rank:
       print "Machine %d/%d - Start loading the competitorsets for TRAIN"%(comm_rank,comm_size)
       t0 = time.time()
-      num_sets = 30#0000 # TODO remove
+      num_sets = 300000 # TODO remove
       print num_sets
 
       # TODO: CAREFULL - num_sets shouldn't be bigger than 500000
