@@ -35,6 +35,7 @@ except:
     import pickle
     
 LOOK_AHEAD_LENGTH = 10000
+RON_MODE = (os.path.exists('/home/ron'))
 
 def test_predictionerror(fg, sgd, data):
 # computes predictionacc or error (getting it exactly right or not) 
@@ -116,7 +117,7 @@ def run():
  
   memory_for_personalized_parameters = 20 #512.0 # memory in MB if using personalized SGD learning  
   percentage = 0.2 # Dependent on machines in future min:10%, 2nodes->80%
-  outer_iterations = 3 #10
+  outer_iterations = 1 #10
   nepoches = 0.003 #0.05 #10
   alpha = 100.0
   beta = 0.001 #0.01
@@ -298,7 +299,10 @@ def run():
         
       # Store the parameters to /tscratch/tmp/csrec
       if comm_rank == 0:
-          dirname = '/tscratch/tmp/csrec/'
+          if RON_MODE:
+              dirname = '/home/ron/params/'
+          else:
+              dirname = '/tscratch/tmp/csrec/'
           if os.path.exists('/tscratch'):
             if not os.path.exists(dirname):
               os.makedirs(dirname)
