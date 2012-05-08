@@ -90,22 +90,33 @@ class CompetitorSetCollection:
         print 'read the set_ids'
         res = self.sq.rqst(set_ids_req)
         set_ids = res.fetch_row(11000000,0)
-        set_ids = [(int(x[0]), ) for x in set_ids]
+        set_ids = [int(x[0]) for x in set_ids]
         cPickle.dump(set_ids, open(set_filename, 'w'))
+        print 'pickled the set_ids'
       else:
         set_ids = cPickle.load(open(set_filename, 'r'))
         
-      indices = [random.randint(0,len(set_ids)-1) for x in range(self.num_sets)]
-      smaller_set_ids = [set_ids[i] for i in indices]
-      #print 'set_ids:',set_ids
-      #print smaller_set_ids
-      fetch_request = "select * from competitor_sets where set_id = %s"
-      t_db = time.time()
-      cursor = self.sq.db.cursor()
-      cursor.executemany(fetch_request, smaller_set_ids)
-      sets = cursor.fetchall()
+      smaller_set_ids = np.random.random_integers(0,len(set_ids)-1,self.num_sets).tolist()
+      
+      base_string = "select * from competitor_sets where set_id in ("
+      sets = []
+      counter = 0
+      set_req = base_string
+      add_string = " %d,"
+      for s in smaller_set_ids:
+        set_req += add_string%s
+        counter += 1
+        if counter == 100000:
+          counter = 0
+          set_req = set_req[:-1]+')' # remove last 'or'
+          t_db = time.time()
+          cursor = self.sq.db.cursor()
+          cursor.execute(set_req)
+          sets += cursor.fetchall()
+          set_req = base_string
+      
       t_db -= time.time()
-      print 'db lookup for compset took %f sec'%-t      
+#      print 'db lookup for compset took %f sec'%-t      
     
     else:
       print 'start loading competitor'

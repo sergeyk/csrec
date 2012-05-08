@@ -149,28 +149,18 @@ def run():
   #print "machine %d is sleeping for %d sec."%(comm_rank,sec)
   #time.sleep(sec)
   
-  for i in range(comm_size):
-    if i==comm_rank:
+  for i in range(2,comm_size,3):
+    if comm_rank==i or comm_rank==i-1 or comm_rank==i-2:
       print "Machine %d/%d - Start loading the competitorsets for TRAIN"%(comm_rank,comm_size)
       t0 = time.time()
-      num_sets = 1000 #1000000 # TODO remove
+      num_sets = 1000000 # TODO remove
       print num_sets
 
       # TODO: CAREFULL - num_sets shouldn't be bigger than 500000
     #  if num_sets > 500000:
     #    raise RuntimeError('num_sets should not be larger than 500000. That takes \
     #      already 2.3G mem and we dont wanna run into mem errors')
-      try:
-        cs_train = CompetitorSetCollection(num_sets=num_sets, mode = 'train')
-      except mdb.OperationalError, e:
-        if int(e.args[0]) == 1040:
-          base_sleep_time = 1
-          sleep_time = random.randint(0,3) + base_sleep_time
-          time.sleep(sleep_time)
-          print '%s: max connection error, sleeping' % comm_rank
-        else:
-          print '\n\n\t\t%s: Error %d: %s\n\n' % (comm_rank, e.args[0],e.args[1])
-          sys.exit(1)
+      cs_train = CompetitorSetCollection(num_sets=num_sets, mode = 'train')
 
       t1 = time.time()
       print "Machine %d/%d - Finished loading the competitorsets for TRAIN."%(comm_rank,comm_size)
@@ -344,21 +334,11 @@ def run():
       #print "machine %d is sleeping for %d sec."%(comm_rank,sec)
       #time.sleep(sec)
       
-      for i in range(comm_size):
-        if i==comm_rank:
-          print "Machine %d/%d - Start loading the competitorsets for TEST"%(comm_rank,comm_size)
-          try:
-            cs_test = CompetitorSetCollection(num_sets=num_sets, mode='val')
-          except mdb.OperationalError, e:
-            if int(e.args[0]) == 1040:
-              base_sleep_time = 1
-              sleep_time = random.randint(0,3) + base_sleep_time
-              time.sleep(sleep_time)
-              print '%s: max connection error, sleeping' % comm_rank
-            else:
-              print '\n\n\t\t%s: Error %d: %s\n\n' % (comm_rank, e.args[0],e.args[1])
-              sys.exit(1) 
-      
+      for i in range(2,comm_size,3):
+        if comm_rank==i or comm_rank==i-1 or comm_rank==i-2:
+          print "Machine %d/%d - Start loading the competitorsets for VAL"%(comm_rank,comm_size)
+          cs_test = CompetitorSetCollection(num_sets=num_sets, mode='val')
+          
         safebarrier(comm)
       
       errorrate, truenonerate, prednonerate = test_predictionerror(fg, sgd, cs_test)
@@ -368,7 +348,7 @@ def run():
       testmeannrank[lw,lr] = meannrank
       if comm_rank == 0:
         if verbose:
-          print "[TEST] Errorrate: %f"%(errorrate)
+          print "[VAL] Errorrate: %f"%(errorrate)
           print "TrueNone-Rate: %f -> error: %f"%(truenonerate, 1.0 - truenonerate)
           print "PredNone-Rate: %f"%(prednonerate)
           print "MEANNRANK: %f"%(meannrank)
@@ -385,7 +365,7 @@ def run():
     print "TRAINerrormatrix"
     print trainerrors            
 
-    print "TESTerrormatrix"
+    print "VALerrormatrix"
     print testerrors            
 
 
