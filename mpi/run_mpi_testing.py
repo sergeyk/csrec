@@ -160,7 +160,7 @@ def run():
   for i in range(comm_size):
     if i==comm_rank:
       print "Machine %d/%d - Start loading the competitorsets for TEST"%(comm_rank,comm_size)
-      cs_test = CompetitorSetCollection(num_sets=num_sets, testing=False, validation=True, just_winning_sets=False)
+      cs_test = CompetitorSetCollection(num_sets=num_sets, mode='val')
   
     safebarrier(comm)
   
