@@ -27,6 +27,8 @@ import numpy as np
 from mpi.mpi_imports import *
 import time 
 import MySQLdb as mdb
+from baselines.reject_baseline import *
+from baselines.random_baseline import *
 
 try:
     import cPickle as pickle
@@ -154,7 +156,7 @@ def run():
   #print sgd
   
   # load ALL test data
-  num_sets = 100000 # 'max' -> if max, everybody should have same testset
+  num_sets = 'max' # 'max' or 10000 -> if max, everybody should have same testset
   for i in range(comm_size):
     if i==comm_rank:
       print "Machine %d/%d - Start loading the competitorsets for TEST"%(comm_rank,comm_size)
@@ -162,14 +164,28 @@ def run():
   
     safebarrier(comm)
   
+  baseline = True
   # let every machine do part of it
-  errorrate, truenonerate, prednonerate = test_predictionerror(fg, sgd, cs_test)
-  meannrank = test_meannormalizedwinnerrank(fg, sgd, cs_test)
-  if comm_rank == 0:
-    print "[TEST] Errorrate: %f"%(errorrate)
-    print "TrueNone-Rate: %f -> error: %f"%(truenonerate, 1.0 - truenonerate)
-    print "PredNone-Rate: %f"%(prednonerate)
-    print "MEANNRANK: %f"%(meannrank)
+  if baseline:
+      rejectaccuracy = reject_baseline_test_predictionerror_mpi(cs_test)
+      rejectmeannrank = reject_baseline_test_meannormalizedwinnerrank_mpi(cs_test)
+      randomaccuracy = random_baseline_test_predictionerror_mpi(cs_test)
+      randommeannrank = 0.5
+      if comm_rank == 0:
+        print "Baselines"
+        print "REJECT accuracy:", rejectaccuracy
+        print "RANDOM accuracy:", randomaccuracy
+        print "REJECT meannrank:", rejectmeannrank
+        print "RANDOM meannrank:", randommeannrank  
+         
+  else:
+    errorrate, truenonerate, prednonerate = test_predictionerror(fg, sgd, cs_test)
+    meannrank = test_meannormalizedwinnerrank(fg, sgd, cs_test)
+    if comm_rank == 0:
+      print "[TEST] Errorrate: %f"%(errorrate)
+      print "TrueNone-Rate: %f -> error: %f"%(truenonerate, 1.0 - truenonerate)
+      print "PredNone-Rate: %f"%(prednonerate)
+      print "MEANNRANK: %f"%(meannrank)
      
      
 if __name__=='__main__':
