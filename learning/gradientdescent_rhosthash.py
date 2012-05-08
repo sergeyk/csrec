@@ -38,7 +38,7 @@ class SGDLearningRHOSTHASH:
         self.r = r if r else 0.0
         #r_hosts = np.zeros(nhosts) # do I need dictionary here: hostID -> param?
         self.rhostsize = rhostsize
-        self.r_hosts = r_hosts if r_hosts else np.zeros(rhostsize)
+        self.r_hosts = r_hosts if r_hosts!=None else np.zeros(rhostsize)
         self.get_feature = get_feature_function
     
     def get_score(self, feature):

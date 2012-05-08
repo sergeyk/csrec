@@ -39,6 +39,18 @@ def inthash(x,y,N): # take this one
     r = 2*float(a&1)-1
     a = (a>>1)%N
     return a,r 
+    
+def hosthash(a,N): # take this one
+    a = (a ^ 61) ^ (a >> 16)
+    a = a + (a << 3)
+    a = a ^ (a >> 4)
+    a = a * 0x27d4eb2d
+    a = a ^ (a >> 15)
+    # use last bit as rademacher hash
+    # and rest for location
+    r = 2*float(a&1)-1
+    a = (a>>1)%N
+    return a,r 
 
 ## rademacher (binary) hash: TODO: is there a better/easier way to do it?
 #def rademacher(x,y):
@@ -60,12 +72,13 @@ def argsort(seq):
 
 class SGDLearningPersonalized:
 
-    def __init__(self, featuredimension, get_feature_function, memory_for_personalized_parameters, theta=None, r=None, r_hosts=None, theta_hosts=None):
+    def __init__(self, featuredimension, get_feature_function, memory_for_personalized_parameters, rhostsize=10000, theta=None, r=None, r_hosts=None, theta_hosts=None):
         self.featuredimension = int(featuredimension)
         self.theta = theta if theta!=None else 0.2*(np.random.rand(featuredimension+1) - 0.5) # +1 to learn bias term
         self.r = r if r else 0.0
         #r_hosts = np.zeros(nhosts) # do I need dictionary here: hostID -> param?
-        self.r_hosts = r_hosts if r_hosts else {}
+        self.rhostsize = rhostsize
+        self.r_hosts = r_hosts if r_hosts!=None else np.zeros(rhostsize)
         self.get_feature = get_feature_function
         
         if theta_hosts!=None:
@@ -81,11 +94,8 @@ class SGDLearningPersonalized:
         return np.exp(np.dot(self.theta + theta_h,feature))
         
     def get_rejectscore(self, hostID):
-        # if we don't have a r_host yet create one with param zero
-        if not self.r_hosts.has_key(hostID):
-            self.r_hosts[hostID] = 0.0
-            
-        return np.exp(self.r + self.r_hosts[hostID])
+        hidx, rademacher = hosthash(hostID,self.rhostsize)
+        return np.exp(self.r + rademacher*self.r_hosts[hidx])
 
     def get_hostparameters(self, hostID):
         # TODO: I could compute indizes for nonzero elements of the feature only
@@ -104,12 +114,6 @@ class SGDLearningPersonalized:
     def rank(self, competitorset, testingphase=False):
         # used for inference later and to evaluate error on testset
         hostID = competitorset.get_hostID()        
-        
-        # if we don't have a r_host yet create one with param zero
-        if not self.r_hosts.has_key(hostID):
-            self.r_hosts[competitorset.get_hostID()] = 0.0
-            if testingphase:
-              print "IN PREDICT: I complain, I have never seen this host before!"
         
         # before without bias
         #features = [self.get_feature(surferID,hostID,requestID) for (surferID, requestID) in competitorset.get_surferlist()] 
@@ -135,7 +139,8 @@ class SGDLearningPersonalized:
         #print "PERS PARAMS", hostID, theta_h # TODO remove
         
         scores = [self.get_score(f, theta_h) for f in features]
-        rejectscore = self.get_rejectscore(hostID)
+        hidx, rademacher = hosthash(hostID,self.rhostsize)
+        rejectscore = np.exp(self.r + rademacher*self.r_hosts[hidx])
         scores.append(rejectscore)
         candidates = list(zip(*competitorset.get_surferlist())[0])
         candidates.append(None)
@@ -171,7 +176,8 @@ class SGDLearningPersonalized:
         theta_h = theta_h * rademacherflips
         
         scores = [self.get_score(f, theta_h) for f in features]
-        rejectscore = self.get_rejectscore(hostID)
+        hidx, rademacher = hosthash(hostID,self.rhostsize)
+        rejectscore = np.exp(self.r + rademacher*self.r_hosts[hidx])
         normalizer = float(np.sum(scores) + rejectscore)
         probabilities = [s/normalizer for s in scores]
         rejectprobability = rejectscore / normalizer
@@ -183,7 +189,7 @@ class SGDLearningPersonalized:
             self.theta =  (1 - eta * lambda_winner) * self.theta - eta * np.sum(temp, axis=0)
             #self.r = self.r - eta * (rejectprobability - 1)
             self.r = (1 - eta * lambda_reject) * self.r - eta * (rejectprobability - 1)
-            self.r_hosts[hostID] =  (1 - eta * lambda_reject) * self.r_hosts[hostID] - eta * (rejectprobability - 1) 
+            self.r_hosts[hidx] =  rademacher*((1 - eta * lambda_reject) * rademacher*self.r_hosts[hidx] - eta * (rejectprobability - 1))
 
             # update of personalized host parameters
             self.theta_hosts[indizes] = rademacherflips * ((1 - eta * lambda_winner) * theta_h - eta * np.sum(temp, axis=0)) # TODO make sure that the flipping makes sense!
@@ -198,7 +204,7 @@ class SGDLearningPersonalized:
             self.r_hosts[hostID] =  (1 - eta * lambda_reject) * self.r_hosts[hostID] - eta * rejectprobability 
 
             # update of personalized host parameters
-            self.theta_hosts[indizes] = rademacherflips * ((1 - eta * lambda_winner) * theta_h - eta * (np.sum(temp, axis=0) - features[winneridx]))
+            self.r_hosts[hidx] =  rademacher*((1 - eta * lambda_reject) * rademacher*self.r_hosts[hidx] - eta * rejectprobability)
         
 
 
@@ -287,6 +293,8 @@ if __name__=='__main__':
         print "\twinnerfeat", winnerfeat
         print "\tr", sgd.r
         print "\tr_hosts", sgd.r_hosts
+        hidx, rademacher = hosthash(cs.get_hostID(),sgd.rhostsize)
+        print "\thost", cs.get_hostID(), "rademacher",rademacher, "r_h", rademacher*sgd.r_hosts[hidx], "r+r_h", sgd.r+rademacher*sgd.r_hosts[hidx]
         print "\ttrue", cs.get_winner()
         print "\tpredicted", sgd.predict(cs)
         print "\tranking", sgd.rank(cs)
