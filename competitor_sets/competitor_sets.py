@@ -86,12 +86,15 @@ class CompetitorSetCollection:
         self.set_ids_table = "select set_id from \
          (select set_id, count(winner) as cnt, sum(winner) as sum \
          from competitor_sets  where date "+date_restrict+" group by set_id order \
-         by rand()  ) as T where cnt > 1 and sum > 0 limit 0, " +str(self.num_sets)      
+         by rand()  ) as T where cnt > 1 and sum > 0"      
         
       else:
         self.set_ids_table = "select set_id \
          from competitor_sets  where date "+date_restrict+" group by set_id order \
-         by rand() limit 0, " +str(self.num_sets)
+         by rand()"
+      
+      if not self.num_sets == 'max':
+        self.set_ids_table += "limit 0, " +str(self.num_sets)
             
       request = "select competitor_sets.* from competitor_sets join (" + \
         self.set_ids_table + ") as T on (competitor_sets.set_id = T.set_id) \
@@ -132,6 +135,13 @@ class CompetitorSetCollection:
     req_ids = []
     for row in self.all_sets:
       for r in row:
+        req_ids.append(r[CompetitorSet.TRANS['req_id']])
+    return req_ids
+  
+  def get_req_ids_for_samples(self, ns):
+    req_ids = []
+    for n in ns:
+      for r in self.all_sets[n]:
         req_ids.append(r[CompetitorSet.TRANS['req_id']])
     return req_ids
 
