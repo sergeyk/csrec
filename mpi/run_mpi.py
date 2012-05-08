@@ -100,8 +100,8 @@ def run():
       
   memory_for_personalized_parameters = 20 #512.0 # memory in MB if using personalized SGD learning  
   percentage = 0.2 # Dependent on machines in future min:10%, 2nodes->80%
-  outer_iterations = 10 #10
-  nepoches = 0.1 #10
+  outer_iterations = 1 #10 #10
+  nepoches = 0.0005 #0.05 #10
   alpha = 100.0
   beta = 0.001 #0.01
   #lambda_winner = 0.01
@@ -128,24 +128,27 @@ def run():
   #testing = True # should be false to get the full data set
   
   # sleeping so that we dont kill database
-  sec = 20*comm_rank
-  print "machine %d is sleeping for %d sec."%(comm_rank,sec)
-  time.sleep(sec)
+  #sec = 20*comm_rank
+  #print "machine %d is sleeping for %d sec."%(comm_rank,sec)
+  #time.sleep(sec)
   
-  print "Start loading the competitorsets for TRAIN and TEST"
-  t0 = time.time()
-  num_sets = 200000 # TODO remove
-  print num_sets
+  for i in range(comm_size):
+    if i==comm_rank:
+      print "Machine %d/%d - Start loading the competitorsets for TRAIN"%(comm_rank,comm_size)
+      t0 = time.time()
+      num_sets = 300000 # TODO remove
+      print num_sets
 
-  # TODO: CAREFULL - num_sets shouldn't be bigger than 500000
-#  if num_sets > 500000:
-#    raise RuntimeError('num_sets should not be larger than 500000. That takes \
-#      already 2.3G mem and we dont wanna run into mem errors')
-  cs_train = CompetitorSetCollection(num_sets=num_sets, testing=testing, validation=False, just_winning_sets=just_winning_sets)
-      
-  t1 = time.time()
-  print "Finished loading the competitorsets for TRAIN and TEST"
-  print "Loading competitorsets took %s."%(t1-t0)
+      # TODO: CAREFULL - num_sets shouldn't be bigger than 500000
+    #  if num_sets > 500000:
+    #    raise RuntimeError('num_sets should not be larger than 500000. That takes \
+    #      already 2.3G mem and we dont wanna run into mem errors')
+      cs_train = CompetitorSetCollection(num_sets=num_sets, testing=testing, validation=False, just_winning_sets=just_winning_sets)
+          
+      t1 = time.time()
+      print "Finished loading the competitorsets for TRAIN"
+      print "Loading competitorsets took %s."%(t1-t0)
+    safebarrier(comm)
   
   
   # CV over lamba1, lambda2
@@ -286,11 +289,16 @@ def run():
           print "MEANNRANK: %f"%(meannrank)
       
       # need to sleep again st we don't kill database
-      print "machine %d is sleeping for %d sec."%(comm_rank,sec)
-      time.sleep(sec)
+      #print "machine %d is sleeping for %d sec."%(comm_rank,sec)
+      #time.sleep(sec)
       
-      cs_test = CompetitorSetCollection(num_sets=num_sets, testing=testing, validation=True, just_winning_sets=just_winning_sets)
-      fg.reinit_out_prod_get(cs_test.get_all_req_ids())
+      for i in range(comm_size):
+        if i==comm_rank:
+          print "Machine %d/%d - Start loading the competitorsets for TEST"%(comm_rank,comm_size)
+          cs_test = CompetitorSetCollection(num_sets=num_sets, testing=testing, validation=True, just_winning_sets=just_winning_sets)
+        safebarrier(comm)
+      
+      
                   
       errorrate, truenonerate, prednonerate = test_predictionerror(fg, sgd, cs_test)
       testerrors[lw,lr] = errorrate
