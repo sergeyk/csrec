@@ -70,7 +70,7 @@ class CompetitorSetCollection:
     train_val_test = str(train_val_test)
     
     if mode == 'train':
-      request = "select set_id from competitor_sets where \
+      request = "select * from competitor_sets where \
        train_val_test = 1"
       
     else:
@@ -83,10 +83,8 @@ class CompetitorSetCollection:
     print 'start loading competitor'
     res = self.sq.rqst(request, True)
     
-    embed()       
-    
-    
     if mode == 'train' and not num_sets == 'max':
+      probability = self.num_sets/float(self.NUM_TRAIN_SETS)
       random.seed(time.time())
       # ok this is it, we need to go random
       sets = []
@@ -98,13 +96,20 @@ class CompetitorSetCollection:
         if row == ():
           go_on = False
           break
+        row = row[0]
         set_id = row[1]
         if set_id == last_set_id:
           if entering:
             sets.append(row)
         else:
           # We see a new set_id. decide randomly whether to pick this.
-          
+          prob = random.random()
+          if prob < probability:
+            entering = True
+            sets.append(row)
+          else:
+            entering = False
+        last_set_id = set_id          
     
     else:
       sets = res.fetch_row(11000000,0)
