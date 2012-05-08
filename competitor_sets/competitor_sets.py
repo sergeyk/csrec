@@ -129,7 +129,7 @@ class CompetitorSetCollection:
           (select *, count(winner) as cnt from competitor_sets where \
           train_val_test="+train_val_test+" and winner_set=1 group by set_id) \
           as t where cnt > "+str(size_comp_sets)+") as TT on (TT.set_id = \
-          competitor_sets.set_id);"  
+          competitor_sets.set_id)"  
       if not self.num_sets == 'max':
         request += " limit 0, " +str(self.num_sets)
 
