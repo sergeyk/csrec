@@ -93,7 +93,7 @@ class OuterProductDumper():
       datas.append((req_id, thedata))      
       
       t -= time.time()
-      if counter % 1000 == 0 or req_idx == len(all_keys)-1:
+      if counter % 10000 == 0 or req_idx == len(all_keys)-1:
         print '%s finished %s/%s' % (comm_rank, counter, 
                                      len(self.req_user_map.keys()))
 

@@ -52,7 +52,7 @@ def split_requests(reqs, cluster):
   
 def clusterize(sq, reqs):
   # 3 Days is the magical number. We expect a mean compset-size of 2.4
-  MINUTES_BANDWIDTH = 60*24*3
+  MINUTES_BANDWIDTH = 60*24*7
   # ========= Cluster Responses =============
   rsps_raw = [x[4] for x in reqs]
   
@@ -140,7 +140,7 @@ def get_sessions(lower, upper, force=False):
       row = rows[rowdex]
       
       hid = row[0]
-      print '%d is at user %d'%(comm_rank, hid)
+      #print '%d is at user %d'%(comm_rank, hid)
       if not last_hid == hid and not last_hid == -1:
         # we have a new host
         #print 'at host %s'%last_hid
@@ -188,7 +188,7 @@ def compile_sessions():
   comp_set_id = 0
   too_much_count = 0
   # IS THIS SUPPOSE TO BE COMPETITOR SETS OR COMPETITOR SETS 2?
-  default_string = "INSERT INTO `competitor_sets2` (`req_id`, `set_id`, \
+  default_string = "INSERT INTO `competitor_sets` (`req_id`, `set_id`, \
     `host_id`, `surfer_id`, `winner`, `date`) VALUES "
   index = 1
   write_string = default_string
@@ -224,7 +224,7 @@ def compile_sessions():
         write_string = default_string
         first_lines = True
         processed += max_batch_size
-        if (processed % 10000) == 0:
+      if (processed % 10000) == 0:
           print '%s processed %s/%s' % (comm_rank, processed, len(read_cluss))        
       comp_set_id += 1        
     ###################  
