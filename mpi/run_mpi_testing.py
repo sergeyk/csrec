@@ -1,0 +1,172 @@
+'''
+Parallelize the SGD
+Roadmap:
+# determine % of dataset for each node
+# for iter (?!)
+  # per node:
+    # draw % of data at random
+    # sgd object (first iter: params random, then use params of last iteration)
+    # do NITER iterations of learning
+    # sgd_theta, sgd_r, sgd_rh
+
+    # construct mean over params:
+      - on node 0, comm.reduce
+    
+# return params
+'''
+from learning.gradientdescent_personalization import SGDLearningPersonalized
+from learning.gradientdescent import SGDLearning
+from competitor_sets.competitor_sets import CompetitorSetCollection
+from competitor_sets.Sqler import Sqler
+from features.user_features import FeatureGetter
+from math import sqrt
+import random
+import os
+import os.path
+import numpy as np
+from mpi.mpi_imports import *
+import time 
+import MySQLdb as mdb
+
+try:
+    import cPickle as pickle
+except:
+    import pickle
+    
+LOOK_AHEAD_LENGTH = 10000
+
+def test_predictionerror(fg, sgd, data):
+# computes predictionacc or error (getting it exactly right or not) 
+  errors = 0
+  truenones = 0
+  prednones = 0
+  N = data.get_nsamples()
+  
+  indices = range(comm_rank, N, comm_size) 
+  update_lookahead_cnt = 0  
+  req_ids = data.get_req_ids_for_samples(indices[0:LOOK_AHEAD_LENGTH])
+  fg.init_out_prod_get(req_ids)
+
+  for i in indices:
+    update_lookahead_cnt += 1
+    if update_lookahead_cnt == LOOK_AHEAD_LENGTH:
+      req_ids = data.get_req_ids_for_samples(indices[i:i+LOOK_AHEAD_LENGTH])
+      fg.reinit_out_prod_get(req_ids)
+      update_lookahead_cnt = 0
+    
+    competitorset = data.get_sample(i)
+    pred = sgd.predict(competitorset, testingphase=False)
+    true = competitorset.get_winner()
+    #if true:
+    #  print 'prediction', pred
+    #  print 'true val', true
+        
+    errors += (pred!=true)
+    truenones += (true==None)
+    prednones += (pred==None)
+    
+  safebarrier(comm)
+  
+  errors = comm.allreduce(errors)
+  truenones = comm.allreduce(truenones)
+  prednones = comm.allreduce(prednones)
+    
+  errorrate = errors/float(N)  
+  truenonerate = truenones/float(N)  
+  prednonerate = prednones/float(N) 
+  return errorrate, truenonerate, prednonerate
+
+
+def test_meannormalizedwinnerrank(fg, sgd, data): 
+  sumnrank = 0.0
+  N = data.get_nsamples()
+  
+  indices = range(comm_rank, N, comm_size)
+  update_lookahead_cnt = 0  
+  req_ids = data.get_req_ids_for_samples(indices[0:LOOK_AHEAD_LENGTH])
+  fg.init_out_prod_get(req_ids)
+  
+  for i in indices:
+    update_lookahead_cnt += 1
+    if update_lookahead_cnt == LOOK_AHEAD_LENGTH:
+      req_ids = data.get_req_ids_for_samples(indices[i:i+LOOK_AHEAD_LENGTH])
+      fg.reinit_out_prod_get(req_ids)
+      update_lookahead_cnt = 0
+      
+    competitorset = data.get_sample(i)
+    cand, scores = sgd.rank(competitorset)
+    true = competitorset.get_winner()
+    nrank = cand.index(true) / float(len(cand)-1) # len-1 because we have rank 0..n-1
+    #if len(cand)>2:
+    #  print "from meanNrank eval"
+    #  print true, cand, cand.index(true), nrank, sumnrank
+    sumnrank += nrank
+    
+  safebarrier(comm)
+  sumnrank = comm.allreduce(sumnrank)
+  meannrank= sumnrank/float(N)  
+  return meannrank
+
+
+def run():
+  # parameters for which learning parameters to use
+  personalization = False
+  testing = False
+  lambda_winner = 0.01
+  lambda_reject = 0.01
+  
+  # load parameters from file (only rank 0)
+  if comm_rank == 0:
+    dirname = '/tscratch/tmp/csrec/'        
+    filename = 'parameters_lwin_%f_lrej_%f_testing_%d_personalized_%d.pkl'%(lambda_winner, lambda_reject, testing, personalization)
+    
+    if personalization:
+      theta, theta_hosts, r, r_hosts = pickle.load( open( dirname+filename, "rb" ) ) 
+    else:
+      theta, r, r_hosts = pickle.load( open( dirname+filename, "rb" ) )
+    print "Loaded params from " + dirname+filename
+  else:
+    theta = None
+    r = None
+    r_hosts = None
+    theta_hosts = None   
+ 
+  theta = comm.bcast(theta, root=0)
+  r = comm.bcast(r, root=0)
+  r_hosts = comm.bcast(r_hosts, root=0)
+  if personalization:
+    theta_hosts = comm.bcast(theta_hosts, root=0)
+    
+  # create SGD object with those params
+  fg = FeatureGetter(False)
+  featuredimension = fg.get_dimension()
+  get_feature_function = fg.get_features
+  memory_for_personalized_parameters = 500
+  if personalization:
+    sgd = SGDLearningPersonalized(featuredimension, get_feature_function, memory_for_personalized_parameters, theta=theta, r=r, r_hosts=r_hosts, theta_hosts=theta_hosts) # featdim +1 iff cheating
+  else:
+    sgd = SGDLearning(featuredimension, get_feature_function, theta=theta, r=r, r_hosts=r_hosts) # without personalization/hashing, faster
+  
+  #print sgd
+  
+  # load ALL test data
+  num_sets = 100000 # 'max' -> if max, everybody should have same testset
+  for i in range(comm_size):
+    if i==comm_rank:
+      print "Machine %d/%d - Start loading the competitorsets for TEST"%(comm_rank,comm_size)
+      cs_test = CompetitorSetCollection(num_sets=num_sets, testing=False, validation=True, just_winning_sets=False)
+  
+    safebarrier(comm)
+  
+  # let every machine do part of it
+  errorrate, truenonerate, prednonerate = test_predictionerror(fg, sgd, cs_test)
+  meannrank = test_meannormalizedwinnerrank(fg, sgd, cs_test)
+  if comm_rank == 0:
+    print "[TEST] Errorrate: %f"%(errorrate)
+    print "TrueNone-Rate: %f -> error: %f"%(truenonerate, 1.0 - truenonerate)
+    print "PredNone-Rate: %f"%(prednonerate)
+    print "MEANNRANK: %f"%(meannrank)
+     
+     
+if __name__=='__main__':
+  run()

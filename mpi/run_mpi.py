@@ -112,7 +112,7 @@ def run():
       
   memory_for_personalized_parameters = 20 #512.0 # memory in MB if using personalized SGD learning  
   percentage = 0.2 # Dependent on machines in future min:10%, 2nodes->80%
-  outer_iterations = 1 #10 #10
+  outer_iterations = 10 #10
   nepoches = 0.05 #0.05 #10
   alpha = 100.0
   beta = 0.001 #0.01
@@ -157,7 +157,7 @@ def run():
     #    raise RuntimeError('num_sets should not be larger than 500000. That takes \
     #      already 2.3G mem and we dont wanna run into mem errors')
       try:
-          cs_train = CompetitorSetCollection(num_sets=num_sets, testing=testing, validation=False, just_winning_sets=just_winning_sets)
+        cs_train = CompetitorSetCollection(num_sets=num_sets, testing=testing, validation=False, just_winning_sets=just_winning_sets)
       except mdb.OperationalError, e:
         if int(e.args[0]) == 1040:
           base_sleep_time = 1
@@ -181,8 +181,8 @@ def run():
   time.sleep(sec)
   
   # CV over lamba1, lambda2
-  #lambdas = [10**-3, 10**-2, 10**-1, 10**0, 10**+1]
-  lambdas = [10**-1]
+  lambdas = [10**-3, 10**-2, 10**-1, 10**0, 10**+1]
+  #lambdas = [10**-1]
 
   trainerrors = np.zeros((len(lambdas),len(lambdas)))
   testerrors = np.zeros((len(lambdas),len(lambdas)))
@@ -220,7 +220,7 @@ def run():
           i = outit*niter + innerit
           eta_t = 1/sqrt(alpha+i*beta)
           if not i%(niter/5):
-              print "Machine %d/%d - Iterations \n  out: %d/%d \n  in: %d/%d - eta %f"%(comm_rank, comm_size, outit+1,outer_iterations, innerit+1,niter,eta_t)
+              print "Machine %d/%d - Iterations out: %d/%d - in: %d/%d - eta %f - lambda %f"%(comm_rank, comm_size, outit+1,outer_iterations, innerit+1,niter,eta_t, lambda_winner)
           
           update_lookahead_cnt += 1
           if update_lookahead_cnt == LOOK_AHEAD_LENGTH:
@@ -291,7 +291,7 @@ def run():
           # 777 permission on directory
           os.system('chmod -R 777 '+dirname)
               
-          filename = 'parameters_lwin_%f_lrej_%f_testing_%d.pkl'%(lambda_winner, lambda_reject, testing)
+          filename = 'parameters_lwin_%f_lrej_%f_testing_%d_personalized_%d.pkl'%(lambda_winner, lambda_reject, testing, personalization)
           if os.path.exists('/tscratch'):
             if personalization:
               pickle.dump( (sgd.theta, sgd.theta_hosts, sgd.r, sgd.r_hosts), open( dirname+filename, "wb" ) )
@@ -323,7 +323,18 @@ def run():
       for i in range(comm_size):
         if i==comm_rank:
           print "Machine %d/%d - Start loading the competitorsets for TEST"%(comm_rank,comm_size)
-          cs_test = CompetitorSetCollection(num_sets=num_sets, testing=testing, validation=True, just_winning_sets=just_winning_sets)
+          try:
+            cs_test = CompetitorSetCollection(num_sets=num_sets, testing=testing, validation=True, just_winning_sets=just_winning_sets)
+          except mdb.OperationalError, e:
+            if int(e.args[0]) == 1040:
+              base_sleep_time = 1
+              sleep_time = random.randint(0,3) + base_sleep_time
+              time.sleep(sleep_time)
+              print '%s: max connection error, sleeping' % commrank
+            else:
+              print '\n\n\t\t%s: Error %d: %s\n\n' % (commrank, e.args[0],e.args[1])
+              sys.exit(1) 
+      
         safebarrier(comm)
       
       errorrate, truenonerate, prednonerate = test_predictionerror(fg, sgd, cs_test)
@@ -362,7 +373,7 @@ def run():
     
     
     # store errorrates somewhere
-    filename = 'errors_testing_%d.pkl'%(testing)
+    filename = 'errors_testing_%d_%d.pkl'%(testing,personalization)
     
     if os.path.exists('/tscratch'):
       pickle.dump( (trainerrors, testerrors, trainmeannrank, testmeannrank), open( dirname+filename, "wb" ) )
