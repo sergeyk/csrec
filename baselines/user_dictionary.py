@@ -49,7 +49,7 @@ class UserDictionaries():
     req = "SELECT user_id "
     for f in self.features:
       req += ", %s "%f
-    req += " from user_small "
+    req += " from user "
     t = time.time()
     print req
     self.cursor.execute(req)
@@ -62,7 +62,7 @@ class UserDictionaries():
   def create_threshs(self):
     t = time.time()
     print 'get the number of rows...'
-    self.cursor.execute("select count(*) from user_small")
+    self.cursor.execute("select count(*) from user")
     num_rows = self.cursor.fetchall()
     t -= time.time()
     print '\ttook %f'%-t
@@ -70,7 +70,7 @@ class UserDictionaries():
     for f in self.features:
       print 'computing thresh for %s'%f
       t = time.time()
-      self.cursor.execute("select "+f+" from user_small order by "+f+" limit "+str(pick_elem)+", 1")      
+      self.cursor.execute("select "+f+" from user order by "+f+" limit "+str(pick_elem)+", 1")      
       res = self.cursor.fetchall()[0][0]
       print 'thresh:', res
       self.threshs.append(res)
