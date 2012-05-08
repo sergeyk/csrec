@@ -1,7 +1,7 @@
 from competitor_sets.Sqler import *
 import matplotlib.pyplot as plt
 
-sq = Sqler()
+sq = get_sqler()
 res = sq.rqst('select * from rec_sent2users')
 res_sent = res.fetch_row(100000,0) 
 # num_requests, ppl with this count
