@@ -117,7 +117,7 @@ def run():
   memory_for_personalized_parameters = 20 #512.0 # memory in MB if using personalized SGD learning  
   percentage = 0.2 # Dependent on machines in future min:10%, 2nodes->80%
   outer_iterations = 3 #10
-  nepoches = 0.3 #0.05 #10
+  nepoches = 0.003 #0.05 #10
   alpha = 100.0
   beta = 0.001 #0.01
   #lambda_winner = 0.01
@@ -149,7 +149,7 @@ def run():
   #print "machine %d is sleeping for %d sec."%(comm_rank,sec)
   #time.sleep(sec)
   
-  for i in range(2,comm_size,3):
+  for i in range(2,comm_size+2,3):
     if comm_rank==i or comm_rank==i-1 or comm_rank==i-2:
       print "Machine %d/%d - Start loading the competitorsets for TRAIN"%(comm_rank,comm_size)
       t0 = time.time()

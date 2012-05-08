@@ -5,7 +5,10 @@ import numpy as np
 from Sqler import *
 from mpi.mpi_imports import *
 import random
-from IPython import embed 
+try:
+  from IPython import embed 
+except:
+  pass
 import time
 import csrec_paths
 
