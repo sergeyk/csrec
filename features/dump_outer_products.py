@@ -53,10 +53,9 @@ class OuterProductDumper():
     print 'reduced len user_map: %d'%len(self.req_user_map)
     #embed()
     
-  def dump_outer_product(self, req_id, data):
-    thedata = cPickle.dumps(data)    
+  def dump_outer_product(self, datas):
     try:        
-      self.cursor.execute(self.request, (req_id, thedata ))
+      self.cursor.executemany(self.request, datas)
     except MySQLdb.IntegrityError:
       pass
   
@@ -79,8 +78,9 @@ class OuterProductDumper():
     total_time = 0
     counter = 0
     commit_count = 0
-    
-    for req_id in self.req_user_map.keys():
+    all_keys = self.req_user_map.keys()
+    datas = []
+    for req_idx, req_id in enumerate(all_keys):
       t = time.time()
       
       data = self.get_features(req_id)
@@ -89,12 +89,16 @@ class OuterProductDumper():
       counter += 1
       
       #print '%d dumps 100 rows'%comm_rank
-      self.dump_outer_product(req_id, data)
+      thedata = cPickle.dumps(data)
+      datas.append((req_id, thedata))      
+      
       t -= time.time()
-      if counter % 1000 == 0:
+      if counter % 1000 == 0 or req_idx == len(all_keys)-1:
         print '%s finished %s/%s' % (comm_rank, counter, 
                                      len(self.req_user_map.keys()))
 
+        self.dump_outer_product(datas)
+        datas = []
       total_time -= t
       
     print 'mean time: %f sec'%(total_time/float(counter))
