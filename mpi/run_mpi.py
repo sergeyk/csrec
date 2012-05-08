@@ -35,6 +35,7 @@ except:
     import pickle
     
 LOOK_AHEAD_LENGTH = 10000
+RON_MODE = (os.path.exists('/home/ron'))
 
 def test_predictionerror(fg, sgd, data):
 # computes predictionacc or error (getting it exactly right or not) 
@@ -131,8 +132,8 @@ def run():
  
   memory_for_personalized_parameters = 20 #512.0 # memory in MB if using personalized SGD learning  
   percentage = 0.2 # Dependent on machines in future min:10%, 2nodes->80%
-  outer_iterations = 10 #10
-  nepoches = 0.30 #10
+  outer_iterations = 5 #10
+  nepoches = 0.3 #10
   alpha = 100.0
   beta = 0.001 #0.01
   #lambda_winner = 0.01
@@ -168,7 +169,7 @@ def run():
     if comm_rank==i or comm_rank==i-1 or comm_rank==i-2:
       print "Machine %d/%d - Start loading the competitorsets for TRAIN"%(comm_rank,comm_size)
       t0 = time.time()
-      num_sets = 1000000 # TODO remove
+      num_sets = 500000 # TODO remove
       print num_sets
 
       # TODO: CAREFULL - num_sets shouldn't be bigger than 500000
@@ -315,12 +316,19 @@ def run():
         
       # Store the parameters to /tscratch/tmp/csrec
       if comm_rank == 0:
-          dirname = '/tscratch/tmp/csrec/'
+          if RON_MODE:
+              dirname = '/home/ron/csrec/params/'
+              filename = 'parameters_lwin_%f_lrej_%f_testing_%d_personalized_%d_numsets_%d_outerit_%d_nepoches_%d.pkl' % (lambda_winner, lambda_reject, testing, personalization, num_sets, outer_iterations,nepoches)
+              pickle.dump( (sgd.theta, sgd.r, sgd.r_hosts), open( dirname+filename, "wb" ) )
+              print 'writing params to', dirname+filename
+          else:
+              dirname = '/tscratch/tmp/csrec/'
           if os.path.exists('/tscratch'):
             if not os.path.exists(dirname):
               os.makedirs(dirname)
           # 777 permission on directory
-          os.system('chmod -R 777 '+dirname)
+          if not RON_MODE:
+              os.system('chmod -R 777 '+dirname)
               
           filename = 'parameters_lwin_%f_lrej_%f_testing_%d_personalized_%d_numsets_%d_outerit_%d_nepoches_%d_mu.pkl'%(lambda_winner, lambda_reject, testing, personalization, num_sets, outer_iterations,nepoches)
           if os.path.exists('/tscratch'):

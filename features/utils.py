@@ -43,7 +43,10 @@ def generate_bucket_dividers(user_data_pkl_name='sampled_user_data.pkl',
 
 
 def get_dividers_from_values(possible_values, max_buckets):
-    uniques = set(possible_values)
+    try:
+        uniques = set(possible_values)
+    except:
+        uniques = []
     num_unique = len(uniques)
     if num_unique < max_buckets:
         return sorted(list(uniques))
@@ -66,8 +69,10 @@ def find_all_values_of_cols(user_data_dct):
             print "%s/%s" % (i, len(user_data_dct)), 'users finished'
        
     for field_name, field_values in all_values.iteritems():
-        print 'number of unique values for', field_name, len(set(field_values))
-    
+        try:
+            print 'number of unique values for', field_name, len(set(field_values))
+        except:
+            pass
     return all_values
 
 
@@ -100,18 +105,6 @@ def get_histograms_from_values(field_type, field_name, possible_values, max_buck
     plt.ylabel("Frequency")
     plt.show()
 
-
-def get_histograms_from_values(values):
-    import matplotlib.pyplot as plt
-    from numpy.random import normal
-    gaussian_numbers = values
-    plt.hist(gaussian_numbers, bins=100)
-    plt.title('set sizes')
-    xlabel = "size"
-    plt.xlabel(xlabel)
-    plt.ylabel("Frequency")
-    plt.show()
-
 def find_top_x(field_name):
     ensure_user_data_loaded()
     possible_values = ALL_VALUES[field_name]
@@ -123,12 +116,14 @@ def find_top_x(field_name):
     for (c_id, cnt) in c.most_common(10):
         ids.append(int(c_id))
     print ids
-
+    
 if __name__ == "__main__":
     parser = optparse.OptionParser()
     parser.add_option("-g", action="store", type="string", dest="field_name", 
                       help="show histogram for FIELD_NAME. Use '-g all' for all histograms.")
     parser.add_option("-d", action="store_true", dest="dividers", 
+                      help="generate bin dividers")
+    parser.add_option("-r", action="store_true", dest="requests", 
                       help="generate bin dividers")
     parser.add_option("-p", action="store", type="string", dest="field_name_p", 
                       help="show histogram for FIELD_NAME. Use '-g all' for all histograms.")
@@ -144,6 +139,8 @@ if __name__ == "__main__":
         show_histogram(options.field_name)
     elif options.field_name_p:
         find_top_x(options.field_name_p)
+    elif options.requests:
+        generate_requests_pkl()
     else:
         parser.print_help()
     
