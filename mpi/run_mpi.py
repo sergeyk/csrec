@@ -108,7 +108,11 @@ def test_meannormalizedwinnerrank(fg, sgd, data):
   return meannrank
 
 
-def run():  
+def run(): 
+  lambdas = [float(sys.argv[1])]
+  if comm_rank == 0:
+    print "using lambda:", lambdas
+ 
   memory_for_personalized_parameters = 20 #512.0 # memory in MB if using personalized SGD learning  
   percentage = 0.2 # Dependent on machines in future min:10%, 2nodes->80%
   outer_iterations = 3 #10
