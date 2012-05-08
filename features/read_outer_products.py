@@ -38,7 +38,7 @@ class OuterProducGetter():
   def create_outer_prods_from_req_ids(self, req_ids):
     while True:
       try:
-        unsafe_create_outer_prods_from_req_ids(req_ids)
+        self.unsafe_create_outer_prods_from_req_ids(req_ids)
         return
       except mdb.OperationalError, e:
         if int(e.args[0]) == 1040:
