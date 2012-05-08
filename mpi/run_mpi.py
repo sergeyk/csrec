@@ -132,7 +132,7 @@ def run():
   beta = 0.001 #0.01
   #lambda_winner = 0.01
   #lambda_reject = 0.01
-  verbose = False
+  verbose = True #False
   personalization = False # no hashing -> faster
   rhostsize = 1000000
   
@@ -163,7 +163,7 @@ def run():
     if comm_rank==i or comm_rank==i-1 or comm_rank==i-2:
       print "Machine %d/%d - Start loading the competitorsets for TRAIN"%(comm_rank,comm_size)
       t0 = time.time()
-      num_sets = 1000000 # TODO remove
+      num_sets = 10000 #1000000 # TODO remove
       print num_sets
 
       # TODO: CAREFULL - num_sets shouldn't be bigger than 500000
@@ -243,11 +243,11 @@ def run():
           for l in competitorset.get_surferlist():
             assert(l[1] in req_ids)
   
-          if verbose and not i%10000 and i>1:
+          if verbose and not i%(niter/5) and i>1:
               print "Iterations \n\tout: %d/%d \n\tin: %d/%d - eta %f - lambda %f"%(outit+1,outer_iterations, innerit+1,niter,eta_t, lambda_winner)
               print "\ttheta", min(sgd.theta), max(sgd.theta)
               print "\tr", sgd.r
-              print "\tr_hosts", sgd.r_hosts.get(competitorset.get_hostID(), -999) ,min(sgd.r_hosts.values()), max(sgd.r_hosts.values()) 
+              print "\tr_hosts",min(sgd.r_hosts), max(sgd.r_hosts) 
               print "\ttrue", competitorset.get_winner()
               print "\tpredicted", sgd.predict(competitorset)
               print "\tranking", sgd.rank(competitorset)

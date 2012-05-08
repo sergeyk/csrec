@@ -39,7 +39,7 @@ except:
     
 LOOK_AHEAD_LENGTH = 10000
 
-def test_predictionerror(fg, sgd, data):
+def test_predictionerror(fg, sgd, data, allow_rejects=True):
 # computes predictionacc or error (getting it exactly right or not) 
   errors = 0
   truenones = 0
@@ -61,11 +61,12 @@ def test_predictionerror(fg, sgd, data):
       update_lookahead_cnt += 1
     
     competitorset = data.get_sample(i)
-    try:
-      pred = sgd.predict(competitorset, testingphase=False)
-    except:
-      from IPython import embed
-      embed()
+    #try:
+    #  pred = sgd.predict(competitorset, testingphase=False, allow_rejects=allow_rejects)
+    #except:
+    #  from IPython import embed
+    #  embed()
+    pred = sgd.predict(competitorset, testingphase=False, allow_rejects=allow_rejects)
     true = competitorset.get_winner()
     #if true:
     #  print 'prediction', pred
@@ -87,7 +88,7 @@ def test_predictionerror(fg, sgd, data):
   return errorrate, truenonerate, prednonerate
 
 
-def test_meannormalizedwinnerrank(fg, sgd, data): 
+def test_meannormalizedwinnerrank(fg, sgd, data, allow_rejects=True): 
   sumnrank = 0.0
   N = data.get_nsamples()
   
@@ -106,7 +107,7 @@ def test_meannormalizedwinnerrank(fg, sgd, data):
       update_lookahead_cnt += 1
       
     competitorset = data.get_sample(i)
-    cand, scores = sgd.rank(competitorset)
+    cand, scores = sgd.rank(competitorset, allow_rejects=allow_rejects)
     true = competitorset.get_winner()
     nrank = cand.index(true) / float(len(cand)-1) # len-1 because we have rank 0..n-1
     #if len(cand)>2:
@@ -134,9 +135,9 @@ def run():
   if comm_rank == 0:
     dirname = '/tscratch/tmp/csrec/'        
     filename = 'parameters_lwin_%f_lrej_%f_testing_%d_personalized_%d_numsets_%d_outerit_%d_nepoches_%d.pkl'%(lambda_winner, lambda_reject, testing, personalization, num_sets, outer_iterations,nepoches)
-    filename = 'parameters_lwin_0.001000_lrej_0.001000_testing_0_personalized_0.pkl' # TODO remove
+    filename = 'parameters_lwin_0.000100_lrej_0.000100_testing_0_personalized_0_numsets_10000_outerit_10_nepoches_0.pkl' # TODO remove
     print filename
-    
+
     if personalization:
       theta, theta_hosts, r, r_hosts = pickle.load( open( dirname+filename, "rb" ) ) 
     else:
@@ -147,6 +148,10 @@ def run():
     r = None
     r_hosts = None
     theta_hosts = None   
+  
+  #from IPython import embed
+  #embed()
+    
  
   theta = comm.bcast(theta, root=0)
   r = comm.bcast(r, root=0)
@@ -172,16 +177,17 @@ def run():
   for i in range(2,comm_size+2,3):
     if comm_rank==i or comm_rank==i-1 or comm_rank==i-2:
       print "Machine %d/%d - Start loading the competitorsets for TEST"%(comm_rank,comm_size)
-      cs_test = CompetitorSetCollection(num_sets=num_sets, mode='test')
+      cs_test = CompetitorSetCollection(num_sets=num_sets, mode='test_win')
       
     safebarrier(comm)
   
   baseline = False
+  allow_rejects = True
   # let every machine do part of it
   if baseline:
-      rejectaccuracy = reject_baseline_test_predictionerror_mpi(cs_test)
-      rejectmeannrank = reject_baseline_test_meannormalizedwinnerrank_mpi(cs_test)
-      randomaccuracy = random_baseline_test_predictionerror_mpi(cs_test)
+      rejectaccuracy = reject_baseline_test_predictionerror_mpi(cs_test, allow_rejects=allow_rejects)
+      rejectmeannrank = reject_baseline_test_meannormalizedwinnerrank_mpi(cs_test, allow_rejects=allow_rejects)
+      randomaccuracy = random_baseline_test_predictionerror_mpi(cs_test, allow_rejects=allow_rejects)
       randommeannrank = 0.5
       if comm_rank == 0:
         print "Baselines"
@@ -193,8 +199,8 @@ def run():
       # do single feature baseline for all features
       features, thresholds = get_features_and_thresholds()
       for featureidx in range(6):
-        sgfeataccuracy = singlefeature_baseline_test_predictionerror_mpi(cs_test, features, thresholds, featureidx=featureidx)
-        sgfeatmeannrank = singlefeature_baseline_test_meannormalizedwinnerrank_mpi(cs_test, features, thresholds, featureidx=featureidx)
+        sgfeataccuracy = singlefeature_baseline_test_predictionerror_mpi(cs_test, features, thresholds, featureidx=featureidx, allow_rejects=allow_rejects)
+        sgfeatmeannrank = singlefeature_baseline_test_meannormalizedwinnerrank_mpi(cs_test, features, thresholds, featureidx=featureidx, allow_rejects=allow_rejects)
         if comm_rank == 0:
           print "Baselines"
           print "SGFEAT accuracy - featidx %d : %f"%(featureidx, sgfeataccuracy)
@@ -210,8 +216,7 @@ def run():
       print "PredNone-Rate: %f"%(prednonerate)
       print "MEANNRANK: %f"%(meannrank)
   
-  from IPython import embed
-  embed()
+
      
      
 if __name__=='__main__':
