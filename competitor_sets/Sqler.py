@@ -122,4 +122,6 @@ def safe_mysql(f):
         sys.exit(1)
   return wrapper
 
-
+sqler = Sqler()
+def get_sqler():
+  return sqler

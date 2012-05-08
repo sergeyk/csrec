@@ -48,12 +48,10 @@ class CompetitorSetCollection:
   ''' Storage of all competitor sets for all hosts. Load from dump, provide 
   CompetitorSet object'''
   
-  def __init__(self, num_sets=100, split_date='2011-08-16 16:24:47', testing=False, validation=False, just_winning_sets = False):
+  # The split date forms a 60:40 split.
+  def __init__(self, num_sets=100, split_date='2011-07-11 05:36:34', testing=False, validation=False, just_winning_sets = False):
     print 'start Sqler'
-    t = time.time()
-    self.sq = Sqler()
-    t -= time.time()
-    print 'took %f secs'%-t
+    self.sq = get_sqler()
     
     if testing:
       if validation:
@@ -157,4 +155,3 @@ if __name__=='__main__':
   print cs.get_surferlist()
   print cs.get_winner()
   
-
