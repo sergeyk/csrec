@@ -71,7 +71,8 @@ class OuterProducGetter():
       if first_elem:
         sql_cmd = sql_cmd_base%req_id
         first_elem = False
-        continue
+        if not last_elem:
+          continue
         
       sql_cmd += sql_cmd_extens%req_id
       if req_len_cnter > self.RQST_LENGTH_TRESH or last_elem:

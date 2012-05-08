@@ -46,13 +46,13 @@ def test_predictionerror(fg, sgd, data):
   
   indices = range(comm_rank, N, comm_size) 
   update_lookahead_cnt = 0  
-  req_ids = data.get_req_ids_for_samples(indices[0:LOOK_AHEAD_LENGTH+1])
+  req_ids = data.get_req_ids_for_samples(indices[0:LOOK_AHEAD_LENGTH])
   fg.init_out_prod_get(req_ids)
 
   for i in indices:
     update_lookahead_cnt += 1
     if update_lookahead_cnt == LOOK_AHEAD_LENGTH:
-      req_ids = data.get_req_ids_for_samples(indices[i:i+LOOK_AHEAD_LENGTH+1])
+      req_ids = data.get_req_ids_for_samples(indices[i:i+LOOK_AHEAD_LENGTH])
       fg.reinit_out_prod_get(req_ids)
       update_lookahead_cnt = 0
     
@@ -89,13 +89,13 @@ def test_meannormalizedwinnerrank(fg, sgd, data):
   
   indices = range(comm_rank, N, comm_size)
   update_lookahead_cnt = 0  
-  req_ids = data.get_req_ids_for_samples(indices[0:LOOK_AHEAD_LENGTH+1])
+  req_ids = data.get_req_ids_for_samples(indices[0:LOOK_AHEAD_LENGTH])
   fg.reinit_out_prod_get(req_ids)
   
   for i in indices:
     update_lookahead_cnt += 1
     if update_lookahead_cnt == LOOK_AHEAD_LENGTH:
-      req_ids = data.get_req_ids_for_samples(indices[i:i+LOOK_AHEAD_LENGTH+1])
+      req_ids = data.get_req_ids_for_samples(indices[i:i+LOOK_AHEAD_LENGTH])
       fg.reinit_out_prod_get(req_ids)
       update_lookahead_cnt = 0
       
