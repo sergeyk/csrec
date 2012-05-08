@@ -62,7 +62,7 @@ class OuterProductDumper():
   
   def commit(self):
     self.sq.commit()
-
+    
   def get_dicts(self, req_id):
     user1 = self.req_user_map[req_id][0]
     dict1 = pull_data_for_user(self.cursor, user1)
