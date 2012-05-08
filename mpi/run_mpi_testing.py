@@ -124,14 +124,17 @@ def run():
   # parameters for which learning parameters to use
   personalization = False
   testing = False
-  lambda_winner = 0.01
-  lambda_reject = 0.01
+  lambda_winner = 0.1
+  lambda_reject = 1.0
   num_sets = 1000000
+  outer_iterations = 10
+  nepoches = 0.05
   
   # load parameters from file (only rank 0)
   if comm_rank == 0:
     dirname = '/tscratch/tmp/csrec/'        
-    filename = 'parameters_lwin_%f_lrej_%f_testing_%d_personalized_%d_numsets_%d.pkl'%(lambda_winner, lambda_reject, testing, personalization, num_sets)
+    filename = 'parameters_lwin_%f_lrej_%f_testing_%d_personalized_%d_numsets_%d_outerit_%d_nepoches_%d.pkl'%(lambda_winner, lambda_reject, testing, personalization, num_sets, outer_iterations,nepoches)
+    filename = 'parameters_lwin_0.001000_lrej_0.001000_testing_0_personalized_0.pkl' # TODO remove
     print filename
     
     if personalization:
@@ -165,7 +168,7 @@ def run():
   #print sgd
   
   # load ALL test data
-  num_sets = 'max' # 'max' or 10000 -> if max, everybody should have same testset
+  num_sets = 30000 #'max' # 'max' or 10000 -> if max, everybody should have same testset
   for i in range(2,comm_size+2,3):
     if comm_rank==i or comm_rank==i-1 or comm_rank==i-2:
       print "Machine %d/%d - Start loading the competitorsets for TEST"%(comm_rank,comm_size)
@@ -206,6 +209,9 @@ def run():
       print "TrueNone-Rate: %f -> error: %f"%(truenonerate, 1.0 - truenonerate)
       print "PredNone-Rate: %f"%(prednonerate)
       print "MEANNRANK: %f"%(meannrank)
+  
+  from IPython import embed
+  embed()
      
      
 if __name__=='__main__':
