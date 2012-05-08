@@ -39,6 +39,8 @@ class OuterProducGetter():
     #print 'create outer products for %d requests'%len(req_ids)
     sql_cmd_extens = " or req_id = %d "
     sql_cmd_base = "select req_id, data from "+self.DUMP_TABLE+" where req_id = %d "
+    print 'create outer products from req ids...'
+    t = time.time()
     req_len_cnter = 0
     first_elem = True
     last_elem = False
@@ -54,13 +56,13 @@ class OuterProducGetter():
       sql_cmd += sql_cmd_extens%req_id
       if req_len_cnter > self.RQST_LENGTH_TRESH or last_elem:
         sql_cmd += ";"
-        print 'process id %d'%req_id
+        #print 'process id %d'%req_id
         # Now the command is big enough and we execute it
         t = time.time()     
         self.cursor.execute(sql_cmd)
         results = self.cursor.fetchall()
         t -= time.time()
-        print 'Res for this request: ', len(results)
+        #print 'Res for this request: ', len(results)
         for res in results:
           #print 'convert req_id %d'%res[0]
           pkl_dump = res[1]
@@ -73,6 +75,8 @@ class OuterProducGetter():
           self.outer_products[res[0]] = r
         req_len_cnter = 0
         first_elem = True
+    t -= time.time()
+    print '\t creating outer prods took %f secs'%-t
           
 if __name__=='__main__':
   # get the damn req_ids

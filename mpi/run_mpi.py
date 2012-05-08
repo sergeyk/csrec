@@ -32,15 +32,29 @@ try:
 except:
     import pickle
 
-def test_predictionerror(sgd, data):
+def test_predictionerror(fg, sgd, data):
 # computes predictionacc or error (getting it exactly right or not) 
   errors = 0
   truenones = 0
   prednones = 0
   N = data.get_nsamples()
   
-  for i in range(comm_rank, N, comm_size):
+  indices = range(comm_rank, N, comm_size) 
+  update_lookahead_cnt = 0
+  LOOK_AHEAD_LENGTH = 10000
+  req_ids = data.get_req_ids_for_samples(indices[0:LOOK_AHEAD_LENGTH])
+  fg.reinit_out_prod_get(req_ids)
+
+  for i in indices:
+    update_lookahead_cnt += 1
+    if update_lookahead_cnt == LOOK_AHEAD_LENGTH:
+      req_ids = data.get_req_ids_for_samples(indices[i:i+LOOK_AHEAD_LENGTH])
+      fg.reinit_out_prod_get(req_ids)
+      update_lookahead_cnt = 0
+    
     competitorset = data.get_sample(i)
+    for l in competitorset.get_surferlist():
+      assert(l[1] in req_ids)
     pred = sgd.predict(competitorset, testingphase=False)
     true = competitorset.get_winner()
     #if true:
@@ -80,10 +94,6 @@ def test_meannormalizedwinnerrank(sgd, data):
   sumnrank = comm.allreduce(sumnrank)
   meannrank= sumnrank/float(N)  
   return meannrank
-
-
-
-
 
 
 def run():
@@ -126,14 +136,13 @@ def run():
   t0 = time.time()
   num_sets = 2000#200000 # TODO remove
   print num_sets
+
   # TODO: CAREFULL - num_sets shouldn't be bigger than 500000
-  if num_sets > 500000:
-    raise RuntimeError('num_sets should not be larger than 500000. That takes \
-      already 2.3G mem and we dont wanna run into mem errors')
+#  if num_sets > 500000:
+#    raise RuntimeError('num_sets should not be larger than 500000. That takes \
+#      already 2.3G mem and we dont wanna run into mem errors')
   cs_train = CompetitorSetCollection(num_sets=num_sets, testing=testing, validation=False, just_winning_sets=just_winning_sets)
-  req_ids = cs_train.get_all_req_ids()
-  fg.init_out_prod_get(req_ids)
-    
+      
   t1 = time.time()
   print "Finished loading the competitorsets for TRAIN and TEST"
   print "Loading competitorsets took %s."%(t1-t0)
@@ -162,21 +171,40 @@ def run():
       niter = int(N*nepoches)
       
       for outit in range(outer_iterations):
-        # for each outer iteration we draw new samples iid per node  
+        # for each outer iteration we draw new samples iid per node
+        sampleindices = []
+        for _ in range(int(nepoches)+1):
+          sampleindices += range(N)
+        #sampleindices = range(N)
+        
+        random.shuffle(sampleindices)
+        update_lookahead_cnt = 0
+        LOOK_AHEAD_LENGTH = 10000
+        req_ids = cs_train.get_req_ids_for_samples(sampleindices[0:LOOK_AHEAD_LENGTH])
+        fg.init_out_prod_get(req_ids)
+        
+#        from IPython import embed
+#        embed()  
         for innerit in range(niter):
           i = outit*niter + innerit
           eta_t = 1/sqrt(alpha+i*beta)
           if not i%(niter/5):
               print "Iterations \n  out: %d/%d \n  in: %d/%d - eta %f"%(outit+1,outer_iterations, innerit+1,niter,eta_t)
-
-          # draw random sample  
-          sampleindex = random.randint(0,N-1)    
+          
+          update_lookahead_cnt += 1
+          if update_lookahead_cnt == LOOK_AHEAD_LENGTH:
+            req_ids = cs_train.get_req_ids_for_samples(sampleindices[innerit:innerit+LOOK_AHEAD_LENGTH])
+            fg.reinit_out_prod_get(req_ids)
+            update_lookahead_cnt = 0
+          
+          # draw random sample - UPDATE: now first get a random permutation, then do it            
+          sampleindex = sampleindices[innerit]    
           competitorset = cs_train.get_sample(sampleindex)
 
           for l in competitorset.get_surferlist():
             assert(l[1] in req_ids)
-            
-          if verbose and not i%1000 and i>1:
+
+          if verbose and not i%10000 and i>1:
               print "Iterations \n\tout: %d/%d \n\tin: %d/%d - eta %f - lambda %f"%(outit+1,outer_iterations, innerit+1,niter,eta_t, lambda_winner)
               print "\ttheta", min(sgd.theta), max(sgd.theta)
               print "\tr", sgd.r
@@ -246,7 +274,7 @@ def run():
       # Compute the errors
       safebarrier(comm)
       
-      errorrate, truenonerate, prednonerate = test_predictionerror(sgd, cs_train)
+      errorrate, truenonerate, prednonerate = test_predictionerror(fg, sgd, cs_train)
       meannrank = test_meannormalizedwinnerrank(sgd, cs_train)
       trainerrors[lw,lr] = errorrate
       trainmeannrank[lw,lr] = meannrank
@@ -264,7 +292,7 @@ def run():
       cs_test = CompetitorSetCollection(num_sets=num_sets, testing=testing, validation=True, just_winning_sets=just_winning_sets)
       fg.reinit_out_prod_get(cs_test.get_all_req_ids())
                   
-      errorrate, truenonerate, prednonerate = test_predictionerror(sgd, cs_test)
+      errorrate, truenonerate, prednonerate = test_predictionerror(fg, sgd, cs_test)
       testerrors[lw,lr] = errorrate
       meannrank = test_meannormalizedwinnerrank(sgd, cs_test)
       testerrors[lw,lr] = errorrate
