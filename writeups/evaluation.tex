@@ -7,7 +7,7 @@ As shown in \autoref{fig:requests_distribution}, the distribution of number of r
 \begin{figure}[ht]
 \centering
 \includegraphics[width=1\linewidth]{figures/req_received_dist2.png}
-\caption{Distribution of requests received by a host. \todo{Tobi: these numbers must be incorrect}}
+\caption{Distribution of requests received by a host.}
 \label{fig:requests_distribution}
 \end{figure}
 
@@ -17,10 +17,18 @@ We use two different measures to evaluate performance: Prediction Accuracy (PA),
 
 We compute these two measure on the CouchSurfing Data that has 11 million couch request grouped into 5.5 million competitor sets. We split these competitor sets into a training, validation, and test set (60/20/20\%) in time to ensure that we do not look ahead into the future to make predictions easier. Please not that the state of the system we compute our features from lies ``in the future''. This can help but in some cases hurt as described below.
 
-For a summary of the results see Figure \todo{put figure here tobi} which shows PA and ANWR on competitorsets of a certain minimum cardinality. One can observe that we consistently outperform the baselines by X-Y percent. For larger competitor sets the recommendation or ranking task becomes harder and performance drops. Especially in this regime, our algorithm supports hosts better in choosing the right couch surfer to accept. Due to the normalization the ANWR stays roughly constant. The average rank for the random baseline is 0.5 (``the middle''). Interestingly, some of the single-feature baselines do worse than the random baseline (e.g. the number of people that have vouched to you) even though one might think they would be helpful. The number of friends and the number of references performs better. Using our system, on average, a host needs to browse 39\% of the list compared to 46\% for the the second best ranking approach.
+\begin{figure}[ht]
+\centering
+\subfloat[Prediction Accuracy (higher is better)]{
+  \includegraphics[width=0.45\linewidth]{figures/prediciton_accuracy.png}
+}
+\subfloat[Average Winner Rank (lower is better)]{
+  \includegraphics[width=0.45\linewidth]{figures/avg_winner_rank.png}
+}
+\caption{Our evaluations: prediction accuracy and average winner rank. In both cases, we do better than all baselines.}
+\label{fig:eval}
+\end{figure}
+
+For a summary of the results see \autoref{fig:eval} which shows PA and ANWR on competitorsets of a certain minimum cardinality. One can observe that we consistently outperform the baselines by X-Y percent. For larger competitor sets the recommendation or ranking task becomes harder and performance drops. Especially in this regime, our algorithm supports hosts better in choosing the right couch surfer to accept. Due to the normalization the ANWR stays roughly constant. The average rank for the random baseline is 0.5 (``the middle''). Interestingly, some of the single-feature baselines do worse than the random baseline (e.g. the number of people that have vouched to you) even though one might think they would be helpful. The number of friends and the number of references performs better. Using our system, on average, a host needs to browse 39\% of the list compared to 46\% for the the second best ranking approach.
 
 Why is this such a hard problem? First of all, notice that estimating probabilities including the possibility of rejection is much harder than just ranking of candidates due to the fact that rejectance might have nothing to do with the candidates themself or the hosts preference but may simply be dependent on the host's availability. This availability is hard to to infer automatically from the user's profile. For us it was impossible to capture this kind of time-dependent information because we were only supplied with the current state of the CouchSurfing database. Furthermore, note that this also means that we cannot know e.g. when two users became friends on the network. This can lead to interfering behavior. Assume that we know that host $h$ accepted surfer $s$ from  a competitor set $S$ and we know that they are friends. Our model infers that it this friendship might be \textit{the} critical and discriminative feature. However, $h$ and $s$ might not have been friends before the accepted couchrequest but only after they spent some time with each other. Similarly, our current model does not capture other temporal relationships such as whether host and surfer had been in contact before the actual request. We hypothesize that accurate modeling of this temporal structure in the data should improve performance significantly.
-
-
-
-
