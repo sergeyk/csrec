@@ -25,7 +25,9 @@ def get_profile(cursor, user_id):
         p_type = 'cached'
         data = get_cached_profile(user_id)
     else:
-        raise Exception('REQUIRES ALL USER INTERESTS TO BE CACHED')
+        data = []
+        p_type = 'uncached'
+        print 'WARNING: %s not found in cache' % user_id
     return {'field_type': p_type, 'field_data': data}
 
 def get_db_profile(cursor, user_id):
@@ -63,7 +65,7 @@ def pull_data_for_user(cursor, user_id):
                 user_data[col_name]['field_data'] = result[i]
     user_data['languages'] = {'field_type': 'language_set',
                               'field_data': get_languages(cursor, user_id)}
-    user_data['profile'] = get_profile(cursor, user_id)}
+    user_data['profile'] = get_profile(cursor, user_id)
     return user_data
         
 

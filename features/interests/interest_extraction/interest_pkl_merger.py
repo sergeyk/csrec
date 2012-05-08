@@ -1,6 +1,6 @@
 import os
 import cPickle
-merged_interest_dct = cPickle.load(open('merged_accepted_pairs.pkl', 'rb'))
+merged_interest_dct = cPickle.load(open('merged_interest_dct.pkl', 'rb'))
 
 merged_accepted_pairs = []
 
