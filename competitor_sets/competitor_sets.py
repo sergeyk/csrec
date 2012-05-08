@@ -114,13 +114,13 @@ class CompetitorSetCollection:
     else:
       request = "select * from competitor_sets where train_val_test = " + \
         train_val_test        
-      if not self.num_sets == 'max':
-        request += " limit 0, " +str(self.num_sets)         
-      
       if mode == 'test_win':
         # We want just competitorsets with a winner in it.
         request = "select * from competitor_sets where train_val_test = " + \
           train_val_test + " and winner_set=1"
+          
+      if not self.num_sets == 'max':
+        request += " limit 0, " +str(self.num_sets)
 
       print 'start loading competitor'
       res = self.sq.rqst(request, True)
