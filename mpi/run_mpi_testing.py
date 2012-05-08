@@ -16,6 +16,7 @@ Roadmap:
 '''
 from learning.gradientdescent_personalization import SGDLearningPersonalized
 from learning.gradientdescent import SGDLearning
+from learning.gradientdescent_rhosthash import SGDLearningRHOSTHASH
 from competitor_sets.competitor_sets import CompetitorSetCollection
 from competitor_sets.Sqler import Sqler
 from features.user_features import FeatureGetter
@@ -129,12 +130,6 @@ def run():
     filename = 'parameters_lwin_%f_lrej_%f_testing_%d_personalized_%d_numsets_%d.pkl'%(lambda_winner, lambda_reject, testing, personalization, num_sets)
     print filename
     
-    for i in range(2,comm_size+2,3):
-      if comm_rank==i or comm_rank==i-1 or comm_rank==i-2:
-        print "Machine %d/%d - Start loading the competitorsets for VAL"%(comm_rank,comm_size)
-        cs_test = CompetitorSetCollection(num_sets=num_sets, mode='val')
-        
-      safebarrier(comm)
     if personalization:
       theta, theta_hosts, r, r_hosts = pickle.load( open( dirname+filename, "rb" ) ) 
     else:
@@ -160,7 +155,8 @@ def run():
   if personalization:
     sgd = SGDLearningPersonalized(featuredimension, get_feature_function, memory_for_personalized_parameters, theta=theta, r=r, r_hosts=r_hosts, theta_hosts=theta_hosts) # featdim +1 iff cheating
   else:
-    sgd = SGDLearning(featuredimension, get_feature_function, theta=theta, r=r, r_hosts=r_hosts) # without personalization/hashing, faster
+    #sgd = SGDLearning(featuredimension, get_feature_function, theta=theta, r=r, r_hosts=r_hosts) # without personalization/hashing, faster
+    sgd = SGDLearningRHOSTHASH(featuredimension, get_feature_function, theta=theta, r=r, r_hosts=r_hosts)
   
   #print sgd
   
@@ -169,7 +165,7 @@ def run():
   for i in range(2,comm_size+2,3):
     if comm_rank==i or comm_rank==i-1 or comm_rank==i-2:
       print "Machine %d/%d - Start loading the competitorsets for TEST"%(comm_rank,comm_size)
-      cs_test = CompetitorSetCollection(num_sets=num_sets, mode='val')
+      cs_test = CompetitorSetCollection(num_sets=num_sets, mode='test')
       
     safebarrier(comm)
   
@@ -188,9 +184,10 @@ def run():
         print "RANDOM meannrank:", randommeannrank  
         
       # do single feature baseline for all features
-      for featureidx in range(5):
-        sgfeataccuracy = singlefeature_baseline_test_predictionerror_mpi(cs_test)
-        sgfeatmeannrank = singlefeature_baseline_test_meannormalizedwinnerrank_mpi(cs_test)
+      features, thresholds = get_features_and_thresholds()
+      for featureidx in range(6):
+        sgfeataccuracy = singlefeature_baseline_test_predictionerror_mpi(cs_test, features, thresholds, featureidx=featureidx)
+        sgfeatmeannrank = singlefeature_baseline_test_meannormalizedwinnerrank_mpi(cs_test, features, thresholds, featureidx=featureidx)
         if comm_rank == 0:
           print "Baselines"
           print "SGFEAT accuracy - featidx %d : %f"%(featureidx, sgfeataccuracy)
