@@ -4,7 +4,7 @@ import math
 import feature_processor
 import numpy as np
 from features.regions.region_id import *
-import bucketizer_test
+import test_bucketizer
 
 # field-specific globals
 INTEREST_BUCKETS = range(21)
@@ -106,7 +106,7 @@ DEFAULT_BUCKETIZER_FN = DefaultBucketizerFn()
 DEFAULT_DIVIDERS = cPickle.load(open(csrec_paths.get_features_dir()+'bucket_dividers.pkl', 'rb'))
 
 def cross_bucketized_features(user1_dct, user2_dct, req_dct, 
-                              feature_dimension, field_names, debug=False):
+                              feature_dimension, field_names, debug=True):
     cur_feature_offset = 0
     crossed_feature_vector = np.zeros(feature_dimension, np.dtype(np.int32))
     debug_info = []
@@ -141,7 +141,7 @@ def cross_bucketized_features(user1_dct, user2_dct, req_dct,
         
         cur_feature_offset += bucketizer_fn.post_full_dim(field_name)
     if debug:
-        bucketizer_test.test(crossed_feature_vector, user1_dct, user2_dct, req_dct, 
+        test_bucketizer.test(crossed_feature_vector, user1_dct, user2_dct, req_dct, 
                               feature_dimension, field_names)
     return crossed_feature_vector
 
