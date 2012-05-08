@@ -81,7 +81,7 @@ def test_predictionerror(fg, sgd, data):
   return errorrate, truenonerate, prednonerate
 
 
-def test_meannormalizedwinnerrank(fg, sgd, data): 
+def test_meannormalizedwinnerrank(fg, sgd, data, verbose=False): 
   sumnrank = 0.0
   N = data.get_nsamples()
   
@@ -100,6 +100,8 @@ def test_meannormalizedwinnerrank(fg, sgd, data):
     competitorset = data.get_sample(i)
     cand, scores = sgd.rank(competitorset)
     true = competitorset.get_winner()
+    if verbose:
+      print "Correct %d - Candidates %d - Scores %f"%(true,cand,scores)
     nrank = cand.index(true) / float(len(cand)-1) # len-1 because we have rank 0..n-1
     #if len(cand)>2:
     #  print "from meanNrank eval"
@@ -311,7 +313,7 @@ def run():
           # 777 permission on directory
           os.system('chmod -R 777 '+dirname)
               
-          filename = 'parameters_lwin_%f_lrej_%f_testing_%d_personalized_%d_numsets_%d.pkl'%(lambda_winner, lambda_reject, testing, personalization, num_sets)
+          filename = 'parameters_lwin_%f_lrej_%f_testing_%d_personalized_%d_numsets_%d_outerit_%d_nepoches_%d.pkl'%(lambda_winner, lambda_reject, testing, personalization, num_sets, outer_iterations,nepoches)
           if os.path.exists('/tscratch'):
             if personalization:
               pickle.dump( (sgd.theta, sgd.theta_hosts, sgd.r, sgd.r_hosts), open( dirname+filename, "wb" ) )
@@ -380,7 +382,7 @@ def run():
     
     
     # store errorrates somewhere
-    filename = 'errors_testing_%d_personalized_%d_numsets_%d.pkl'%(testing,personalization,num_sets)
+    filename = 'errors_lwin_%f_lrej_%f_testing_%d_personalized_%d_numsets_%d_%d_outerit_%d_nepoches_%d.pkl'%(lambda_winner,lambda_reject,testing,personalization,num_sets, outer_iterations,nepoches)
     
     if os.path.exists('/tscratch'):
       pickle.dump( (trainerrors, testerrors, trainmeannrank, testmeannrank), open( dirname+filename, "wb" ) )

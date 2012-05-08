@@ -12,7 +12,7 @@ from mpi.mpi_imports import *
 class OuterProducGetter():
   
   DUMP_TABLE = 'outer_products'
-  RQST_LENGTH_TRESH = 3000
+  RQST_LENGTH_TRESH = 1000
   
   def __init__(self, dimension):
     self.dimension = dimension
@@ -20,8 +20,8 @@ class OuterProducGetter():
     self.init_db()
     
   def init_db(self):
-    sqler = get_sqler()
-    self.sq = sqler.db
+    self.sqler = get_sqler()
+    self.sq = self.sqler.db
     self.cursor = self.sq.cursor()
         
   def get_product(self, req_id):
@@ -37,20 +37,8 @@ class OuterProducGetter():
 
   def create_outer_prods_from_req_ids(self, req_ids):
     self.outer_products = {}
-    while True:
-      try:
-        self.unsafe_create_outer_prods_from_req_ids(req_ids)
-        return
-      except mdb.OperationalError, e:
-        if int(e.args[0]) == 1040:
-          base_sleep_time = 1
-          sleep_time = random.randint(0,3) + base_sleep_time
-          time.sleep(sleep_time)
-          print '%s: max connection error, sleeping' % commrank
-        else:
-          print '\n\n\t\t%s: Error %d: %s\n\n' % (commrank, e.args[0],e.args[1])
-          sys.exit(1)
-      
+    self.unsafe_create_outer_prods_from_req_ids(req_ids)
+        
       
     
   def unsafe_create_outer_prods_from_req_ids(self, req_ids):
@@ -78,30 +66,29 @@ class OuterProducGetter():
         
       sql_cmd += sql_cmd_extens%req_id
       if req_len_cnter > self.RQST_LENGTH_TRESH or last_elem:
+        
         sql_cmd += ";"
         #print 'process id %d'%req_id
         # Now the command is big enough and we execute it
-        t = time.time()     
+        t = time.time()
         self.cursor.execute(sql_cmd)
         results = self.cursor.fetchall()
         t -= time.time()
         #print 'Res for this request: ', len(results)
         for res in results:
           #print 'convert req_id %d'%res[0]
-          pkl_dump = res[1]
-          try:
-            r = cPickle.loads(pkl_dump)
-          except:
-            print 'what?'
-            return
-            
+          pkl_dump = res[1]  
+          r = cPickle.loads(pkl_dump)            
           self.outer_products[res[0]] = r
         req_len_cnter = 0
         first_elem = True
     
+<<<<<<< HEAD
     if (len(self.outer_products.keys()) != len(req_ids)):
       import pdb
       pdb.set_trace()
+=======
+>>>>>>> 45b83b5493b2573de31d53cac58d95e4809cd192
     t_out -= time.time()
     print '\t creating outer prods took %f secs'%-t_out
           

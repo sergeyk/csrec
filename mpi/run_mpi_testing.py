@@ -121,12 +121,20 @@ def run():
   testing = False
   lambda_winner = 0.01
   lambda_reject = 0.01
+  num_sets = 1000000
   
   # load parameters from file (only rank 0)
   if comm_rank == 0:
     dirname = '/tscratch/tmp/csrec/'        
-    filename = 'parameters_lwin_%f_lrej_%f_testing_%d_personalized_%d.pkl'%(lambda_winner, lambda_reject, testing, personalization)
+    filename = 'parameters_lwin_%f_lrej_%f_testing_%d_personalized_%d_numsets_%d.pkl'%(lambda_winner, lambda_reject, testing, personalization, num_sets)
+    print filename
     
+    for i in range(2,comm_size+2,3):
+      if comm_rank==i or comm_rank==i-1 or comm_rank==i-2:
+        print "Machine %d/%d - Start loading the competitorsets for VAL"%(comm_rank,comm_size)
+        cs_test = CompetitorSetCollection(num_sets=num_sets, mode='val')
+        
+      safebarrier(comm)
     if personalization:
       theta, theta_hosts, r, r_hosts = pickle.load( open( dirname+filename, "rb" ) ) 
     else:
@@ -157,15 +165,15 @@ def run():
   #print sgd
   
   # load ALL test data
-  num_sets = 10000 #'max' # 'max' or 10000 -> if max, everybody should have same testset
-  for i in range(comm_size):
-    if i==comm_rank:
+  num_sets = 'max' # 'max' or 10000 -> if max, everybody should have same testset
+  for i in range(2,comm_size+2,3):
+    if comm_rank==i or comm_rank==i-1 or comm_rank==i-2:
       print "Machine %d/%d - Start loading the competitorsets for TEST"%(comm_rank,comm_size)
       cs_test = CompetitorSetCollection(num_sets=num_sets, mode='val')
-  
+      
     safebarrier(comm)
   
-  baseline = True
+  baseline = False
   # let every machine do part of it
   if baseline:
       rejectaccuracy = reject_baseline_test_predictionerror_mpi(cs_test)
