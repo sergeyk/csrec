@@ -11,9 +11,6 @@ As shown in \autoref{fig:requests_distribution}, the distribution of number of r
 \label{fig:requests_distribution}
 \end{figure}
 
-\todo{summary of statistics about the data, nr surfers/hosts/couchrequests, nr competitorsets, distribution over size of competitorsets}
-11m REQU, 5.5M compsets, split 60/20/20
-
 In the light of the described need of CouchSurfing, we focused on the evaluation from the host perspective, i.e. rejects are not as important (surfer's care about rejects) and assistance is particularly important when the host faces a lot of couchrequest at the same time (a large competitor set). Therefore, we look at all competitor sets that have a winner and group them by their cardinality. We compare our system against a random baseline, and several rule-based approaches that presumably resemble the system currently in use at Couchsurfing (e.g. ordering by the number of references or friends). We call these single-feature baselines. Unfortunately, the ranking algorithm currently deployed at CouchSurfing was not shared with us, yet. However, we were told that it is a simple rule-based approach that most likely involves the parameters mentioned above.
 
 We use two different measures to evaluate performance: Prediction Accuracy (PA), and Average Normalized Winner Rank (ANWR). Prediction Accuracy is the fraction of correctly predicted winner's from several competitor sets (larger is better). Average Normalized Winner Rank is a more general measure that captures what position the actual winner has in our computed ranking/smaller is better) We normalize the rank to be between zero and number of competitors minus one. Note that a prediction only counts as a positive towards PA if it occured at the first place in the ranking. The ANWR is less strict in this case. \todo{maybe something mathematical here?}
