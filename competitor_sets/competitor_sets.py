@@ -5,7 +5,10 @@ import numpy as np
 from Sqler import *
 from mpi.mpi_imports import *
 import random
-from IPython import embed 
+try:
+  from IPython import embed 
+except:
+  pass
 import time
 import csrec_paths
 import matplotlib.pyplot as plt
@@ -190,4 +193,3 @@ if __name__=='__main__':
   plt.savefig('comp_set_sizes')
   
   plt.show()
-  

@@ -15,10 +15,10 @@ for i in range(len(nz_x)):
     x = nz_x[i]
     y = nz_y[i]
     
-    i_matrix[x, y] *= 1/2*\
+    i_matrix[x, y] *= 1/float(2)*\
         (1/float(appearances[x]) + \
              1/float(appearances[y]))
-    
-    print '%s/%s normalized' % (count, len(nz_x))
+    if count % 1000 == 0:
+        print '%s/%s normalized' % (count, len(nz_x))
 
 cPickle.dump(i_matrix, open('norm_interest_matrix.pkl', 'wb'))

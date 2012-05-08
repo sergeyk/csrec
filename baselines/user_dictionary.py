@@ -7,7 +7,10 @@ from competitor_sets.Sqler import get_sqler
 import os
 import csrec_paths
 import time
-from IPython import embed
+try:
+  from IPython import embed
+except:
+  pass
 
 class UserDictionaries():
   def __init__(self, threshold=0.75, force=False):
