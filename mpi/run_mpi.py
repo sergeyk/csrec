@@ -114,7 +114,7 @@ def test_meannormalizedwinnerrank(fg, sgd, data, verbose=False):
 
 
 def run(): 
-  lambdas = [float(sys.argv[1])]
+  lambdas = [(float(sys.argv[1]),float(sys.argv[2]))]
   if comm_rank == 0:
     print "using lambda:", lambdas
  
@@ -187,10 +187,12 @@ def run():
   trainmeannrank = np.zeros((len(lambdas),len(lambdas)))
   testmeannrank = np.zeros((len(lambdas),len(lambdas)))
   
-  for lw,lambda_winner in enumerate(lambdas):
+  for lw in range(len(lambdas)):
+  #for lw,lambda_winner in enumerate(lambdas):
     #for lr,lambda_reject in enumerate(lambdas):
+      lambda_winner, lambda_reject = lambdas[lw]
       lr = lw # we can't afford the full CV
-      lambda_reject = lambda_winner #* 10.0
+      #lambda_reject = lambda_winner #* 10.0
         
       # Create sgd object   
       if personalization:
