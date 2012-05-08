@@ -105,3 +105,6 @@ class Sqler:
       return datetime.datetime.strptime(timestring, '%Y-%m-%d %H:%M:%S')
 
   
+sqler = Sqler()
+def get_sqler():
+  return sqler
