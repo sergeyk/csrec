@@ -15,7 +15,9 @@ for i in range(len(nz_x)):
     x = nz_x[i]
     y = nz_y[i]
     
-    i_matrix[x, y] /= (appearances[x] + appearances[y])
+    i_matrix[x, y] *= 1/2*\
+        (1/float(appearances[x]) + \
+             1/float(appearances[y]))
     
     print '%s/%s normalized' % (count, len(nz_x))
 

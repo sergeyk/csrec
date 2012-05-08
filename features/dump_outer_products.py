@@ -62,7 +62,7 @@ class OuterProductDumper():
   
   def commit(self):
     self.sq.commit()
-
+    
   def get_dicts(self, req_id):
     user1 = self.req_user_map[req_id][0]
     dict1 = pull_data_for_user(self.cursor, user1)
@@ -91,13 +91,12 @@ class OuterProductDumper():
       #print '%d dumps 100 rows'%comm_rank
       self.dump_outer_product(req_id, data)
       t -= time.time()
-      if counter % 1000 == 0:
+      if counter % 10000 == 0:
         print '%s finished %s/%s' % (comm_rank, counter, 
-                                     len(self.req_user_map.keys()))        
+                                     len(self.req_user_map.keys()))
+
       total_time -= t
-      counter = 0
       
-      self.commit()
     print 'mean time: %f sec'%(total_time/float(counter))
     t = time.time()
     

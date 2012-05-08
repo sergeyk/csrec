@@ -18,11 +18,9 @@ def all_pairs(lst):
 
 def load_data():
     intra_weight = 1
-    inter_weight = .1
     interest_id_map = {}
     id_interest_map = {}
     i_dct = cPickle.load(open(csrec_paths.get_proj_root()+'/features/interests/interest_extraction/merged_interest_dct.pkl', 'rb')) 
-    a_pairs = cPickle.load(open(csrec_paths.get_proj_root()+'/features/interests/interest_extraction/merged_accepted_pairs.pkl', 'rb'))
     num_uniques = 0
     for k,v in i_dct.iteritems():
         for i in v:
