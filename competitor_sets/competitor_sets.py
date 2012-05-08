@@ -8,6 +8,7 @@ import random
 from IPython import embed 
 import time
 import csrec_paths
+import matplotlib.pyplot as plt
 
 class CompetitorSet:
   
@@ -53,8 +54,11 @@ class CompetitorSetCollection:
   
   NUM_TRAIN_SETS = 2954911 # Looked up and fix 
   
-  def __init__(self, num_sets=100, mode = 'train'):
-    ''' mode needs to be of train/test/test_win/val'''
+  def __init__(self, num_sets='max', mode = 'train', size_comp_sets=2):
+    ''' 
+    mode needs to be of train/test/test_win/val
+    size_comp_sets determines the size of each competitor_set using test_win
+    '''
     print 'start Sqler'
     self.sq = get_sqler()
     
@@ -114,18 +118,25 @@ class CompetitorSetCollection:
     else:
       request = "select * from competitor_sets where train_val_test = " + \
         train_val_test        
+               
+      
       if mode == 'test_win':
         # We want just competitorsets with a winner in it.
-        request = "select * from competitor_sets where train_val_test = " + \
-          train_val_test + " and winner_set=1"
-          
+        # this is for sets with 1 or more surfers
+#        request = "select * from competitor_sets where train_val_test = " + \
+#          train_val_test + " and winner_set=1"
+        request = "select * from competitor_sets join (select * from \
+          (select *, count(winner) as cnt from competitor_sets where \
+          train_val_test="+train_val_test+" and winner_set=1 group by set_id) \
+          as t where cnt > "+str(size_comp_sets)+") as TT on (TT.set_id = \
+          competitor_sets.set_id)"  
       if not self.num_sets == 'max':
         request += " limit 0, " +str(self.num_sets)
 
       print 'start loading competitor'
       res = self.sq.rqst(request, True)
       sets = res.fetch_row(11000000,0)
-      
+            
     last_set_id = sets[0][CompetitorSet.TRANS['set_id']]
     curr_set = []
     self.all_sets = []
@@ -169,7 +180,9 @@ class CompetitorSetCollection:
 
 if __name__=='__main__':
   t = time.time()
-  cs_coll_train = CompetitorSetCollection(num_sets=1000000)
-  print cs_coll_train.get_nsamples(), 'samples'
-  t -= time.time()
-  print 'Loading comp set took %f secs'%-t
+  comp_set_sizes = np.zeros(10)
+  for i in range(10):
+    cs_coll_train = CompetitorSetCollection(mode='test_win', size_comp_sets=i)
+    comp_set_sizes[i] = cs_coll_train.get_nsamples()
+  plt.plot(comp_set_sizes)
+  plt.show()

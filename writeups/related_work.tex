@@ -1,26 +1,29 @@
 % !TEX root=report.tex
 \subsection{Related Work} \label{sec:related_work}
-CouchSurfing data has been used in research in the field of trust and reputation systems \cite{Lauterbach2009}.
-Trust and reputation are critical factors for users to decide whom to interact with.
+
+CouchSurfing data has seen prior research user in the field of trust and reputation systems \cite{Lauterbach2009}.
 Reputation systems allow users to judge other user's trustworthiness and provides incentives for users to be honest.
 For this purpose, CouchSurfing.org employs a vouching system (declaring friends as trustworthy), a verification system (paying a small fee to get your name and address verified---the only revenue source for the website), and references (ratings and feedback) from other users.
-In this work, we do not focus on reputation and trust, but rather on other features of surfers and hosts that may signal likelihood of an accepted request.
+
+In this work, we do not focus solely on reputation and trust, but rather on overall features of surfers and hosts that may signal likelihood of an accepted request.
 
 Recommender systems rely heavily on ratings contributed by users in order to predict other users preferences.
 Follow-up work has shown that public, identified ratings tend to be disproportionally positive if the ratee is another user who can reciprocate \cite{Teng2010} (like on CouchSurfing). 
 To the best of our knowledge this paper represents the first effort in using recommender systems and machine learning for social travel on platforms like CouchSurfing.
+
 While we make use of ratings as a source of features for our prediction task, predicting the ratings themselves is not our goal.
 Rather, we aim to predict which couch request, among a group of competing ones, will be accepted by the host.
 
 A similar problem arises in search engine optimization in a seminal paper on ranking SVMs \cite{Joachims2002}.
 Clickthrough data from users presented with a ranked list of results was used to improve the ranking function in a max-margin formulation.
-In our situation, hosts are indeed presented with a ranked list of surfers (and surfers with a list of hosts), but the time of presentation as well as the clickthrough data is unknown to us.
+In our situation, hosts are indeed presented with a list of surfers (and surfers with a list of hosts), but the time of presentation as well as the clickthrough data is unknown to us.
+
 We can, however, infer rough presentation times from the request and decision times, and we have the resulting accept or reject decision of the host.
-In this way, our problem is of classification and not ranking: given a set of couch requests, we predict, for each one, whether it was accepted or rejected, with the constraint that only one request could have been accepted.
+In this way, our problem is of classification and not ranking: given an (inferred) competitor set of couch requests, we predict whether each request was accepted or rejected, with the constraint that at most one request could have been accepted.
 
 There are two parts to this prediction: a global ``attraction'' model that explains in general why some hosts prefer some users to others; and a host-specific personal model that allows additional flexibility.
 Personalizing classifiers in this way leads to a very large number of parameters that often is infeasible to keep in memory.
-To enable for personalization in a large-scale setting, the hashing trick has been proposed where either features or parameters are hashed into an array of predefined size.
+To enable for personalization in a large-scale setting, the ``hashing trick'' has been proposed where either features or parameters are hashed into an array of predefined size.
 This potentially allows features or parameters to collide, but it has been successfully applied in personalized spam classification \cite{Attenberg2009} and investigated theoretically \cite{Weinberger2012}.
 We use the hashing trick to store personalized host parameters.
 
@@ -29,13 +32,12 @@ The hypothesis is that people with similar interests attract each other: a premi
 Similarly, we use the interests of hosts and surfers expressed in free form text on their personal profiles to estimate the likelihood of an accepted request.
 Some evaluation schemes in \cite{Yang2011} are also relevant to our problem formulation.
 
-For learning, we use a parallel Stochastic Gradient Descent (SGD) algorithm that distributes random subsets of the data onto multiple machines and uses fast lock-free updates on a local copy of the parameters \cite{Zinkevich2010}.
+For learning the parameters of our model, we use a parallel Stochastic Gradient Descent (SGD) algorithm that distributes random subsets of the data onto multiple machines and uses fast lock-free updates on a local copy of the parameters \cite{Zinkevich2010}.
 We modify the algorithm in that after a certain number of iterations, the results are averaged and re-broadcast, for additional robustness.
 
 As part of our featurization function, we extract ``interests'' from free-form text of the user profiles.
 In this challenging task we are guided by \cite{Liu2005}, who use a graph structure assembled from overlapping user interests, and \cite{Cantador2011}, who deal with semantic annotation: essentially mapping a document to its ontology entities (almost like topic modeling).
 We learn the graph based on a novel normalization scheme, and use clusters found in the structure as features in our model.
-\todo{To Ron: update this part of related work as you see fit.}
 
 \comment{They \cite{Cantador2011} extract terms, map the terms to ontology entities (by looking up the term's wikipedia article and construct a vector of applicable ontology entities based on what categories appear in the wikipedia article), and then measure the strength of those mappings using the tf-idf measure.
 They build a news recommender system that recommends based on activation propagation.}
