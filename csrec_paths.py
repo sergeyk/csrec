@@ -2,6 +2,9 @@ import os
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
+def get_config_dir():
+    return ROOT + '/evaluation/config/'
+
 def get_dataset_dir():
     return ROOT + '/datasets/'
 

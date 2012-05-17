@@ -31,6 +31,8 @@ import MySQLdb as mdb
 from baselines.reject_baseline import *
 from baselines.random_baseline import *
 from baselines.singlefeature_baseline import *
+import csrec_paths
+
 RON_MODE = (os.path.exists('/home/ron'))
 
 try:
@@ -140,29 +142,20 @@ def test_meannormalizedwinnerrank(fg, sgd, data, allow_rejects=True):
   return meannrank
 
 
-def run():
+def run(cfg):
   # parameters for which learning parameters to use
-  personalization = False
-  testing = False
-  lambda_winner = 0.1
-  lambda_reject = 1.0
-  num_sets = 1000000
-  outer_iterations = 10
-  nepoches = 0.05
-  
+  personalization = cfg.personalization
+  testing = cfg.testing
+  lambda_winner = cfg.lambda_winner
+  lambda_reject = cfg.lambda_reject
+  num_sets = cfg.num_sets
+  outer_iterations = cfg.outer_iterations
+  nepoches = cfg.nepoches
+  dirname = cfg.dirname
+  filename = cfg.filename
+
   # load parameters from file (only rank 0)
   if comm_rank == 0:
-    dirname = '/tscratch/tmp/csrec/'        
-    filename = 'parameters_lwin_%f_lrej_%f_testing_%d_personalized_%d_numsets_%d_outerit_%d_nepoches_%d.pkl'%(lambda_winner, lambda_reject, testing, personalization, num_sets, outer_iterations,nepoches)
-    #filename = 'parameters_lwin_0.000100_lrej_0.000100_testing_0_personalized_0_numsets_10000_outerit_10_nepoches_0.pkl' # TODO remove
-    filename = 'parameters_lwin_0.001000_lrej_0.001000_testing_0_personalized_0_numsets_100000_outerit_10_nepoches_0.pkl'
-    4
-    print filename
-    if RON_MODE:
-        dirname = '/home/ron/csrec/params/'
-        filename = 'parameters_lwin_0.100000_lrej_0.100000_testing_0_personalized_0_numsets_500000_outerit_2_nepoches_0.pkl'
-
-
     if personalization:
       theta, theta_hosts, r, r_hosts = pickle.load( open( dirname+filename, "rb" ) ) 
     else:
@@ -240,9 +233,18 @@ def run():
       print "TrueNone-Rate: %f -> error: %f"%(truenonerate, 1.0 - truenonerate)
       print "PredNone-Rate: %f"%(prednonerate)
       print "MEANNRANK: %f"%(meannrank)
-  
-
-     
      
 if __name__=='__main__':
-  run()
+    import optparse, imp
+    parser = optparse.OptionParser()
+    parser.add_option("-c", action="store", type="string", dest="config_filename", 
+                      help="specify the name of the config file to use. Config files are located in evaluation/config/. Example: '-c ron_config'")
+    (options, args) = parser.parse_args()
+    print options, args
+    if options.config_filename:
+        cfg = imp.load_source(options.config_filename, csrec_paths.get_config_dir()+options.config_filename+'.py')
+    else:
+        parser.print_help()
+        import sys
+        sys.exit(0)
+    run(cfg)

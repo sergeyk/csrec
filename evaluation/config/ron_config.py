@@ -1,0 +1,9 @@
+personalization = False
+testing = False
+lambda_winner = 0.1
+lambda_reject = 1.0
+num_sets = 1000000
+outer_iterations = 10
+nepoches = 0.05  
+dirname = '/home/ron/csrec/params/'	
+filename = 'parameters_lwin_0.100000_lrej_0.100000_testing_0_personalized_0_numsets_500000_outerit_2_nepoches_0.pkl'
