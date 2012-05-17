@@ -13,3 +13,4 @@ littlepy/
 writeups/*.pdf
 *.pkl
 sync
+core

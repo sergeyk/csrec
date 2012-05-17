@@ -207,7 +207,7 @@ def run():
     safebarrier(comm)
   
   baseline = False
-  allow_rejects = False
+  allow_rejects = True
   # let every machine do part of it
   if baseline:
       rejectaccuracy = reject_baseline_test_predictionerror_mpi(cs_test, allow_rejects=allow_rejects)
