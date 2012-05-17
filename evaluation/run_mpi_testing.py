@@ -72,7 +72,8 @@ def test_predictionerror(fg, sgd, data, allow_rejects=True):
         # it is not yet in there! so load by the grace of god!
         fg.outer_product_getter.unsafe_create_outer_prods_from_req_ids(l[1])
     try:
-      pred = sgd.predict(competitorset, testingphase=False, allow_rejects=allow_rejects)
+      pred = sgd.predict(
+          competitorset, testingphase=False, allow_rejects=allow_rejects)
     except:
         if not RON_MODE:
             from IPython import embed
@@ -157,9 +158,9 @@ def run(cfg):
   # load parameters from file (only rank 0)
   if comm_rank == 0:
     if personalization:
-      theta, theta_hosts, r, r_hosts = pickle.load( open( dirname+filename, "rb" ) ) 
+      theta, theta_hosts, r, r_hosts = pickle.load(open(dirname+filename, "rb")) 
     else:
-      theta, r, r_hosts = pickle.load( open( dirname+filename, "rb" ) )
+      theta, r, r_hosts = pickle.load(open(dirname+filename, "rb" ))
     print "Loaded params from " + dirname+filename
   else:
     theta = None
@@ -183,10 +184,13 @@ def run(cfg):
   get_feature_function = fg.get_features
   memory_for_personalized_parameters = 500
   if personalization:
-    sgd = SGDLearningPersonalized(featuredimension, get_feature_function, memory_for_personalized_parameters, theta=theta, r=r, r_hosts=r_hosts, theta_hosts=theta_hosts) # featdim +1 iff cheating
+    sgd = SGDLearningPersonalized(
+        featuredimension, get_feature_function, memory_for_personalized_parameters, 
+        theta=theta, r=r, r_hosts=r_hosts, theta_hosts=theta_hosts) # featdim +1 iff cheating
   else:
     #sgd = SGDLearning(featuredimension, get_feature_function, theta=theta, r=r, r_hosts=r_hosts) # without personalization/hashing, faster
-    sgd = SGDLearningRHOSTHASH(featuredimension, get_feature_function, theta=theta, r=r, r_hosts=r_hosts)
+    sgd = SGDLearningRHOSTHASH(
+        featuredimension, get_feature_function, theta=theta, r=r, r_hosts=r_hosts)
   
   #print sgd
   
@@ -203,9 +207,12 @@ def run(cfg):
   allow_rejects = True
   # let every machine do part of it
   if baseline:
-      rejectaccuracy = reject_baseline_test_predictionerror_mpi(cs_test, allow_rejects=allow_rejects)
-      rejectmeannrank = reject_baseline_test_meannormalizedwinnerrank_mpi(cs_test, allow_rejects=allow_rejects)
-      randomaccuracy = random_baseline_test_predictionerror_mpi(cs_test, allow_rejects=allow_rejects)
+      rejectaccuracy = reject_baseline_test_predictionerror_mpi(
+          cs_test, allow_rejects=allow_rejects)
+      rejectmeannrank = reject_baseline_test_meannormalizedwinnerrank_mpi(
+          cs_test, allow_rejects=allow_rejects)
+      randomaccuracy = random_baseline_test_predictionerror_mpi(
+          cs_test, allow_rejects=allow_rejects)
       randommeannrank = 0.5
       if comm_rank == 0:
         print "Baselines"
@@ -217,17 +224,25 @@ def run(cfg):
       # do single feature baseline for all features
       features, thresholds = get_features_and_thresholds()
       for featureidx in range(6):
-        sgfeataccuracy = singlefeature_baseline_test_predictionerror_mpi(cs_test, features, thresholds, featureidx=featureidx, allow_rejects=allow_rejects)
-        sgfeatmeannrank = singlefeature_baseline_test_meannormalizedwinnerrank_mpi(cs_test, features, thresholds, featureidx=featureidx, allow_rejects=allow_rejects)
+        sgfeataccuracy = singlefeature_baseline_test_predictionerror_mpi(
+            cs_test, features, thresholds, featureidx=featureidx, 
+            allow_rejects=allow_rejects)
+        sgfeatmeannrank = singlefeature_baseline_test_meannormalizedwinnerrank_mpi(
+            cs_test, features, thresholds, featureidx=featureidx, 
+            allow_rejects=allow_rejects)
         if comm_rank == 0:
           print "Baselines"
-          print "SGFEAT accuracy - featidx %d : %f"%(featureidx, sgfeataccuracy)
-          print "SGFEAT meannrank - featidx %d : %f"%(featureidx, sgfeatmeannrank) 
+          print "SGFEAT accuracy - featidx %d : %f"%(featureidx, 
+                                                     sgfeataccuracy)
+          print "SGFEAT meannrank - featidx %d : %f" % (featureidx, 
+                                                        sgfeatmeannrank) 
         
          
   else:
-    errorrate, truenonerate, prednonerate = test_predictionerror(fg, sgd, cs_test, allow_rejects=allow_rejects)
-    meannrank = test_meannormalizedwinnerrank(fg, sgd, cs_test, allow_rejects=allow_rejects)
+    errorrate, truenonerate, prednonerate = test_predictionerror(
+        fg, sgd, cs_test, allow_rejects=allow_rejects)
+    meannrank = test_meannormalizedwinnerrank(fg, sgd, cs_test, 
+                                              allow_rejects=allow_rejects)
     if comm_rank == 0:
       print "[TEST] Errorrate: %f"%(errorrate)
       print "TrueNone-Rate: %f -> error: %f"%(truenonerate, 1.0 - truenonerate)
@@ -237,12 +252,16 @@ def run(cfg):
 if __name__=='__main__':
     import optparse, imp
     parser = optparse.OptionParser()
-    parser.add_option("-c", action="store", type="string", dest="config_filename", 
-                      help="specify the name of the config file to use. Config files are located in evaluation/config/. Example: '-c ron_config'")
+    parser.add_option("-c", action="store", type="string", 
+                      dest="config_filename", 
+                      help= ("specify the name of the config file to use."
+                             "Config files are located in evaluation/config/. "
+                             "Example: '-c ron_config'"))
     (options, args) = parser.parse_args()
     print options, args
     if options.config_filename:
-        cfg = imp.load_source(options.config_filename, csrec_paths.get_config_dir()+options.config_filename+'.py')
+        cfg = imp.load_source(options.config_filename, 
+                              csrec_paths.get_config_dir()+options.config_filename+'.py')
     else:
         parser.print_help()
         import sys
