@@ -187,5 +187,9 @@ if __name__=='__main__':
   for i in range(10):
     cs_coll_train = CompetitorSetCollection(mode='test_win', size_comp_sets=i)
     comp_set_sizes[i] = cs_coll_train.get_nsamples()
+    
   plt.plot(comp_set_sizes)
+  embed()
+  plt.savefig('comp_set_sizes')
+  
   plt.show()

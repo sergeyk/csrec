@@ -2,66 +2,27 @@
 \subsection{Competitor Sets} \label{subsec:competitor_sets}
 
 The data we received from CouchSurfing does not allow us to know exactly when a host has looked at a couch request, but it does have timestamps for every request and every decision made by a host.
-To form sets of ``competing'' requests, we use a heuristic procedure to scan through all requests made to a particular host, and split them into groups based on their timing, their requested lodging dates, and the timing of the host's decisions.
+To form sets of ``competing'' requests, we use a heuristic procedure to scan through all requests made to a particular host, and split them into groups based on their timing.
 
 In the following, requests carry the same index as the user/surfer that invoked them, i.e., surfer $s_i$ sends request $c_{i,j}$ to host $h_j$.
-Without loss of generality we can assume for now that each user just sends at most one request to each couch.
 In the following examples, $h$ is fixed, so we just denote requests as $c_i$.
- 
-The CS system allows hosts to reject a couch request, which indicates a negative sample. We call those \textit{explicit negatives}. In addition, it is possible to infer \textit{implicit negatives}: if we take for example a host $h$ with a very popular couch in Paris with tens of requests per day, it seems reasonable to assume that $h$ will not look at every request, and will stop reading more requests after deciding for a specific surfer $s_i$.
-These requests won't receive an explicit Reject, but are \emph{de facto} rejected due to ``timing out.''
 
-For a given period $\tau$, let $C_{j}^{\tau} = c_1, c_2,\ldots,c_n$ be the requests send to $h$. We hereby assume that if at a certain time host $h$ accepts a request $c_i$ for period $\tau$, she prefers the requesting surfer $s_i$ over all other users whose requests she read that overlap with $\tau$. An efficient sweep-line algorithm to find sets of overlapping requests is depicted in {algorithm~\ref{alg:overlap}}.
+We assume a session-based behavior for the user $h$, which means he sits down in front of his computer and checks all new request to his couch every once in a while. There will be several different surfers that want to stay with him during different times. Now within a certain concetration span, $h$ will read through all the requests (besides the basic infos about age, sex and location, a potential surfer $s_i$ can also specify various details about his itinerary and whatever else will help him convince $h$). While reading through the requests $h$ decides on the fly which of them to accept or decline. Based on this notion we chunk together request by their \textit{request modification date} (rmd), the date $h$ responded uppon them with \textit{accept}, \textit{declined} or \textit{maybe}. More specifically, we order all request for each host by their rmd and perform a mean-shift clustering with a bandwidth of the session length, e.g. 30 min. 
 
-One more important thing to keep in mind is that if $h$ accepted a request for period $\tau$ at time $t_0$ and gets another request $c_l$ for $\tau$ at time $t_1 > t_0$, there is no information about whether or not $h$ likes $s_i$, because his couch is already taken, so we have to filter these out before moving on.
+As described later we now use the winner in a competitor set as a positive sample and all other requests as negatives. Since a ranking between two winners in the same set cannot be done reasonably - we have no notion of who would be better in this case - and to match our model optimally, we split sets with several winners into multiple sets with one winner each. With that we expand the number of competitor sets from 4.5 million to 5.5 million.
 
-\begin{algorithm}
-\caption{Find overlapping requests}
-\label{alg:overlap}
-\begin{algorithmic} 
-\REQUIRE $R = (c_1, c_2,\ldots,c_n)$, $c_i = (t_i^{start}, t_i^{end})$
-\ENSURE $S\subseteq \mathcal{P}(R)$ 
-\STATE $S \leftarrow \emptyset$
-\STATE $A \leftarrow \emptyset$ 
-\STATE $T {(i, start/end, t_i^{s/t}) |c_i \in R}$
-\STATE $sort(T, t_i^{s/t})$ 
-\STATE $b\_incr \leftarrow True$ 
-\FOR{$t$ in $T$}
-\IF{$t$ == $v_j^{start}$}
-\STATE $A.append(t)$
-\STATE $b\_incr \leftarrow True$
-\ELSE
-\IF{$b\_incr == True$}
-\STATE $b\_incr \leftarrow False$
-\STATE $S.append({c_i | (i, \_, \_) \in A})$
-\ENDIF
-\STATE $A.delete(t)$
-\ENDIF
-\ENDFOR
-\end{algorithmic}
-\end{algorithm}
-
-It might also be beneficial to soften the notion of ``overlap'' just because it might be very stressful for a host to have surfers without a gap in between the two visits.
-
-Analyzing the data for statistics on gaps for each host seperately will reveal their willingness to host several surfers in a row.
-The above algorithm can easily be adapted by modifying the input times accordingly.
-\todo{for tobi: clarify this: is this used?}
-
-\subsubsection{Filter rejects by temporal constraints}
-\todo{for tobi: i'm confused---how is what was done above different from this? maybe unite?}
-
-\todo{for tobi: insert reference to \autoref{fig:timeline_view} somewhere.}
-
-Using a very similar technique we can filter rejects that are not actually rejects for the reason of a mismatching surfer. Imagine $h$ gets a request $c_1$ at time $t_1$, accepts this request at time $t_2$ and gets another request $c_2$ for the same period as $c_1$ at $t_3$. If we have that $t_1 < t_2 < t_3$, there is no valid information about whether or not $h$ likes surfer $s_2$. By the time he gets the second request, his couch is already booked out and so he has to reject $s_2$ no matter if he would even prefer him over $s_1$. Because of this scenario we filter our training data for exactly those \textit{uninformative rejects} using again algorithm~\ref{alg:overlap} and temporal orderings on requests and acceptances/rejects.
+In figure~\ref{fig:timeline_view} we plot the requests that are sent to one host. The gray/red boxes stand for one request; Their width describes the period of time they want to stay. The vertical position stands for the point in time when this request was filed. We draw a box in read if the host accepted this request and in gray if it is declined. As can easily be seen, there are some users (cf. figure~\ref{fig:top_req}) that receive an overwhelming amount of requests and others that accept most of the requests they receive.
 
 \begin{figure}[ht]
 \centering
 \subfloat[Requested]{
   \includegraphics[width=0.45\linewidth]{figures/top_requested.png}
+  \label{fig:top_req}
 }
 \subfloat[Accepted]{
   \includegraphics[width=0.45\linewidth]{figures/top_accepted.png}
+  \label{fig:top_acc}
 }
-\caption{\todo{for tobi: Explain.}}
+\caption{Couchrequest for two extreme users}
 \label{fig:timeline_view}
 \end{figure}
