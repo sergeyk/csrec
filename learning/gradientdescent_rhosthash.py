@@ -43,8 +43,14 @@ class SGDLearningRHOSTHASH:
         self.mu = -0.001 # prior for r
     
     def get_score(self, feature):
-        return np.exp(np.dot(self.theta,feature))
-        
+        try:
+            return np.exp(np.dot(self.theta,feature))
+        except ValueError:
+            print 'error: mismatch feature and weight dimensions'
+            print 'theta', len(self.theta)
+            print 'feature', len(feature)
+            system.exit(1)
+
     def get_rejectscore(self, hostID):
         hidx, rademacher = hosthash(hostID,self.rhostsize)
         return np.exp(self.r + rademacher*self.r_hosts[hidx])

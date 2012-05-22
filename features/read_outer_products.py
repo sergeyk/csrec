@@ -25,10 +25,10 @@ class OuterProducGetter():
     self.cursor = self.sq.cursor()
         
   def get_product(self, req_id):
-    feat = np.zeros(self.dimension)
-    r = self.outer_products[req_id]
-    feat[r] = 1
-    return feat
+      feat = np.zeros(self.dimension)
+      r = self.outer_products[req_id]
+      feat[r] = 1
+      return feat
   
   def create_outer_prods_from_req_ids(self, req_ids):
     self.outer_products = {}

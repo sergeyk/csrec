@@ -8,29 +8,35 @@ import feature_processor
 import csrec_paths
 from MySQLdb import converters
 import pprint
-from cached_interests import cached_profiles
+import cached_interests
+
 
 def get_languages(cursor, user_id):
-    sql_cmd = "select * from %s where user_id=%s" % ('user_language', user_id)
+    sql_cmd = ("select * from %s where user_id=%s" % 
+               ('user_language', user_id))
     cursor.execute(sql_cmd)
     all_results = list(cursor.fetchall())
     return list(all_results)
 
+
 def get_cached_profile(user_id):
-    return cached_profiles[user_id]
+    return cached_interests.cached_profiles_dct[user_id]
+
 
 def get_profile(cursor, user_id):
-    if user_id in cached_profiles:
+    if user_id in cached_interests.cached_profiles_dct:
         p_type = 'cached'
         data = get_cached_profile(user_id)
     else:
         data = []
         p_type = 'uncached'
-        print 'WARNING: %s not found in cache' % user_id
+        raise Exception('Error: %s not found in cache' % user_id)
     return {'field_type': p_type, 'field_data': data}
 
+
 def get_db_profile(cursor, user_id):
-    sql_cmd = "select * from %s where user_id=%s" % ('user_profile', user_id)
+    sql_cmd = ("select * from %s where user_id=%s" 
+               % ('user_profile', user_id))
     cursor.execute(sql_cmd)
     
     all_results = list(cursor.fetchall())
@@ -45,7 +51,8 @@ def get_db_profile(cursor, user_id):
         output[cols[i]] = true_results[i]
     return output
 
-def pull_data_for_user(cursor, user_id):
+
+def load_data_for_user(cursor, user_id):
     conv = converters.conversions
     user_data = {}
     tables = ['user', 'user_info']
@@ -68,24 +75,9 @@ def pull_data_for_user(cursor, user_id):
     return user_data
         
 
-def pickle_competitor_set_user_info(cursor, competitor_set):
-    active_user_ids = set([])
-    sql_cmd = "select host_id, surfer_id from "+competitor_set
-    cur.execute(sql_cmd)
-    all_results = list(cur.fetchall())
-    for result in all_results:
-        active_user_ids.add(result[0])
-        active_user_ids.add(result[1])
-    print 'pulling data for', len(active_user_ids), 'users...'
-    user_data_dct = {}
-    i = 0
-    for user_id in active_user_ids:
-        i += 1
-        user_data_dct[user_id] = pull_data_for_user(cursor, user_id)
-        if i%1000 == 0:
-            print "%s/%s" % (i, len(active_user_ids)), 'users finished'
-            cPickle.dump(user_data_dct, 
-                         open(csrec_paths.get_features_dir()+'sampled_user_data.pkl', 'wb'))
+def test_pull_user_info(cursor):
+    pprint.pprint(load_data_for_user(cursor, 1083726))
+
 
 if __name__ == "__main__":
     con = None
@@ -98,7 +90,7 @@ if __name__ == "__main__":
                           password, 'csrec');
 
         cur = con.cursor()
-        pickle_competitor_set_user_info(cur, 'sample_competitor_sets')
+        test_pull_user_info(cur)
 
     except mdb.Error, e:
         print e

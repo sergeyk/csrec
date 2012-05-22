@@ -3,7 +3,7 @@ import cPickle
 import MySQLdb
 import random
 from features.user_features import FeatureGetter
-from features.pickle_user_data import pull_data_for_user
+from features.load_user_data_from_db import load_data_for_user
 
 try:
   from IPython import embed
@@ -22,7 +22,7 @@ class OuterProductDumper():
     self.cursor = self.sq.cursor()
     self.fg = FeatureGetter()
               
-    self.dump_table = 'outer_products2'
+    self.dump_table = 'outer_products'
     self.request = "INSERT INTO "+self.dump_table+" (req_id, data) VALUES (%s, %s)"
     req_per_node = self.NUM_COUCHREQUESTS/comm_size 
     lower = comm_rank*req_per_node + self.START_OFFSET
@@ -64,9 +64,9 @@ class OuterProductDumper():
     
   def get_dicts(self, req_id):
     user1 = self.req_user_map[req_id][0]
-    dict1 = pull_data_for_user(self.cursor, user1)
+    dict1 = load_data_for_user(self.cursor, user1)
     user2 = self.req_user_map[req_id][1]
-    dict2 = pull_data_for_user(self.cursor, user2)
+    dict2 = load_data_for_user(self.cursor, user2)
     return (dict1, dict2)
   
   def get_features(self, req_id):

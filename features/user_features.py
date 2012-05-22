@@ -35,17 +35,13 @@ class FeatureGetter():
         self.testing = testing
         self.outer_product_getter = OuterProducGetter(self.dimension)
 
-    def get_cached_feature(self, req_id):
-        try:
-            return self.outer_product_getter.get_product(req_id)  
-        except KeyError:
-            return self.outer_product_getter.unsafe_create_outer_prods_from_req_ids([reqid])
-
     def upt_out_prod_get(self, req_ids):
         #print 'initialize outer prods'        
         self.outer_product_getter.create_outer_prods_from_req_ids(req_ids)
         
     def init_dimensions(self):
+        # Hack, for some reason feature dim is not big enough with current
+        # outer_products table
         self.dimension = bucketizer.get_full_crossed_dimension(self.field_names)
         
     def init_field_names(self):
@@ -107,6 +103,13 @@ class FeatureGetter():
         else:
             return self.get_cached_feature(req_id)
     
+    def get_cached_feature(self, req_id):
+        try:
+            return self.outer_product_getter.get_product(req_id)  
+        except KeyError:
+            self.outer_product_getter.unsafe_create_outer_prods_from_req_ids([req_id])
+            return self.outer_product_getter.get_product(req_id)
+
     def get_dimension(self):
         return self.dimension
 
@@ -114,17 +117,18 @@ def test():
     np.set_printoptions(threshold='nan')
     import time
     fg = FeatureGetter()
+    print 'feature vec dimension', fg.get_dimension()
     t0 = time.time()
-    arr = fg.get_features(1346062, 2722310, 1)
+    arr = fg.get_features(1346062, 2722310, 138)
+    print arr
     run_time = time.time() - t0
     #print arr
     print 'time to cross and expand feature:', (run_time)*1000, 'ms'
-    print 'feature vec dimension', fg.get_dimension()
     print 'memory size of feature vector', arr.itemsize*fg.get_dimension(), 'bytes'
 
 def test2():
     fg = FeatureGetter()
 
 if __name__ == "__main__":
-    #test()
-    test2()
+    test()
+    #test2()
