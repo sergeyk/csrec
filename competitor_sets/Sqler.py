@@ -73,14 +73,15 @@ class Sqler:
     # instead of all at a time fetch  the rows one after the other.
     return res 
   
-  def get_num_compsets(self, split_date="'2011-03-29 11:41:04'", validation=False):
-    if validation:
-      split_op = " > "
-    else:
-      split_op = " < "
-    split_param = split_op + split_date + " "
-    
-    res = self.rqst("SELECT count(DISTINCT set_id) FROM `competitor_sets` where date "+split_param)
+  def get_num_compsets(self, set_type):
+    set_type_number_map = {
+      'train':1,
+      'val':2,
+      'test':3
+      }
+    sql_cmd = ('SELECT count(distinct set_id) FROM `competitor_sets` where train_val_test=%s'
+               % set_type_number_map[set_type])
+    res = self.rqst(sql_cmd)
     num_compsets = int(res.fetch_row(1,0)[0][0])
     res.fetch_row(10,0)
     return num_compsets

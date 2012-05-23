@@ -18,7 +18,7 @@ from learning.gradientdescent_personalization import SGDLearningPersonalized
 from learning.gradientdescent import SGDLearning
 from learning.gradientdescent_rhosthash import SGDLearningRHOSTHASH
 from competitor_sets.competitor_sets import CompetitorSetCollection
-from competitor_sets.Sqler import Sqler
+from competitor_sets.Sqler import *
 from features.user_features import FeatureGetter
 from math import sqrt
 import random
@@ -149,15 +149,21 @@ def test_meannormalizedwinnerrank(fg, sgd, data, allow_rejects=True):
   return meannrank
 
 
-def run(cfg):
+def run(cfg, params_filename=None):
+  test_type = 'test'
   # load learning parameters from config
+  percentage = cfg.test_percentage
   personalization = cfg.personalization
-  num_test_sets = cfg.num_test_sets
-  dirname = cfg.dirname
-  filename = cfg.filename
+  dirname = cfg.test_dirname
+  filename = cfg.test_filename
+  if params_filename:
+      filename = params_filename
   baseline = cfg.baseline
   allow_rejects = cfg.allow_rejects
   memory_for_personalized_parameters = cfg.memory_for_personalized_parameters
+  sq = get_sqler()
+  overallnum_sets = sq.get_num_compsets(test_type)
+  num_sets = int(overallnum_sets*percentage)
 
   # load feature weights from file
   if comm_rank == 0:
@@ -169,7 +175,7 @@ def run(cfg):
   else:
     theta = None
     r = None
-    r_hosts = None
+    r_hosts = N
     theta_hosts = None   
 
   theta = comm.bcast(theta, root=0)
@@ -192,8 +198,9 @@ def run(cfg):
   # load ALL test data
   for i in range(2,comm_size+2,3):
     if comm_rank==i or comm_rank==i-1 or comm_rank==i-2:
-      print "Machine %d/%d - Start loading the competitorsets for TEST"%(comm_rank+1,comm_size)
-      cs_test = CompetitorSetCollection(num_sets=num_test_sets, mode='test_win')
+      print ("Machine %d/%d - Start loading %s competitorsets for TEST"
+             %(comm_rank+1,comm_size, num_sets))
+      cs_test = CompetitorSetCollection(num_sets=num_sets, mode='test_win')
       
     safebarrier(comm)
   
@@ -241,23 +248,10 @@ def run(cfg):
       print "PredNone-Rate: %f"%(prednonerate)
       print "MEANNRANK: %f"%(meannrank)
      
+
 if __name__=='__main__':
-    import optparse, imp
-    import time
-    parser = optparse.OptionParser()
-    parser.add_option("-c", action="store", type="string", 
-                      dest="config_filename",
-                      help= ("specify the name of the config file to use."
-                             "Config files are located in evaluation/config/. "
-                             "Example: '-c ron_config'"))
-    (options, args) = parser.parse_args()
-    print options, args
-    if options.config_filename:
-        cfg = imp.load_source(options.config_filename, 
-                              csrec_paths.get_config_dir()+options.config_filename+'.py')
-    else:
-        parser.print_help()
-        sys.exit(0)
+    import load_config
     t_start = time.time()
-    run(cfg)
+    run(load_config.cfg)
     print 'run completed in %s sec' % (time.time() - t_start)
+

@@ -49,7 +49,8 @@ class SGDLearningRHOSTHASH:
             print 'error: mismatch feature and weight dimensions'
             print 'theta', len(self.theta)
             print 'feature', len(feature)
-            system.exit(1)
+            import sys
+            sys.exit(0)
 
     def get_rejectscore(self, hostID):
         hidx, rademacher = hosthash(hostID,self.rhostsize)

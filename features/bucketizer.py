@@ -62,4 +62,5 @@ def get_full_crossed_dimension(field_names_lst):
         fn = get_bucketizer_fn(field_name)
         post_len = fn.final_dim(field_name)
         dimension += post_len
+    print 'dimension of features = %s' % dimension
     return dimension
